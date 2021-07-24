@@ -1,0 +1,13 @@
+name = "PreCICEC"
+uuid = "57fbd4af-5cc3-4712-aac0-6930e7658184"
+authors = ["pavelkharitenko <pavel.kharitenko@googlemail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
