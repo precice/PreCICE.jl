@@ -8,7 +8,6 @@ This is a WIP Julia binding for the c++ library preCICE, using its C interface. 
 Since this repository has the structure of a Julia package, you can directly add it to your environment in a Julia REPL:
 
 ```julia
-julia
 julia> ]
 pkg> add https://github.com/pavelkharitenko/julia-binding-for-preCICE.git
 julia> using PreCICEC
@@ -33,6 +32,6 @@ For a coupling example see the solverdummy.jl in the example/ directory
 
 ## I installed my preCICE library to a different location
 
-Right know this package just simply takes the libprecice.so at `/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0`.
+By default this package assumes the `libprecice.so` is at `/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0`.
 
-Changing the path through a method is not working yet, but you can clone this package and change `libprecicePath` in `src/PreCICE.jl` to the location of your libprecice.so. 
+Change the path with `PreCICEC.setPathToLibprecice("path/to/my/libprecice.so")` or reset it with `PreCICEC.resetPathToLibprecice()`
