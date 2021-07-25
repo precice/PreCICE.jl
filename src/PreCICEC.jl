@@ -9,7 +9,38 @@ libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" # TODO use Bina
 # TODO add Julia's exception handling to the ccalls
 # TODO is the GC a threat? Is GC.@preserve somewhere required?
 # TODO do integers from C really have to be casted to Julia's Int32?
+# TODO maybe load libprecice.so only once with Libdl.dlopen() instead of calling it in each method?
 
+
+export 
+    # construction and configuration
+    setLibprecice, createSolverInterface, createSolverInterfaceWithCommunicator,
+
+    # steering methods
+    initialize, initializeData, advance, finalize,
+
+    # status queries
+    getDimensions, isCouplingOngoing, isReadDataAvailable, isWriteDataRequired, isTimeWindowComplete, hasToEvaluateSurrogateModel, hasToEvaluateFineModel,
+
+    # action methods
+    isActionRequired, markActionFulfilled,
+
+    # mesh access
+    hasMesh, getMeshID, setMeshVertex, getMeshVertexSize, setMeshVertices, getMeshVertices, getMeshVertexIDsFromPositions, setMeshEdge, setMeshTriangle, 
+    setMeshTriangleWithEdges, setMeshQuad, setMeshQuadWithEdges,
+
+    # data access
+    hasData, getDataID, mapReadDataTo, mapWriteDataFrom, writeBlockVectorData, writeVectorData, writeBlockScalarData, writeScalarData, readBlockScalarData,
+    readVectorData, readBlockScalarData, readScalarData,
+
+    # constants
+    getVersionInformation, actionWriteInitialData, actionWriteIterationCheckpoint, actionReadIterationCheckpoint
+
+
+
+function setLibprecice(pathToPrecice::String) 
+    libprecicePath = pathToPrecice
+end
 
 
 function createSolverInterface(participantName::String, 
@@ -140,7 +171,7 @@ function getDataID(dataName::String, meshID::Int)
 end
 
 
-function precicec_setMeshVertex(meshID::Int, position::AbstractArray{Float64})
+function setMeshVertex(meshID::Int, position::AbstractArray{Float64})
     id::Int = ccall((:precicec_setMeshVertex, libprecicePath), Cint, (Int, Ref{Float64}), meshID, position)
     return id
 end

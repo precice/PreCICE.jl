@@ -20,9 +20,6 @@ PreCICEC.createSolverInterface(solverName, configFileName, commRank, commSize)
 meshID = PreCICEC.getMeshID(meshName)
 dimensions = PreCICEC.getDimensions()
 
-println("-----------")
-println(dimensions)
-
 dataWriteName = nothing
 dataReadName = nothing
 
@@ -55,25 +52,7 @@ for i in 1:numberOfVertices
     end
 end
 
-
-println("VertexIds before setMeshVertices:")
-println(vertexIDs)
-
-println("Vertices before setMeshVertices:")
-println(vertices)
-
 PreCICEC.setMeshVertices(meshID, numberOfVertices, vertices, vertexIDs) 
-
-
-
-println("VertexIds after setMeshVertices:")
-println(vertexIDs)
-
-
-println("Vertices after setMeshVertices:")
-println(vertices)
-
-
 
 let # setting local scope for dt outside of the while loop
 
@@ -87,7 +66,7 @@ while PreCICEC.isCouplingOngoing()
     end
 
     if PreCICEC.isReadDataAvailable()
-        PreCICEC.readBlockVectorData(readDataID, numberOfVertices, vertexIDs, readData) # investigate, why vertexIDs must be a pointer in rBVD(), but not sMV()
+        PreCICEC.readBlockVectorData(readDataID, numberOfVertices, vertexIDs, readData) 
     end
 
     for i in 1:(numberOfVertices * dimensions)
