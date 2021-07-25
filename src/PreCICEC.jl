@@ -1,8 +1,8 @@
 module PreCICEC
 
 
-
 libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" # TODO use BinaryBuilder.jl to distribute preCICE for PreCICEC.jl as a Jll rather than searching locally
+defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" 
 
 
 # TODO add 'return nothing' keyword to void functions
@@ -14,7 +14,7 @@ libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" # TODO use Bina
 
 export 
     # construction and configuration
-    setLibprecice, createSolverInterface, createSolverInterfaceWithCommunicator,
+    setPathToLibprecice, resetPathToLibprecice, createSolverInterface, createSolverInterfaceWithCommunicator,
 
     # steering methods
     initialize, initializeData, advance, finalize,
@@ -38,8 +38,13 @@ export
 
 
 
-function setLibprecice(pathToPrecice::String) 
-    libprecicePath = pathToPrecice
+function setPathToLibprecice(pathToPrecice::String) 
+    global libprecicePath = pathToPrecice
+end
+
+
+function resetPathToLibprecice() 
+    global libprecicePath = defaultLibprecicePath
 end
 
 
@@ -298,10 +303,6 @@ function actionReadIterationCheckpoint()
     msgCstring = ccall((:precicec_actionReadIterationCheckpoint, libprecicePath), Cstring, ())
     return unsafe_string(msgCstring)
 end
-
-
-
-
 
 
 end
