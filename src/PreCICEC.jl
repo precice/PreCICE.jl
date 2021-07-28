@@ -1,14 +1,12 @@
 module PreCICEC
 
 
-libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" # TODO use BinaryBuilder.jl to distribute preCICE for PreCICEC.jl as a Jll rather than searching locally
+libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0"
 defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" 
 
 
 # TODO add 'return nothing' keyword to void functions
 # TODO add Julia's exception handling to the ccalls
-# TODO is the GC a threat? Is GC.@preserve somewhere required?
-# TODO do integers from C really have to be casted to Julia's Int32?
 # TODO maybe load libprecice.so only once with Libdl.dlopen() instead of calling it in each method?
 
 
@@ -66,7 +64,7 @@ function createSolverInterfaceWithCommunicator(participantName::String,
                                                 configFilename::String, 
                                                 solverProcessIndex::Int,  
                                                 solverProcessSize::Int, 
-                                                communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}})
+                                                communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}) # test if type of com is correct
     ccall((:precicec_createSolverInterface_withCommunicator, libprecicePath), 
             Cvoid, 
             (Ptr{Int8}, Ptr{Int8}, Int, Int, Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}), 
@@ -209,12 +207,12 @@ function setMeshEdge(meshID::Int, firstVertexID::Int, secondVertexID::Int)::Int
 end
 
 
-function setMeshTriangle(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID)
+function setMeshTriangle(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID::Int)
     ccall((:precicec_setMeshTriangle, libprecicePath), Cvoid, (Int, Int, Int, Int), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
 end
 
 
-function setMeshTriangleWithEdges(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID)
+function setMeshTriangleWithEdges(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID::Int)
     ccall((:precicec_setMeshTriangleWithEdges, libprecicePath), Cvoid, (Int, Int, Int, Int), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
 end
 
@@ -224,7 +222,7 @@ function setMeshQuad(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdge
 end
 
 
-function setMeshQuadWithEdges(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID)
+function setMeshQuadWithEdges(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID::Int)
     ccall((:precicec_setMeshQuadWithEdges, libprecicePath), Cvoid, (Int, Int, Int, Int, Int), meshID, firstEdgeID, secondEdgeID, thirdEdgeID, fourthEdgeID)
 end
 
@@ -247,7 +245,6 @@ end
 function writeScalarData(dataID::Int, valueIndex::Int, dataValue::AbstractArray{Float64})
     ccall((:precicec_writeScalarData, libprecicePath), Cvoid, (Int, Int, Ref{Float64}), dataID, valueIndex, dataValue)
 end
-
 
 
 function readBlockVectorData(dataID::Int, size::Int, valueIndices::AbstractArray{Int}, values::AbstractArray{Float64})
@@ -298,11 +295,10 @@ function actionWriteIterationCheckpoint()
 end
 
 
-
 function actionReadIterationCheckpoint()
     msgCstring = ccall((:precicec_actionReadIterationCheckpoint, libprecicePath), Cstring, ())
     return unsafe_string(msgCstring)
 end
 
 
-end
+end # module

@@ -1,6 +1,6 @@
 # PreCICEC.jl
 
-This is a WIP Julia binding for the c++ library preCICE, using its C interface. Contrary to [julia-bindings-for-preCICE](https://github.com/pavelkharitenko/julia-binding-for-preCICE) this solution is relies on no other packages. May or may not be slower.
+This is a WIP Julia binding for the C++ library preCICE, using its C interface. Contrary to [julia-bindings-for-preCICE](https://github.com/pavelkharitenko/julia-binding-for-preCICE) this solution relies on no other packages.
 
 ## Usage
 
