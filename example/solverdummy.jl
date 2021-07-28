@@ -4,7 +4,7 @@ using PreCICEC
 commRank = 0
 commSize = 1
 
-if sizeof(ARGS) < 3
+if size(ARGS, 1) < 3
     println("ERROR: pass config path, solver name and mesh name, example: julia solverdummy.jl ./precice-config.xml SolverOne MeshOne")
     exit(1)
 end
@@ -70,7 +70,7 @@ while PreCICEC.isCouplingOngoing()
     end
 
     for i in 1:(numberOfVertices * dimensions)
-        writeData[i] = readData[i] + 1
+        writeData[i] = readData[i] + 1.0
     end
 
     if PreCICEC.isWriteDataRequired(dt)
