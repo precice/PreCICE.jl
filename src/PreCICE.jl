@@ -1,4 +1,4 @@
-module PreCICEC
+module PreCICE
 
 
 libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0"

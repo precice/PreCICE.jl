@@ -1,4 +1,4 @@
-name = "PreCICEC"
+name = "PreCICE"
 uuid = "57fbd4af-5cc3-4712-aac0-6930e7658184"
 authors = ["pavelkharitenko <pavel.kharitenko@googlemail.com> and contributors"]
 version = "0.1.0"

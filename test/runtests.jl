@@ -1,6 +1,6 @@
-using PreCICEC
+using PreCICE
 using Test
 
-@testset "PreCICEC.jl" begin
+@testset "PreCICE.jl" begin
     # Write your tests here.
 end

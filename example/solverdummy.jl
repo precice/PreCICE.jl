@@ -1,5 +1,5 @@
 import Pkg; Pkg.activate("..")
-using PreCICEC
+using PreCICE
 
 commRank = 0
 commSize = 1
@@ -15,10 +15,10 @@ meshName = ARGS[3]
 
 println("""DUMMY: Running solver dummy with preCICE config file "$configFileName", participant name "$solverName", and mesh name "$meshName" """)
 
-PreCICEC.createSolverInterface(solverName, configFileName, commRank, commSize)
+PreCICE.createSolverInterface(solverName, configFileName, commRank, commSize)
 
-meshID = PreCICEC.getMeshID(meshName)
-dimensions = PreCICEC.getDimensions()
+meshID = PreCICE.getMeshID(meshName)
+dimensions = PreCICE.getDimensions()
 
 dataWriteName = nothing
 dataReadName = nothing
@@ -35,8 +35,8 @@ if solverName == "SolverTwo"
     dataWriteName = "dataTwo"
 end
 
-readDataID  = PreCICEC.getDataID(dataReadName, meshID)
-writeDataID = PreCICEC.getDataID(dataWriteName, meshID)
+readDataID  = PreCICE.getDataID(dataReadName, meshID)
+writeDataID = PreCICE.getDataID(dataWriteName, meshID)
 
 readData = Array{Float64, 1}(undef, numberOfVertices * dimensions)
 writeData = Array{Float64, 1}(undef, numberOfVertices * dimensions)
@@ -52,36 +52,36 @@ for i in 1:numberOfVertices
     end
 end
 
-PreCICEC.setMeshVertices(meshID, numberOfVertices, vertices, vertexIDs) 
+PreCICE.setMeshVertices(meshID, numberOfVertices, vertices, vertexIDs) 
 
 let # setting local scope for dt outside of the while loop
 
-dt = PreCICEC.initialize()
+dt = PreCICE.initialize()
 
-while PreCICEC.isCouplingOngoing()
+while PreCICE.isCouplingOngoing()
     
-    if PreCICEC.isActionRequired(PreCICEC.actionWriteIterationCheckpoint())
+    if PreCICE.isActionRequired(PreCICE.actionWriteIterationCheckpoint())
         println("DUMMY: Writing iteration checkpoint")
-        PreCICEC.markActionFulfilled(PreCICEC.actionWriteIterationCheckpoint())
+        PreCICE.markActionFulfilled(PreCICE.actionWriteIterationCheckpoint())
     end
 
-    if PreCICEC.isReadDataAvailable()
-        PreCICEC.readBlockVectorData(readDataID, numberOfVertices, vertexIDs, readData) 
+    if PreCICE.isReadDataAvailable()
+        PreCICE.readBlockVectorData(readDataID, numberOfVertices, vertexIDs, readData) 
     end
 
     for i in 1:(numberOfVertices * dimensions)
         writeData[i] = readData[i] + 1.0
     end
 
-    if PreCICEC.isWriteDataRequired(dt)
-        PreCICEC.writeBlockVectorData(writeDataID, numberOfVertices, vertexIDs, writeData)
+    if PreCICE.isWriteDataRequired(dt)
+        PreCICE.writeBlockVectorData(writeDataID, numberOfVertices, vertexIDs, writeData)
     end
 
-    dt = PreCICEC.advance(dt)
+    dt = PreCICE.advance(dt)
 
-    if PreCICEC.isActionRequired(PreCICEC.actionReadIterationCheckpoint())
+    if PreCICE.isActionRequired(PreCICE.actionReadIterationCheckpoint())
         println("DUMMY: Reading iteration checkpoint")
-        PreCICEC.markActionFulfilled(PreCICEC.actionReadIterationCheckpoint())
+        PreCICE.markActionFulfilled(PreCICE.actionReadIterationCheckpoint())
     else
         println("DUMMY: Advancing in time")
     end
@@ -90,5 +90,5 @@ end # while
 
 end # let scope
 
-PreCICEC.finalize()
+PreCICE.finalize()
 println("DUMMY: Closing Julia solver dummy...")
