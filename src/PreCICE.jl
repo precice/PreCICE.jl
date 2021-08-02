@@ -1,5 +1,6 @@
 module PreCICE
 
+import MPI.Comm, MPI.MPI_Comm
 
 libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0"
 defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" 
@@ -64,10 +65,10 @@ function createSolverInterfaceWithCommunicator(participantName::String,
                                                 configFilename::String, 
                                                 solverProcessIndex::Int,  
                                                 solverProcessSize::Int, 
-                                                communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}) # test if type of com is correct
+                                                communicator::Comm) # test if type of com is correct
     ccall((:precicec_createSolverInterface_withCommunicator, libprecicePath), 
             Cvoid, 
-            (Ptr{Int8}, Ptr{Int8}, Int, Int, Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}), 
+            (Ptr{Int8}, Ptr{Int8}, Int, Int, MPI_Comm), 
             participantName, 
             configFilename, 
             solverProcessIndex, 
