@@ -1,4 +1,4 @@
-import Pkg; Pkg.activate("..")
+import Pkg; Pkg.activate("../..")
 using PreCICE
 
 commRank = 0
