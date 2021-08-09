@@ -9,7 +9,7 @@ Since this repository has the structure of a Julia package, you can directly add
 
 ```julia
 julia> ]
-pkg> add https://github.com/pavelkharitenko/julia-binding-for-preCICE.git
+pkg> add https://github.com/precice/julia-bindings.git
 julia> using PreCICE
 julia> getVersionInformation()
 ...
@@ -18,7 +18,7 @@ julia> getVersionInformation()
 Or put the following on top of your Julia script:
 
 ```julia
-import Pkg; Pkg.add(url="https://github.com/pavelkharitenko/julia-binding-for-preCICE.git")
+import Pkg; Pkg.add(url="https://github.com/precice/julia-bindings.git")
 using PreCICE
 getVersionInformation()
 ...
