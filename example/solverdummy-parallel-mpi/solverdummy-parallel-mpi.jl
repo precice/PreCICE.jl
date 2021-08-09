@@ -1,5 +1,5 @@
 import Pkg; Pkg.activate("../..")
-Pkg.build("MPI")
+Pkg.build("MPI") # build MPI.jl for updating the MPI executable path
 using PreCICE
 using MPI
 

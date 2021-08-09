@@ -26,9 +26,15 @@ getVersionInformation()
 
 This package is WIP and has no release yet. Bugs may occur.
 
-## Solverdummy example
+## Examples
 
-For a coupling example see the solverdummy.jl in the example/ directory
+### Solverdummy example
+
+For a simple coupling example see the solverdummy.jl in the example/solverdummy directory
+
+### MPI parallelization example
+
+For coupling a distributed solver, that is, multiple Julia executables, see the solverdummy-parallel-mpi example
 
 ## I installed my preCICE library to a different location
 

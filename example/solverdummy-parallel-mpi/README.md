@@ -1,11 +1,12 @@
-## This is an WIP example for using preCICE.jl with a distributed Julia solver, using multiple executables. It is not working yet.
+## This is an example for using preCICE.jl with a distributed Julia solver, using multiple executables.
+
 
 ### Installation
 First let MPI.jl point to a OpenMPI implementation of your machine:
 - Install MPI.jl in your Julia enviroment with `Pkg.add("MPI")` or activate this environment with `Pkg.activate("../..")` (from this directory).
 - Run `julia --project -e 'ENV["JULIA_MPI_BINARY"]="system"; using Pkg; Pkg.build("MPI"; verbose=true)'`
 
-Note: MPI.jl comes with MPI implementation version 3.4.2, which seems not to be compatible with this solver example. This solver example also throws errors with OpenMPI version 4.0.3.
+Note: MPI.jl comes with MPI implementation version 3.4.2, which seems not to be compatible with this solver example. This example was tested on Open MPI version 4.0.3.
 
 ### Usage
 From this directory, run 
