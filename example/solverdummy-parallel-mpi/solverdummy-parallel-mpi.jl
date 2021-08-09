@@ -100,6 +100,5 @@ end # let scope
 
 PreCICE.finalize()
 
-MPI.Finalize()
 
 println("""DUMMY ($(MPI.Comm_rank(comm))): Closing Julia solver dummy...""")
