@@ -1,19 +1,27 @@
-import Pkg; Pkg.activate("..")
+import Pkg; Pkg.activate("../..")
+Pkg.build("MPI")
 using PreCICE
+using MPI
 
-commRank = 0
-commSize = 1
 
 if size(ARGS, 1) < 3
     println("ERROR: pass config path, solver name and mesh name, example: julia solverdummy.jl ./precice-config.xml SolverOne MeshOne")
     exit(1)
 end
 
+MPI.Init()
+comm = MPI.COMM_WORLD
+
+
+commRank = MPI.Comm_rank(comm)
+commSize = MPI.Comm_size(comm)
+
+
 configFileName = ARGS[1]
 solverName = ARGS[2]
 meshName = ARGS[3]
 
-println("""DUMMY: Running solver dummy with preCICE config file "$configFileName", participant name "$solverName", and mesh name "$meshName" """)
+println("""DUMMY ($(MPI.Comm_rank(comm))): Running solver dummy with preCICE config file "$configFileName", participant name "$solverName", and mesh name "$meshName" """)
 
 PreCICE.createSolverInterface(solverName, configFileName, commRank, commSize)
 
@@ -61,7 +69,7 @@ dt = PreCICE.initialize()
 while PreCICE.isCouplingOngoing()
     
     if PreCICE.isActionRequired(PreCICE.actionWriteIterationCheckpoint())
-        println("DUMMY: Writing iteration checkpoint")
+        println("""DUMMY ($(MPI.Comm_rank(comm))): Writing iteration checkpoint""")
         PreCICE.markActionFulfilled(PreCICE.actionWriteIterationCheckpoint())
     end
 
@@ -80,10 +88,10 @@ while PreCICE.isCouplingOngoing()
     dt = PreCICE.advance(dt)
 
     if PreCICE.isActionRequired(PreCICE.actionReadIterationCheckpoint())
-        println("DUMMY: Reading iteration checkpoint")
+        println("""DUMMY ($(MPI.Comm_rank(comm))): Reading iteration checkpoint""")
         PreCICE.markActionFulfilled(PreCICE.actionReadIterationCheckpoint())
     else
-        println("DUMMY: Advancing in time")
+        println("""DUMMY ($(MPI.Comm_rank(comm))): Advancing in time""")
     end
 
 end # while
@@ -91,4 +99,7 @@ end # while
 end # let scope
 
 PreCICE.finalize()
-println("DUMMY: Closing Julia solver dummy...")
+
+MPI.Finalize()
+
+println("""DUMMY ($(MPI.Comm_rank(comm))): Closing Julia solver dummy...""")

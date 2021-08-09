@@ -1,4 +1,4 @@
-This is a minimal working example for using preCICEC.jl with Julia. The solverdummy.jl will couple with another solver using preCICE.
+This is a minimal working example for using preCICE.jl with Julia. The solverdummy.jl will couple with another solver using preCICE.
 
 From this directory, run 
 ```
