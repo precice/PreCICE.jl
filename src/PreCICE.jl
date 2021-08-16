@@ -4,8 +4,8 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 """
 
 
-libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0"
-defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0" 
+libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
+defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so" 
 
 
 # TODO add 'return nothing' keyword to void functions
