@@ -1,15 +1,11 @@
 import Pkg; Pkg.activate("../..")
 using PreCICE
 
-commRank = 0
-commSize = 1
-
-println(" ###### ##### #####")
-println("Starting solverinferface in process ", commRank, "of total size ", commSize)
+commRank = myid() - 1
+commSize = nprocs()
 
 
-
-#ARGS = isassigned(newARGS) ? newARGS : ARGS
+ARGS = isassigned(newARGS) ? newARGS : ARGS
 
 if size(ARGS, 1) < 3
     println("ERROR: pass config path, solver name and mesh name, example: julia solverdummy.jl ./precice-config.xml SolverOne MeshOne")
@@ -68,7 +64,7 @@ dt = PreCICE.initialize()
 while PreCICE.isCouplingOngoing()
     
     if PreCICE.isActionRequired(PreCICE.actionWriteIterationCheckpoint())
-        #println("DUMMY: Writing iteration checkpoint")
+        println("DUMMY: Writing iteration checkpoint")
         PreCICE.markActionFulfilled(PreCICE.actionWriteIterationCheckpoint())
     end
 
@@ -87,10 +83,10 @@ while PreCICE.isCouplingOngoing()
     dt = PreCICE.advance(dt)
 
     if PreCICE.isActionRequired(PreCICE.actionReadIterationCheckpoint())
-        #println("DUMMY: Reading iteration checkpoint")
+        println("DUMMY: Reading iteration checkpoint")
         PreCICE.markActionFulfilled(PreCICE.actionReadIterationCheckpoint())
     else
-        #println("DUMMY: Advancing in time")
+        println("DUMMY: Advancing in time")
     end
 
 end # while

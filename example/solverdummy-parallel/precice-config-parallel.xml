@@ -36,7 +36,7 @@
       <read-data  name="dataOne" mesh="MeshTwo" />
     </participant>
 
-    <m2n:sockets from="SolverOne" to="SolverTwo" exchange-directory=".."/>
+    <m2n:sockets from="SolverOne" to="SolverTwo" exchange-directory="."/>
 
     <coupling-scheme:serial-implicit>
       <participants first="SolverOne" second="SolverTwo" />
