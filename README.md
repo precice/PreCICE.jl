@@ -25,11 +25,11 @@ using PreCICE
 
 Once the package is added at the beginning of the Julia script you can access the preCICE API commands in the script.
 
-## Adding when preCICE installation is at custom paths
+## Adding when preCICE is installed at custom paths
 If you installed preCICE at a custom path, errors like ```ERROR: could not load library "/..."``` can be seen after adding the Julia bindings package. In such cases set the path to your library with `PreCICE.setPathToLibprecice("path/to/my/libprecice.so")` or reset it with `PreCICE.resetPathToLibprecice()`
 
 By default this package assumes the `libprecice.so` is at `/usr/lib/x86_64-linux-gnu/`.
 
 # Usage
-You can look at [solverdummy.jl]() as an example of how to use the Julia bindings for preCICE
+You can look at [solverdummy](https://github.com/precice/julia-bindings/solverdummy) as an example of how to use the Julia bindings for preCICE
 
