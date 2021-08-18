@@ -12,7 +12,8 @@ You can use the Julia bindings for preCICE can be used by adding them as a packa
 
 ```julia
 julia> ]
-pkg> add https://github.com/precice/julia-bindings.git
+pkg> add https://github.com/precice/julia-bindings.git 
+Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
 ```
 
@@ -32,4 +33,19 @@ By default this package assumes the `libprecice.so` is at `/usr/lib/x86_64-linux
 
 # Usage
 You can look at [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdummy) as an example of how to use the Julia bindings for preCICE
+
+
+# Testing new features that are on branches of this repository
+
+To use a certain branch of this package, add `#branchname` after the package url, example downloading the `mpi-parallelization` branch:
+
+
+```julia
+julia> ]
+pkg> add https://github.com/precice/julia-bindings.git#mpi-parallelization
+Then exit the package mode with 🔙 or Ctrl + c
+julia> using PreCICE
+```
+
+
 
