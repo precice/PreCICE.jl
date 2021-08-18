@@ -31,5 +31,5 @@ If you installed preCICE at a custom path, errors like ```ERROR: could not load 
 By default this package assumes the `libprecice.so` is at `/usr/lib/x86_64-linux-gnu/`.
 
 # Usage
-You can look at [solverdummy](https://github.com/precice/julia-bindings/solverdummy) as an example of how to use the Julia bindings for preCICE
+You can look at [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdummy) as an example of how to use the Julia bindings for preCICE
 
