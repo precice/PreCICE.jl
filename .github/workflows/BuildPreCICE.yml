@@ -13,4 +13,4 @@ jobs:
       - run: julia -e 'println("Julia installed successfully!")'
       - uses: actions/checkout@v2
       - name: Build Package
-      - uses: julia-actions/julia-buildpkg@v1
+        uses: julia-actions/julia-buildpkg@v1
