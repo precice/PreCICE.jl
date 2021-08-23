@@ -1,5 +1,5 @@
 name: Build PreCICE.jl
-
+on: workflow_dispatch
 
 jobs:
   build:
