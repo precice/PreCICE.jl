@@ -1,5 +1,5 @@
 name: Build PreCICE.jl
-on: [push, pull_request]
+
 
 jobs:
   build:
@@ -8,9 +8,11 @@ jobs:
       - name: Install Julia 1.6.1
         uses: julia-actions/setup-julia@v1.6.1
         with:
-          version: 1.6.1
-         
+          version: 1.6.1       
       - run: julia -e 'println("Julia installed successfully!")'
       - uses: actions/checkout@v2
       - name: Build Package
       - uses: julia-actions/julia-buildpkg@v1
+
+      - name: Run Tests
+        uses: julia-actions/julia-runtest@v1
