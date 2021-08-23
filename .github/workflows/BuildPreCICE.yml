@@ -1,0 +1,15 @@
+name: Build PreCICE.jl
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Julia 1.6.1
+        uses: julia-actions/setup-julia@v1.6.1
+        with:
+          version: 1.6.1
+         
+      - run: julia -e 'println("Julia installed successfully!")'
+      - uses: actions/checkout@v2
+      - uses: julia-actions/julia-buildpkg@v1
