@@ -1,13 +1,5 @@
 name: Run Tests
-on: 
-  workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'     
-        required: true
-        default: 'warning'
-      tags:
-        description: 'Test scenario tags'  
+on: workflow_dispatch
 
 jobs:
   run_tests:
@@ -21,6 +13,4 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
-
-      - name: Run Tests
-        uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-runtest@v1
