@@ -1,4 +1,4 @@
-name: Build PreCICE.jl
+name: Run Tests
 on: workflow_dispatch
 
 jobs:
