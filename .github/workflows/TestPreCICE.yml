@@ -2,7 +2,7 @@ name: Build PreCICE.jl
 on: workflow_dispatch
 
 jobs:
-  build:
+  run_tests:
     runs-on: ubuntu-latest
     steps:
       - name: Install Julia 1.6.1
