@@ -4,6 +4,7 @@ on: [push]
 jobs:
   version_test:
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       matrix:
         os: [ubuntu-latest]
