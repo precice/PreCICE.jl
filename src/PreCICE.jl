@@ -1,18 +1,20 @@
 module PreCICE
 """
 The `PreCICE` module provides the bindings for using the preCICE api. For more information, visit https://precice.org/.
-"""
-
-
-libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
-defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so" 
+""" 
 
 
 # TODO add 'return nothing' keyword to void functions
 # TODO add Julia's exception handling to the ccalls
 # TODO maybe load libprecice.so only once with Libdl.dlopen() instead of calling it in each method?
 # TODO get rid of global variables
-# TODO add documentation
+
+
+libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
+defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
+
+
+
 
 export 
     # construction and configuration
@@ -304,5 +306,7 @@ function actionReadIterationCheckpoint()
     return unsafe_string(msgCstring)
 end
 
+
+include("documentation.jl")
 
 end # module
