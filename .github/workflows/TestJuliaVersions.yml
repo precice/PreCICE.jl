@@ -3,37 +3,37 @@ on: [push]
 
 jobs:
   version_test:
-  runs-on: ${{ matrix.os }}
-  strategy:
-    matrix:
-      os: [ubuntu-latest]
-      julia_version: ['1.0', '1.2.0', '^1.3.0-rc1']
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        julia_version: ['1.0', '1.2.0', '^1.3.0-rc1']
 
-  steps:
-    - name: Install Julia version
-      uses: julia-actions/setup-julia@v1.6.1
-      with:
-        version: ${{ matrix.julia-version }}         
-    - uses: actions/checkout@v2
+    steps:
+      - name: Install Julia version
+        uses: julia-actions/setup-julia@v1.6.1
+        with:
+          version: ${{ matrix.julia-version }}         
+      - uses: actions/checkout@v2
+        
+
+      - name: Cache preCICE
+        id: cache-libprecice
+        uses: actions/cache@v2
+        with:
+          path: libprecice2_2.2.0_focal.deb
+          key: libprecice2_2.2.0_focal.deb1
+          restore-keys: libprecice2_2.2.0_focal.deb1
       
+      - name: Download preCICE
+        if: steps.cache-libprecice.outputs.cache-hit != 'true'
+        run: wget https://github.com/precice/precice/releases/download/v2.2.0/libprecice2_2.2.0_focal.deb
 
-    - name: Cache preCICE
-      id: cache-libprecice
-      uses: actions/cache@v2
-      with:
-        path: libprecice2_2.2.0_focal.deb
-        key: libprecice2_2.2.0_focal.deb1
-        restore-keys: libprecice2_2.2.0_focal.deb1
-    
-    - name: Download preCICE
-      if: steps.cache-libprecice.outputs.cache-hit != 'true'
-      run: wget https://github.com/precice/precice/releases/download/v2.2.0/libprecice2_2.2.0_focal.deb
+      - name: Install preCICE
+        run: sudo apt install ./libprecice2_2.2.0_focal.deb
 
-    - name: Install preCICE
-      run: sudo apt install ./libprecice2_2.2.0_focal.deb
+      - name: Build Package
+        uses: julia-actions/julia-buildpkg@v1
 
-    - name: Build Package
-      uses: julia-actions/julia-buildpkg@v1
-
-    - name: Run tests
-      uses: julia-actions/julia-runtest@v1
+      - name: Run tests
+        uses: julia-actions/julia-runtest@v1
