@@ -17,7 +17,7 @@ Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
 ```
 
-Once the package is added you can directly access preCICE API commands in the Julia environment, for example `getVersionInformation()`. Alternative to the environment you can also inclue the package in your Julia script in the following way:
+Once the package is added you can directly access preCICE API commands in the Julia environment, for example `getVersionInformation()`. Alternative to the environment you can also include the package in your Julia script in the following way:
 
 ```julia
 import Pkg; Pkg.add(url="https://github.com/precice/julia-bindings.git")
