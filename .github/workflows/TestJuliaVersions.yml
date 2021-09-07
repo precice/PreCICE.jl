@@ -1,4 +1,4 @@
-name: Build on different Julia versions
+name: Building Package on stable Julia versions >1.4 and on the latest Julia version under development 'nightly'
 on: 
   workflow_dispatch:
   schedule:
