@@ -189,10 +189,11 @@ function getMeshVertices(meshID::Int, size::Int, ids::AbstractArray{Int}, positi
 end
 
 
-function setMeshVertices(meshID::Int, size::Int, positions::AbstractArray{Float64},  ids::AbstractArray{Int})
-    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Int, Int, Ref{Float64}, Ref{Int}), meshID, size, positions, ids)
+function setMeshVertices(meshID::Int, size::Int, positions::AbstractArray{Float64})::Array{Int}
+    vertexIDs = Array{Int32, 1}(undef, size)
+    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Int, Int, Ref{Float64}, Ref{Int32}), meshID, size, positions, vertexIDs)
+    return vertexIDs
 end
-
 
 function getMeshVertexSize(size::Int)::Int
     size::Int = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Int,), size)

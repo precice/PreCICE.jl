@@ -52,7 +52,7 @@ for i in 1:numberOfVertices
     end
 end
 
-PreCICE.setMeshVertices(meshID, numberOfVertices, vertices, vertexIDs) 
+vertexIDS = PreCICE.setMeshVertices(meshID, numberOfVertices, vertices) 
 
 let # setting local scope for dt outside of the while loop
 
