@@ -29,6 +29,7 @@
     </participant>
 
     <participant name="SolverTwo">
+      <master:sockets/>
       <use-mesh name="MeshOne" from="SolverOne"/>
       <use-mesh name="MeshTwo" provide="yes"/>
       <mapping:nearest-neighbor   direction="write" from="MeshTwo" to="MeshOne" constraint="conservative"/>

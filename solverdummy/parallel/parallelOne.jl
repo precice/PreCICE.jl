@@ -1,9 +1,10 @@
 import Pkg; Pkg.activate("../..")
 using Distributed
-addprocs(3)
+
+addprocs(3; exeflags="--project" )
 
 @everywhere begin
-import Pkg; Pkg.activate("../..")
+
 using PreCICE
 
 commRank = myid() - 1
@@ -56,7 +57,7 @@ dt = PreCICE.initialize()
 while PreCICE.isCouplingOngoing()
     
     if PreCICE.isActionRequired(PreCICE.actionWriteIterationCheckpoint())
-        println("DUMMY: Writing iteration checkpoint")
+        println("DUMMY: Writing iteration checkpoint of rank ", commRank)
         PreCICE.markActionFulfilled(PreCICE.actionWriteIterationCheckpoint())
     end
 
