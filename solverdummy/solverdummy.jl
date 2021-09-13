@@ -41,7 +41,7 @@ writeDataID = PreCICE.getDataID(dataWriteName, meshID)
 readData = Array{Float64, 1}(undef, numberOfVertices * dimensions)
 writeData = Array{Float64, 1}(undef, numberOfVertices * dimensions)
 vertices = Array{Float64, 1}(undef, numberOfVertices * dimensions)
-vertexIDs = Array{Int, 1}(undef, numberOfVertices)
+
 
 
 for i in 1:numberOfVertices
@@ -52,7 +52,7 @@ for i in 1:numberOfVertices
     end
 end
 
-vertexIDS = PreCICE.setMeshVertices(meshID, numberOfVertices, vertices) 
+vertexIDs = PreCICE.setMeshVertices(meshID, numberOfVertices, vertices)
 
 let # setting local scope for dt outside of the while loop
 
