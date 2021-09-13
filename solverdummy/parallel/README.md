@@ -19,19 +19,15 @@ mpirun -n N python3 python-solverdummy-parallel.py ./precice-config-parallel.xml
 To run the Julia solver, change into this directory and type:
 
 ```
-julia -p M
-```
-to launch Julia with M additional processes and then
-
-```julia
-julia> include("solverOne.jl")         # or include("solverTwo.jl")
+julia parallelOne.jl  # or julia parallelTwo.jl
 ```
 
-You can also do the two steps above for Julia in one:
+parallelOne or parallelTwo starts three additional processes, that number can be changed.
 
-```julia
-julia -n M solverOne.jl
-```
+
+
+
+
 
 
 
