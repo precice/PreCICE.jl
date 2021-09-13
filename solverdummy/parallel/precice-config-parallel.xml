@@ -22,6 +22,7 @@
     </mesh>
 
     <participant name="SolverOne">
+      <master:sockets/>
       <use-mesh name="MeshOne" provide="yes"/>
       <write-data name="dataOne" mesh="MeshOne" />
       <read-data  name="dataTwo" mesh="MeshOne" />
