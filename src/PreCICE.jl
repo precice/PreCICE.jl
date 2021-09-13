@@ -52,8 +52,8 @@ end
 
 function createSolverInterface(participantName::String, 
                                 configFilename::String,   
-                                solverProcessIndex::Int,  
-                                solverProcessSize::Int)
+                                solverProcessIndex::Integer,  
+                                solverProcessSize::Integer)
     ccall((:precicec_createSolverInterface, libprecicePath), 
             Cvoid, 
             (Ptr{Int8},Ptr{Int8}, Cint, Cint), 
@@ -66,8 +66,8 @@ end
 
 function createSolverInterfaceWithCommunicator(participantName::String, 
                                                 configFilename::String, 
-                                                solverProcessIndex::Int,  
-                                                solverProcessSize::Int, 
+                                                solverProcessIndex::Integer,  
+                                                solverProcessSize::Integer, 
                                                 communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}) # test if type of com is correct
     ccall((:precicec_createSolverInterface_withCommunicator, libprecicePath), 
             Cvoid, 
@@ -101,50 +101,50 @@ function finalize()
 end
 
 
-function getDimensions()::Int # int or int32 ?
-    dim::Int = ccall((:precicec_getDimensions, libprecicePath), Cint, ())
+function getDimensions()::Integer # int or int32 ?
+    dim::Integer = ccall((:precicec_getDimensions, libprecicePath), Cint, ())
     return dim
 end
 
 
 function isCouplingOngoing()::Bool
-    ans::Int = ccall((:precicec_isCouplingOngoing, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_isCouplingOngoing, libprecicePath), Cint, ())
     return ans
 end
 
 
 function isTimeWindowComplete()::Bool
-    ans::Int = ccall((:precicec_isTimeWindowComplete, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_isTimeWindowComplete, libprecicePath), Cint, ())
     return ans
 end
 
 
 function hasToEvaluateSurrogateModel()::Bool
-    ans::Int = ccall((:precicec_hasToEvaluateSurrogateModel, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_hasToEvaluateSurrogateModel, libprecicePath), Cint, ())
     return ans
 end
 
 
 function hasToEvaluateFineModel()::Bool
-    ans::Int = ccall((:precicec_hasToEvaluateFineModel, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_hasToEvaluateFineModel, libprecicePath), Cint, ())
     return ans
 end
 
 
 function isReadDataAvailable()::Bool
-    ans::Int = ccall((:precicec_isReadDataAvailable, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_isReadDataAvailable, libprecicePath), Cint, ())
     return ans
 end
 
 
 function isWriteDataRequired(computedTimestepLength::Float64)::Bool
-    ans::Int = ccall((:precicec_isWriteDataRequired, libprecicePath), Cint, (Cdouble,), computedTimestepLength)
+    ans::Integer = ccall((:precicec_isWriteDataRequired, libprecicePath), Cint, (Cdouble,), computedTimestepLength)
     return ans
 end
 
 
 function isActionRequired(action::String)::Bool
-    ans::Int = ccall((:precicec_isActionRequired, libprecicePath), Cint, (Ptr{Int8},), action)
+    ans::Integer = ccall((:precicec_isActionRequired, libprecicePath), Cint, (Ptr{Int8},), action)
     return ans
 end
 
@@ -155,119 +155,119 @@ end
 
 
 function hasMesh(meshName::String)::Bool
-    ans::Int = ccall((:precicec_hasMesh, libprecicePath), Cint, (Ptr{Int8},), meshName)
+    ans::Integer = ccall((:precicec_hasMesh, libprecicePath), Cint, (Ptr{Int8},), meshName)
     return ans
 end
 
 
 function getMeshID(meshName::String)
-    ans::Int = ccall((:precicec_getMeshID, libprecicePath), Cint, (Ptr{Int8},), meshName)
+    ans::Integer = ccall((:precicec_getMeshID, libprecicePath), Cint, (Ptr{Int8},), meshName)
     return ans
 end
 
 
-function hasData(dataName::String, meshID::Int)::Bool
-    ans::Int = ccall((:precicec_hasData, libprecicePath), Cint, (Ptr{Int8}, Cint), dataName, meshID)
+function hasData(dataName::String, meshID::Integer)::Bool
+    ans::Integer = ccall((:precicec_hasData, libprecicePath), Cint, (Ptr{Int8}, Cint), dataName, meshID)
     return ans
 end
 
 
-function getDataID(dataName::String, meshID::Int)
-    id::Int = ccall((:precicec_getDataID, libprecicePath), Cint, (Ptr{Int8}, Cint), dataName, meshID)
+function getDataID(dataName::String, meshID::Integer)
+    id::Integer = ccall((:precicec_getDataID, libprecicePath), Cint, (Ptr{Int8}, Cint), dataName, meshID)
     return id
 end
 
 
-function setMeshVertex(meshID::Int, position::AbstractArray{Float64})
-    id::Int = ccall((:precicec_setMeshVertex, libprecicePath), Cint, (Cint, Ref{Float64}), meshID, position)
+function setMeshVertex(meshID::Integer, position::AbstractArray{Float64})
+    id::Integer = ccall((:precicec_setMeshVertex, libprecicePath), Cint, (Cint, Ref{Float64}), meshID, position)
     return id
 end
 
 
-function getMeshVertices(meshID::Int, size::Int, ids::AbstractArray{Cint}, positions::AbstractArray{Float64})
+function getMeshVertices(meshID::Integer, size::Integer, ids::AbstractArray{Cint}, positions::AbstractArray{Float64})
     ccall((:precicec_getMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, size, ids, positions)
 end
 
 
-function setMeshVertices(meshID::Int, size::Int, positions::AbstractArray{Float64})
+function setMeshVertices(meshID::Integer, size::Integer, positions::AbstractArray{Float64})
     vertexIDs = Array{Int32, 1}(undef, size)
     ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, size, positions, vertexIDs)
     return vertexIDs 
 end
 
-function getMeshVertexSize(size::Int)::Int
-    size::Int = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Cint,), size)
+function getMeshVertexSize(size::Integer)::Integer
+    size::Integer = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Cint,), size)
     return size
 end
 
 
-function getMeshVertexIDsFromPositions(meshID::Int, size::Int, positions::AbstractArray{Float64}, ids::AbstractArray{Cint})
+function getMeshVertexIDsFromPositions(meshID::Integer, size::Integer, positions::AbstractArray{Float64}, ids::AbstractArray{Cint})
     ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, size, positions, ids)
 end
 
 
-function setMeshEdge(meshID::Int, firstVertexID::Int, secondVertexID::Int)::Int
-    edgeID::Int = ccall((:precicec_setMeshEdge, libprecicePath), Cint, (Cint, Cint, Cint), meshID, firstVertexID, secondVertexID)
+function setMeshEdge(meshID::Integer, firstVertexID::Integer, secondVertexID::Integer)::Integer
+    edgeID::Integer = ccall((:precicec_setMeshEdge, libprecicePath), Cint, (Cint, Cint, Cint), meshID, firstVertexID, secondVertexID)
     return edgeID
 end
 
 
-function setMeshTriangle(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID::Int)
+function setMeshTriangle(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
     ccall((:precicec_setMeshTriangle, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
 end
 
 
-function setMeshTriangleWithEdges(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID::Int)
+function setMeshTriangleWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
     ccall((:precicec_setMeshTriangleWithEdges, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
 end
 
 
-function setMeshQuad(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID, fourthEdgeID::Int)
+function setMeshQuad(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID, fourthEdgeID::Integer)
     ccall((:precicec_setMeshQuad, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID, fourthEdgeID)
 end
 
 
-function setMeshQuadWithEdges(meshID::Int, firstEdgeID::Int, secondEdgeID::Int, thirdEdgeID::Int)
+function setMeshQuadWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
     ccall((:precicec_setMeshQuadWithEdges, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID, fourthEdgeID)
 end
 
 
-function writeBlockVectorData(dataID::Int, size::Int, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+function writeBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
     ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
 
-function writeVectorData(dataID::Int, valueIndex::Int, dataValue::AbstractArray{Float64})
+function writeVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
     ccall((:precicec_writeVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
 end
 
 
-function writeBlockScalarData(dataID::Int, size::Int, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+function writeBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
     ccall((:precicec_writeBlockScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
 
-function writeScalarData(dataID::Int, valueIndex::Int, dataValue::AbstractArray{Float64})
+function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
     ccall((:precicec_writeScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
 end
 
 
-function readBlockVectorData(dataID::Int, size::Int, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+function readBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
     ccall((:precicec_readBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
 
-function readVectorData(dataID::Int, valueIndex::Int, dataValue::AbstractArray{Float64})
+function readVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
     ccall((:precicec_readVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
 end
 
 
-function readBlockScalarData(dataID::Int, size::Int, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+function readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
     ccall((:precicec_readScalarVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
 
-function readScalarData(dataID::Int, valueIndex::Int, dataValue::AbstractArray{Float64})
+function readScalarData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
     ccall((:precicec_readScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
 end
 
@@ -278,12 +278,12 @@ function getVersionInformation()
 end
 
 
-function mapWriteDataFrom(fromMeshID::Int)
+function mapWriteDataFrom(fromMeshID::Integer)
     ccall((:precicec_mapWriteDataFrom, libprecicePath), Cvoid, (Cint,), fromMeshID)
 end
 
 
-function mapReadDataTo(fromMeshID::Int)
+function mapReadDataTo(fromMeshID::Integer)
     ccall((:precicec_mapReadDataTo, libprecicePath), Cvoid, (Cint,), fromMeshID)
 end
 
