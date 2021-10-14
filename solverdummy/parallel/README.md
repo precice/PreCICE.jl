@@ -12,7 +12,7 @@ mpirun -n N python3 python-solverdummy-parallel.py ./precice-config-parallel.xml
 or
 
 ```
-mpirun -n N python3 python-solverdummy-parallel.py ./precice-config-parallel.xml SolverTwo MeshTwo
+mpirun -n 4 python3 python-solverdummy-parallel.py ./precice-config-parallel.xml SolverTwo MeshTwo
 ```
 
 
