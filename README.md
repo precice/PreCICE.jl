@@ -1,43 +1,58 @@
 # PreCICE.jl
 
-This is a WIP Julia binding for the C++ library preCICE, using its C interface. Contrary to [julia-bindings-for-preCICE](https://github.com/pavelkharitenko/julia-binding-for-preCICE) this solution relies on no other packages.
+<a style="text-decoration: none" href="https://github.com/precice/julia-bindings/blob/main/LICENSE" target="_blank">
+    <img src="https://img.shields.io/github/license/precice/julia-bindings.svg" alt="GNU GPL license">
+</a>
 
-## Usage
+This package provides Julia language bindings for the C++ library [preCICE](https://github.com/precice/precice). It is a Julia package that wraps the API of preCICE.
 
+## Adding the package to a Julia environment or script
 
-Since this repository has the structure of a Julia package, you can directly add it to your environment in a Julia REPL:
+You can use the Julia bindings for preCICE by adding them as a package in a Julia environment or also directly including the package in a Julia script. For both usages you need to have preCICE installed on the system. For preCICE installation you can look at the [installation documentation](https://precice.org/installation-overview.html). You can directly add the Julia bindings to your Julia environment in the following way:
 
 ```julia
 julia> ]
-pkg> add https://github.com/precice/julia-bindings.git
+pkg> add https://github.com/precice/julia-bindings.git 
+Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
-julia> getVersionInformation()
-...
 ```
 
-Or put the following on top of your Julia script:
+Once the package is added you can directly access preCICE API commands in the Julia environment, for example `getVersionInformation()`. Alternatively you can also include the package in your Julia script in the following way:
 
 ```julia
 import Pkg; Pkg.add(url="https://github.com/precice/julia-bindings.git")
 using PreCICE
-getVersionInformation()
-...
 ```
 
-This package is WIP and has no release yet. Bugs may occur.
+Once the package is added at the beginning of the Julia script you can access the preCICE API commands in the script.
 
-## Examples
+## Adding the package when preCICE is installed at custom paths
 
-### Solverdummy example
+If you installed preCICE at a custom path, errors like ```ERROR: could not load library "/..."``` can occur after adding the Julia bindings package. In such cases set the path to your library with `PreCICE.setPathToLibprecice("path/to/my/libprecice.so")` or reset it with `PreCICE.resetPathToLibprecice()`
 
-For a simple coupling example see the solverdummy.jl in the example/solverdummy directory
+By default this package assumes the `libprecice.so` is at `/usr/lib/x86_64-linux-gnu/`.
 
-### MPI parallelization example
+## Usage
 
-For coupling a distributed solver, that is, multiple Julia executables, see the solverdummy-parallel-mpi example
+You can look at [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdummy) as an example of how to use the Julia bindings for preCICE.
 
-## I installed my preCICE library to a different location
+## Testing new features that are on branches of this repository
 
-By default this package assumes the `libprecice.so` is at `/usr/lib/x86_64-linux-gnu/libprecice.so.2.2.0`.
+To use a certain branch of this package, add `#branchname` after the package url, for example if the branch `mpi-parallelization` is to be tested:
 
-Change the path with `PreCICE.setPathToLibprecice("path/to/my/libprecice.so")` or reset it with `PreCICE.resetPathToLibprecice()`
+```julia
+julia> ]
+pkg> add https://github.com/precice/julia-bindings.git#mpi-parallelization
+Then exit the package mode with 🔙 or Ctrl + c
+julia> using PreCICE
+```
+
+## Dependencies
+
+This package works with official Julia binaries listed below. See the [Platform Specific Instructions for official Binaries](https://julialang.org/downloads/platform/)  or [Julia's documentation](https://docs.julialang.org/en/v1/manual/getting-started/) if you are not sure how to download them.
+
+## Supported versions
+
+`1.6` and newer
+
+[Unofficial Julia binaries](https://julialang.org/downloads/platform/#platform_specific_instructions_for_unofficial_binaries) may not be compatible.
