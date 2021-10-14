@@ -62,6 +62,7 @@ while PreCICE.isCouplingOngoing()
     end
 
     if PreCICE.isReadDataAvailable()
+        println("read data:", readData)
         PreCICE.readBlockVectorData(readDataID, numberOfVertices, vertexIDs, readData) 
     end
 
@@ -70,6 +71,7 @@ while PreCICE.isCouplingOngoing()
     end
 
     if PreCICE.isWriteDataRequired(dt)
+        println("write data:", writeData)
         PreCICE.writeBlockVectorData(writeDataID, numberOfVertices, vertexIDs, writeData)
     end
 

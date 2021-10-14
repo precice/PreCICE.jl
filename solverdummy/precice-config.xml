@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <precice-configuration>
-  <log>
-    <sink
-      type="stream"
-      output="stdout"
-      filter="%Severity% > debug"
-      format="preCICE:%ColorizedSeverity% %Message%"
-      enabled="true" />
-  </log>
+  
 
   <solver-interface dimensions="3">
     <data:vector name="dataOne" />

@@ -1,7 +1,7 @@
 import Pkg; Pkg.activate("../..")
 using Distributed
 
-addprocs(3; exeflags="--project" )
+addprocs(4; exeflags="--project" )
 
 @everywhere begin
 
@@ -42,9 +42,9 @@ vertices = Array{Float64, 1}(undef, numberOfVertices * dimensions)
 
 for i in 1:numberOfVertices
     for j in 1:dimensions
-        vertices[j+ dimensions * (i-1)] = i + commRank
-        readData[j+ dimensions * (i-1)] = i + commRank
-        writeData[j+ dimensions * (i-1)] = i + commRank
+        vertices[j+ dimensions * (i-1)] = i-1 + commRank
+        readData[j+ dimensions * (i-1)] = i-1 + commRank
+        writeData[j+ dimensions * (i-1)] = i-1 + commRank
     end
 end
 
@@ -63,13 +63,18 @@ while PreCICE.isCouplingOngoing()
 
     if PreCICE.isReadDataAvailable()
         PreCICE.readBlockVectorData(readDataID, numberOfVertices, vertexIDs, readData) 
+        println("read data:", readData)
+        println("type of", typeof(readData))
+        
     end
 
-    for i in 1:(numberOfVertices * dimensions)
-        writeData[i] = readData[i] + 1.0
-    end
+    
+    writeData = readData .+ 1.0
+    
 
     if PreCICE.isWriteDataRequired(dt)
+        println("write data:", writeData)
+        println("type of", typeof(writeData))
         PreCICE.writeBlockVectorData(writeDataID, numberOfVertices, vertexIDs, writeData)
     end
 
