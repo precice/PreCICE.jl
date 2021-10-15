@@ -3,10 +3,11 @@
 <precice-configuration>
 
   <log>
-    <sink type="stream" output="stdout"  filter= "%Severity% > debug" format="preCICE:%ColorizedSeverity% %Message%" enabled="true" />
+    <sink type="stream" output="stdout"  filter= "%Severity% > debug" 
+    format="preCICE:%ColorizedSeverity% %Message%" enabled="true" />
   </log>
 
-  <solver-interface dimensions="3" >
+  <solver-interface dimensions="2" >
 
     <data:vector name="dataOne"  />
     <data:vector name="dataTwo"  />
@@ -29,6 +30,7 @@
     </participant>
 
     <participant name="SolverTwo">
+      <master:sockets/>
       <use-mesh name="MeshOne" from="SolverOne"/>
       <use-mesh name="MeshTwo" provide="yes"/>
       <mapping:nearest-neighbor   direction="write" from="MeshTwo" to="MeshOne" constraint="conservative"/>
