@@ -1,22 +1,38 @@
 import Pkg; Pkg.activate("../..")
+using Distributed
+
+if size(ARGS, 1) < 3
+    println("ERROR: pass total processes number N, config path, solver name and mesh name, 
+                example: julia solverdummy.jl 5 ./precice-config.xml SolverOne")
+    exit(1)
+end
+
+numberWorkers = parse(Int, ARGS[1]) - 1
+ConfigFileName = ARGS[2]
+SolverName = ARGS[3]
+
+# add --project flag if PreCICE is installed in a local Julia environment
+addprocs(numberWorkers; exeflags="--project")
+
+@everywhere begin
+
 using PreCICE
 
 commRank = myid() - 1
 commSize = nprocs()
 
+configFileName = $ConfigFileName
+solverName = $SolverName
 
-ARGS = isassigned(newARGS) ? newARGS : ARGS
-
-if size(ARGS, 1) < 3
-    println("ERROR: pass config path, solver name and mesh name, example: julia solverdummy.jl ./precice-config.xml SolverOne MeshOne")
-    exit(1)
+# set meshName depending on solverName
+if solverName == "SolverOne"
+    meshName = "MeshOne"
+else 
+    meshName = "MeshTwo"
 end
 
-configFileName = ARGS[1]
-solverName = ARGS[2]
-meshName = ARGS[3]
-
-println("""DUMMY: Running solver dummy with preCICE config file "$configFileName", participant name "$solverName", and mesh name "$meshName" """)
+println("""DUMMY ($commRank): Running solver dummy with preCICE config file "$configFileName", 
+            participant name "$solverName", and mesh name "$meshName" """)
 
 PreCICE.createSolverInterface(solverName, configFileName, commRank, commSize)
 
@@ -27,6 +43,7 @@ dataWriteName = nothing
 dataReadName = nothing
 
 numberOfVertices = 1
+
 
 if solverName == "SolverOne"
     dataWriteName = "dataOne"
@@ -41,30 +58,32 @@ end
 readDataID  = PreCICE.getDataID(dataReadName, meshID)
 writeDataID = PreCICE.getDataID(dataWriteName, meshID)
 
-readData = Array{Float64, 1}(undef, numberOfVertices * dimensions)
-writeData = Array{Float64, 1}(undef, numberOfVertices * dimensions)
+
+writeData = zeros(numberOfVertices * dimensions)
+readData = zeros(numberOfVertices * dimensions)
+
 vertices = Array{Float64, 1}(undef, numberOfVertices * dimensions)
-vertexIDs = Array{Int, 1}(undef, numberOfVertices)
 
-
-for i in 1:numberOfVertices
-    for j in 1:dimensions
-        vertices[j+ dimensions * (i-1)] = i + commRank
-        readData[j+ dimensions * (i-1)] = i + commRank
-        writeData[j+ dimensions * (i-1)] = i + commRank
-    end
+# create different vertices coordinates for different procs
+for i in 1:numberOfVertices, j in 1:dimensions
+    offset = commRank * numberOfVertices
+    vertices[j + dimensions * (i-1)] = i-1 + offset
 end
 
-PreCICE.setMeshVertices(meshID, numberOfVertices, vertices, vertexIDs) 
+
+
+
+println(vertices)
 
 let # setting local scope for dt outside of the while loop
+vertexIDs = PreCICE.setMeshVertices(meshID, numberOfVertices, vertices) 
 
 dt = PreCICE.initialize()
 
 while PreCICE.isCouplingOngoing()
     
     if PreCICE.isActionRequired(PreCICE.actionWriteIterationCheckpoint())
-        println("DUMMY: Writing iteration checkpoint")
+        println("DUMMY ($commRank): Writing iteration checkpoint")
         PreCICE.markActionFulfilled(PreCICE.actionWriteIterationCheckpoint())
     end
 
@@ -72,9 +91,7 @@ while PreCICE.isCouplingOngoing()
         PreCICE.readBlockVectorData(readDataID, numberOfVertices, vertexIDs, readData) 
     end
 
-    for i in 1:(numberOfVertices * dimensions)
-        writeData[i] = readData[i] + 1.0
-    end
+    writeData = readData .+ 1.0
 
     if PreCICE.isWriteDataRequired(dt)
         PreCICE.writeBlockVectorData(writeDataID, numberOfVertices, vertexIDs, writeData)
@@ -83,10 +100,10 @@ while PreCICE.isCouplingOngoing()
     dt = PreCICE.advance(dt)
 
     if PreCICE.isActionRequired(PreCICE.actionReadIterationCheckpoint())
-        println("DUMMY: Reading iteration checkpoint")
+        println("DUMMY ($commRank): Reading iteration checkpoint")
         PreCICE.markActionFulfilled(PreCICE.actionReadIterationCheckpoint())
     else
-        println("DUMMY: Advancing in time")
+       println("DUMMY ($commRank): Advancing in time")
     end
 
 end # while
@@ -94,4 +111,6 @@ end # while
 end # let scope
 
 PreCICE.finalize()
-println("DUMMY: Closing Julia solver dummy...")
+println("DUMMY ($commRank): Closing Julia solver dummy...")
+
+end
