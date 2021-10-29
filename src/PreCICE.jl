@@ -103,7 +103,7 @@ function finalize()
 end
 
 
-function getDimensions()::Integer # int or int32 ?
+function getDimensions()::Integer
     dim::Integer = ccall((:precicec_getDimensions, libprecicePath), Cint, ())
     return dim
 end
@@ -197,8 +197,8 @@ function setMeshVertices(meshID::Integer, size::Integer, positions::AbstractArra
     return vertexIDs 
 end
 
-function getMeshVertexSize(size::Integer)::Integer
-    size::Integer = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Cint,), size)
+function getMeshVertexSize(meshID::Integer)::Integer
+    size::Integer = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Cint,), meshID)
     return size
 end
 
@@ -249,8 +249,8 @@ function writeBlockScalarData(dataID::Integer, size::Integer, valueIndices::Abst
 end
 
 
-function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
-    ccall((:precicec_writeScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
+function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
+    ccall((:precicec_writeScalarData, libprecicePath), Cvoid, (Cint, Cint, Cdouble), dataID, valueIndex, dataValue)
 end
 
 
