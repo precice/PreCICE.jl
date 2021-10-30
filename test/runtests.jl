@@ -2,11 +2,6 @@ using PreCICE
 using Test
 
 
-libprecicePath = split(readlines(`whereis libprecice`)[], ' ')[2]
-
-PreCICE.setPathToLibprecice(string(libprecicePath))
-
-
 
 @testset "PreCICE.jl" begin
     
