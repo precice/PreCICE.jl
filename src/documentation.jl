@@ -2,6 +2,8 @@
 # for extending this documentation follow the guidelines at https://docs.julialang.org/en/v1/manual/documentation/
 
 
+# TODO jldoctests: Make sure the tests work
+
 @doc """
 
     setPathToLibprecice(pathToPrecice::String) 
@@ -28,8 +30,8 @@ Create the coupling interface and configure it. Must get called before any other
 - `solverProcessSize::Integer`: The number of solver processes of this participant using preCICE.
 
 # Examples
-```julia
-createSolverInterface("SolverOne", "./precice-config.xml", 0, 1)
+```jldoctest
+julia>createSolverInterface("SolverOne", "./precice-config.xml", 0, 1)
 ```
 """
 createSolverInterface
@@ -47,8 +49,13 @@ createSolverInterfaceWithCommunicator
 
     initialize()::Float64
 
-Initiate the coupling to the coupling supervisor. Return the maximal length of first timestep to be computed by solver.
+Fully initializes preCICE.
+This function handles:
+- Parallel communication to the coupling partner/s is setup.
+- Meshes are exchanged between coupling partners and the parallel partitions are created.
+- **Serial Coupling Scheme:** If the solver is not starting the simulation, coupling data is received from the coupling partner's first computation.
 
+Return the maximum length of first timestep to be computed by the solver.
 """
 initialize
 
@@ -56,10 +63,27 @@ initialize
 
 @doc """
 
-    initializeData()
+    initializeData()::nothing
 
-Initializes coupling data.
+Initializes coupling data. The starting values for coupling data are zero by default.
+To provide custom values, first set the data using the Data Access methods and
+call this method to finally exchange the data.
+Serial Coupling Scheme: Only the first participant has to call this method, the second participant
+receives the values on calling [`initialize`](@initialize).
+Parallel Coupling Scheme:
+- Values in both directions are exchanged.
+- Both participants need to call [`initializeData`](@initializeData).
 
+# Notes
+
+Previous calls:
+ - [`initialize`](@initialize) has been called successfully.
+ - The action `WriteInitialData` is required
+ - [`advance`](@advance) has not yet been called.
+ - [`finalize`](@finalize) has not yet been called.
+
+Tasks completed:
+ - Initial coupling data was exchanged.
 """
 initializeData
 
@@ -69,10 +93,29 @@ initializeData
     
     advance(computedTimestepLength::Float64)::Float64
 
-Exchange data between solver and coupling supervisor. Return maximal length of next timestep to be computed by solver.
+Advances preCICE after the solver has computed one timestep.
 
 # Arguments
-- `computedTimestepLength::Float64`: Length of timestep computed by solver.
+ - `computed_timestep_length::Float64`: Length of timestep used by the solver.
+
+Return the maximum length of next timestep to be computed by solver.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@initialize) has been called successfully.
+ - The solver has computed one timestep.
+ - The solver has written all coupling data.
+ - [`finalize`](@finalize) has not yet been called.
+Tasks completed:
+ - Coupling data values specified in the configuration are exchanged.
+ - Coupling scheme state (computed time, computed timesteps, ...) is updated.
+ - The coupling state is logged.
+ - Configured data mapping schemes are applied.
+ - [Second Participant] Configured post processing schemes are applied.
+ - Meshes with data are exported to files if configured.
+
+Exchange data between solver and coupling supervisor. Return maximal length of next timestep to be computed by solver.
 """
 advance
 
@@ -80,9 +123,18 @@ advance
 
 @doc """
 
-    finalize()
+    finalize()::nothing
 
 Finalize the coupling to the coupling supervisor.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@initialize) has been called successfully.
+
+Tasks completed:
+ - Communication channels are closed.
+ - Meshes and data are deallocated.
 """
 finalize
 
@@ -92,7 +144,8 @@ finalize
 
     getDimensions()::Integer
 
-Return the number of spatial configurations for the coupling.
+Return the number of spatial dimensions configured. Currently, two and three dimensional problems
+can be solved using preCICE. The dimension is specified in the XML configuration.
 """
 getDimensions
 
@@ -102,7 +155,18 @@ getDimensions
 
     isCouplingOngoing()::Bool
 
-Return true if the coupled simulation is ongoing.
+Check if the coupled simulation is still ongoing.
+A coupling is ongoing as long as
+ - the maximum number of timesteps has not been reached, and
+ - the final time has not been reached.
+The user should call [`finalize`](@finalize) after this function returns false.
+
+Return whether the coupling is ongoing.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@initialize) has been called successfully.
 """
 isCouplingOngoing
 
@@ -112,7 +176,19 @@ isCouplingOngoing
 
     isTimeWindowComplete()::Bool
 
-Return true if new data to read is available.
+Check if the current coupling timewindow is completed.
+
+The following reasons require several solver time steps per coupling time step:
+- A solver chooses to perform subcycling.
+- An implicit coupling timestep iteration is not yet converged.
+
+Return whether the timestep is complete.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@initialize) has been called successfully.
+
 """
 isTimeWindowComplete
 
@@ -123,6 +199,8 @@ isTimeWindowComplete
     hasToEvaluateSurrogateModel()::Bool
 
 Return whether the solver has to evaluate the surrogate model representation.
+The solver may still have to evaluate the fine model representation.
+DEPRECATED: Only necessary for deprecated manifold mapping.
 """
 hasToEvaluateSurrogateModel
 
@@ -131,6 +209,10 @@ hasToEvaluateSurrogateModel
 @doc """
 
     hasToEvaluateFineModel()::Bool
+
+Check if the solver has to evaluate the fine model representation.
+The solver may still have to evaluate the surrogate model representation.
+DEPRECATED: Only necessary for deprecated manifold mapping.
 
 Return whether the solver has to evaluate the fine model representation.
 """
@@ -142,7 +224,19 @@ hasToEvaluateFineModel
 
     isReadDataAvailable()::Bool
 
-Return true if new data to read is available.
+Check if new data to be read is available. Data is classified to be new, if it has been received
+while calling [`initialize`](@initialize) and before calling [`advance`](@advance), or in the last call of [`advance`](@advance).
+This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
+timesteps than the limits returned in [`intitialize`](@initialize) and [`advance`](@advance).
+It is allowed to read data even if this function returns false. This is not recommended
+due to performance reasons. Use this function to prevent unnecessary reads.
+
+Returns whether new data is available to be read. True if new data to read is available.
+
+#Notes
+
+Previous calls:
+ - [`initialize`](@initialize) has been called successfully.
 """
 isReadDataAvailable
 
@@ -152,7 +246,22 @@ isReadDataAvailable
 
     isWriteDataRequired(computedTimestepLength::Float64)::Bool
 
-Check if new data has to be written before calling advance().
+Check if new data has to be written before calling [`advance`](@advance).
+This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
+timesteps than the limits returned in [`intitialize`](@initialize) and [`advance`](@advance).
+It is allowed to write data even if this function returns false. This is not recommended
+due to performance reasons. Use this function to prevent unnecessary writes.
+
+# Arguments
+
+ - `computed_timestep_length::double`: Length of timestep used by the solver.
+
+Return whether new data has to be written.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@initialize) has been called successfully.
 """
 isWriteDataRequired
 
@@ -162,7 +271,16 @@ isWriteDataRequired
 
     isActionRequired(action::String)::Bool
 
-Check if the provided action is required. Takes the name of the action.
+Checks if the provided action is required.
+Some features of preCICE require a solver to perform specific actions, in order to be
+in valid state for a coupled simulation. A solver is made eligible to use those features,
+by querying for the required actions, performing them on demand, and calling markActionfulfilled()
+to signalize preCICE the correct behavior of the solver.
+
+# Arguments
+ - `action:: PreCICE action`: Name of the action
+
+Return true if the action is required.
 """
 isActionRequired
 
@@ -170,9 +288,17 @@ isActionRequired
 
 @doc """
 
-    markActionFulfilled(action::String)
+    markActionFulfilled(action::String)::nothing
 
-Indicate preCICE that a required action has been fulfilled by a solver. Takes the name of the action.
+Indicate preCICE that a required action has been fulfilled by a solver. 
+
+# Arguments
+ - `action::String`: Name of the action.
+
+# Notes
+
+Previous calls:
+ - The solver fulfilled the specified action.
 """
 markActionFulfilled
 
@@ -182,8 +308,10 @@ markActionFulfilled
 
     hasMesh(meshName::String)::Bool
 
-Check if the mesh with given name is used by a solver.
+Check if the mesh with given name is used by a solver. 
 
+# Arguments
+ - `meshName::String`: Name of the mesh.
 """
 hasMesh
 
@@ -191,9 +319,19 @@ hasMesh
 
 @doc """
 
-    getMeshID(meshName::String)
+    getMeshID(meshName::String)::Integer
 
-Return id belonging to the given mesh name
+Return the ID belonging to the given mesh name.
+
+# Arguments
+ - `meshName::String`: Name of the mesh.
+
+# Examples
+```jldoctest
+julia>meshid = getMeshID("MeshOne")
+julia>meshid
+0
+```
 """
 getMeshID
 
@@ -203,7 +341,13 @@ getMeshID
 
     hasData(dataName::String, meshID::Integer)::Bool
 
-Check if the data with given name is used by a solver and mesh. 
+Check if the data with given name is used by a solver and mesh.
+ 
+# Arguments
+ - `dataName::String`: Name of the data.
+ - `meshID::Integer`: ID of the associated mesh.
+
+Return true if the mesh is already used.
 """
 hasData
 
@@ -211,15 +355,17 @@ hasData
 
 @doc """
 
-    getDataID(dataName::String, meshID::Integer)
+    getDataID(dataName::String, meshID::Integer)::Integer
+
+    # Arguments
+     - `dataName::String`: Name of the data.
+     - `meshID::Integer`: ID of the associated mesh.
 
 Return the data id belonging to the given name.
 
-The given name (dataName) has to be one of the names specified in the configuration file. The data id obtained can be used to read and write data to and from the coupling mesh.
-
+The given name (`dataName`) has to be one of the names specified in the configuration file. The data ID obtained can be used to read and write data to and from the coupling mesh.
 """
 getDataID
-
 
 
 @doc """
@@ -228,13 +374,17 @@ getDataID
 
 Create a mesh vertex on a coupling mesh and return its id.
 
-
 # Arguments
 - `meshID::Integer`: The id of the mesh to add the vertex to. 
 - `position::AbstractArray{Float64}`: An array with the coordinates of the vertex. Depending on the dimension, either [x1, x2] or [x1,x2,x3].
 
 # See also
 [`getDimensions`](@getDimensions), [`setMeshVertices`](@setMeshVertices)
+
+# Notes
+
+Previous calls:
+ - Count of available elements at position matches the configured dimension.
 
 # Examples
 ```jldoctest
@@ -248,18 +398,42 @@ setMeshVertex
 
 @doc """
 
-    getMeshVertices(meshID::Integer, size::Integer, ids::AbstractArray{Cint}, positions::AbstractArray{Float64})
+    getMeshVertices(meshID::Integer, size::Integer, ids::AbstractArray{Cint}, positions::AbstractArray{Float64})::AbstractArray{Float64}
 
 Get vertex positions for multiple vertex ids from a given mesh.
 
 # Arguments
-- `meshID::Integer, size::Integerr`:  The id of the mesh to read the vertices from.
+- `meshID::Integer`:  The id of the mesh to read the vertices from.
 - `size::Integer`:  Number of vertices to lookup.
 - `ids::AbstractArray{Cint}`:  The id of the mesh to read the vertices from.
 - `positions::AbstractArray{Float64}`:  Positions to write the coordinates to.
                                         The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny),
                                         the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
 
+# Notes
+
+Previous calls:
+ - count of available elements at positions matches the configured `dimension * size`.
+ - count of available elements at ids matches size.
+
+# Examples
+Return data structure for a 2D problem with 5 vertices:
+```jldoctest
+julia>meshID = getMeshID("MeshOne")
+julia>vertexIDs = [1,2,3,4]
+julia>positions = getMeshVertices(meshID, vertexIDs)
+julia>size(positions)
+(5, 2)
+```
+Return data structure for a 3D problem with 5 vertices:
+
+```jldoctest
+julia> mesh_id = get_mesh_id("MeshOne")
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> positions = get_mesh_vertices(mesh_id, vertex_ids)
+julia> size(positions)
+(5, 3)
+```
 """
 getMeshVertices
 
@@ -278,9 +452,14 @@ Create multiple mesh vertices on a coupling mesh and return an array holding the
 - `positions::AbstractArray{Float64}`: An array holding the coordinates of the vertices.
                                     The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny), 
                                     the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
+                 
+# Notes
+Previous calls:
+ - [`initialize`](@initialize) has not yet been called
+ - count of available elements at positions matches the configured `dimension` * `size`
+ - count of available elements at ids matches size
 
 
-                                    
 # See also
 [`getDimensions`](@getDimensions), [`setMeshVertex`](@setMeshVertex)
 
@@ -304,12 +483,12 @@ Return the number of vertices of a mesh.
 getMeshVertexSize
 
 
-
 @doc """
 
     getMeshVertexIDsFromPositions(meshID::Integer, size::Integer, positions::AbstractArray{Float64}, ids::AbstractArray{Cint})
 
 Get mesh vertex IDs from positions.
+Prefer to reuse the IDs returned from calls to [`setMeshVertex`](@setMeshVertex) and [`setMeshVertices`](@setMeshVertices).
 
 # Arguments
 - `meshID::Integer`: ID of the mesh to retrieve positions from.
@@ -318,9 +497,24 @@ Get mesh vertex IDs from positions.
                                        The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny),
                                        the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
 - `ids::AbstractArray{Cint}`: IDs corresponding to positions.
+
+# Notes
+
+Previous calls:
+ - count of available elements at positions matches the configured `dimension` * `size`
+ - count of available elements at ids matches size
+
+ # Examples
+ Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
+```jldoctest
+julia>meshID = getMeshID("MeshOne")
+julia>positions = [1 1; 2 2; 3 3; 4 4; 5 5]
+julia>size(positions)
+(5, 2)
+julia>vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
+```
 """
 getMeshVertexIDsFromPositions
-
 
 
 @doc """
@@ -333,6 +527,11 @@ Set mesh edge from vertex IDs, return edge ID.
 - `meshID::Integer`: ID of the mesh to add the edge to.
 - `firstVertexID::Integer`: ID of the first vertex of the edge.
 - `secondVertexID::Integer`: ID of the second vertex of the edge.
+
+# Notes
+
+Previous calls:
+ - Vertices with `firstVertexID` and `secondVertexID` were added to the mesh with the ID `meshID`
 
 """
 setMeshEdge
@@ -351,7 +550,10 @@ Set mesh triangle from edge IDs.
 - `secondVertexID::Integer`: ID of the second vertex of the edge.
 - `thirdEdgeID::Integer`: ID of the third edge of the triangle.
 
+# Notes
 
+Previous calls:
+ - Edges with `first_edge_id`, `second_edge_id`, and `third_edge_id` were added to the mesh with the ID `meshID`
 """
 setMeshTriangle
 
@@ -363,11 +565,21 @@ setMeshTriangle
 
 Set a triangle from vertex IDs. Create missing edges.
 
+WARNING: This routine is supposed to be used, when no edge information is available per se.
+        Edges are created on the fly within preCICE. This routine is significantly slower than the one
+        using edge IDs, since it needs to check, whether an edge is created already or not.
+
 # Arguments
 - `meshID::Integer`: ID of the mesh to add the edge to.
 - `firstVertexID::Integer`: ID of the first vertex of the edge.
 - `secondVertexID::Integer`: ID of the second vertex of the edge.
 - `thirdEdgeID::Integer`: ID of the third edge of the triangle.
+
+
+# Notes
+
+Previous calls:
+ - Edges with `first_vertex_id`, `second_vertex_id`, and `third_vertex_id` were added to the mesh with the ID `meshID`
 """
 setMeshTriangleWithEdges
 
@@ -379,12 +591,20 @@ setMeshTriangleWithEdges
 
 Set mesh Quad from edge IDs.
 
+WARNING: Quads are not fully implemented yet.
+
 # Arguments
 - `meshID::Integer`: ID of the mesh to add the Quad to.
 - `firstVertexID::Integer`: ID of the first edge of the Quad.
 - `secondVertexID::Integer`: ID of the second edge of the Quad.
 - `thirdEdgeID::Integer`: ID of the third edge of the Quad.
 - `fourthEdgeID::Integer`: ID of the fourth edge of the Quad.
+
+# Notes
+
+Previous calls:
+ - Edges with `first_edge_id`, `second_edge_id`, `third_edge_id`, and `fourth_edge_id` were added
+    to the mesh with the ID `mesh_id`
 """
 setMeshQuad
 
@@ -396,22 +616,34 @@ setMeshQuad
 
 Set surface mesh quadrangle from vertex IDs.
 
+WARNING: This routine is supposed to be used, when no edge information is available per se. Edges are
+created on the fly within preCICE. This routine is significantly slower than the one using
+edge IDs, since it needs to check, whether an edge is created already or not.
+
 # Arguments
 - `meshID::Integer`: ID of the mesh to add the Quad to.
 - `firstVertexID::Integer`: ID of the first edge of the Quad.
 - `secondVertexID::Integer`: ID of the second edge of the Quad.
 - `thirdEdgeID::Integer`: ID of the third edge of the Quad.
 - `fourthEdgeID::Integer`: ID of the fourth edge of the Quad.
+
+Notes
+
+Previous calls:
+ - Edges with `first_vertex_id`, `second_vertex_id`, `third_vertex_id`, and `fourth_vertex_id` were added
+    to the mesh with the ID `mesh_id`
 """
 setMeshQuadWithEdges
 
 
-
+# TODO check this again, is this true?
 @doc """
 
     writeBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
-Write vector data values given as block.
+Write vector data values given as block. This function writes values of specified vertices to a `dataID`.
+Values are provided as a block of continuous memory. Values are stored in a Matrix [N x D] where N = number
+of vertices and D = dimensions of geometry 
 
 The block must contain the vector values in the following form: 
 
@@ -423,6 +655,29 @@ values = (d0x, d0y, d0z, d1x, d1y, d1z, ...., dnx, dny, dnz), where n is the num
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices. 
 - `values::AbstractArray{Float64}`: Values of the data to be written.
 
+# Notes
+
+Previous calls:
+ - count of available elements at values matches the configured `dimension` * `size`
+ - count of available elements at `vertex_ids` matches the given size
+ - [`initialize`](@initialize) has been called
+
+Examples
+
+Write block vector data for a 2D problem with 5 vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = [v1_x, v1_y; v2_x, v2_y; v3_x, v3_y; v4_x, v4_y; v5_x, v5_y])
+julia> write_block_vector_data(data_id, vertex_ids, values)
+```
+Write block vector data for a 3D (D=3) problem with 5 (N=5) vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = [v1_x, v1_y, v1_z; v2_x, v2_y, v2_z; v3_x, v3_y, v3_z; v4_x, v4_y, v4_z; v5_x, v5_y, v5_z]
+julia> write_block_vector_data(data_id, vertex_ids, values)
+```
 """
 writeBlockVectorData
 
@@ -432,13 +687,41 @@ writeBlockVectorData
 
     writeVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
 
-Write vectorial floating-point data to the coupling mesh.
+Write vectorial floating-point data to a vertex. This function writes a value of a specified vertex to a dataID.
+Values are provided as a block of continuous memory.
+
+The 2D-format of value is a numpy array of shape 2
+
+The 3D-format of value is a numpy array of shape 3
 
 # Arguments
 - `dataID::Integer`: ID of the data to be written. Obtained by getDataID().
 - `valueIndex::Integer`: Index of the vertex. 
 - `dataValue::AbstractArray{Float64}`: The array holding the values.
 
+# Notes
+        
+Previous calls:
+ - Count of available elements at value matches the configured dimension
+ - [`initialize`](@initialize) has been called
+
+Examples:
+
+Write vector data for a 2D problem with 5 vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_id = 5
+julia> value = [v5_x, v5_y]
+julia> write_vector_data(data_id, vertex_id, value)
+```
+
+Write vector data for a 3D (D=3) problem with 5 (N=5) vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_id = 5
+julia> value = [v5_x, v5_y, v5_z]
+julia> write_vector_data(data_id, vertex_id, value)
+```
 """
 writeVectorData
 
