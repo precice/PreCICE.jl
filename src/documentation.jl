@@ -428,9 +428,9 @@ julia>size(positions)
 Return data structure for a 3D problem with 5 vertices:
 
 ```jldoctest
-julia> mesh_id = get_mesh_id("MeshOne")
+julia> mesh_id = getMeshID("MeshOne")
 julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> positions = get_mesh_vertices(mesh_id, vertex_ids)
+julia> positions = getMeshVertices(mesh_id, vertex_ids)
 julia> size(positions)
 (5, 3)
 ```
@@ -579,7 +579,7 @@ WARNING: This routine is supposed to be used, when no edge information is availa
 # Notes
 
 Previous calls:
- - Edges with `first_vertex_id`, `second_vertex_id`, and `third_vertex_id` were added to the mesh with the ID `meshID`
+ - Edges with `firstVertexID`, `secondVertexID`, and `thirdEdgeID` were added to the mesh with the ID `meshID`
 """
 setMeshTriangleWithEdges
 
@@ -630,7 +630,7 @@ edge IDs, since it needs to check, whether an edge is created already or not.
 Notes
 
 Previous calls:
- - Edges with `first_vertex_id`, `second_vertex_id`, `third_vertex_id`, and `fourth_vertex_id` were added
+ - Edges with `firstVertexID`, `secondEdgeID`, `thirdVertexID`, and `fourthEdgeID` were added
     to the mesh with the ID `mesh_id`
 """
 setMeshQuadWithEdges
@@ -669,14 +669,14 @@ Write block vector data for a 2D problem with 5 vertices:
 julia> data_id = 1
 julia> vertex_ids = [1, 2, 3, 4, 5]
 julia> values = [v1_x, v1_y; v2_x, v2_y; v3_x, v3_y; v4_x, v4_y; v5_x, v5_y])
-julia> write_block_vector_data(data_id, vertex_ids, values)
+julia> writeBlockVectorData(data_id, vertex_ids, values)
 ```
 Write block vector data for a 3D (D=3) problem with 5 (N=5) vertices:
 ```jldoctest
 julia> data_id = 1
 julia> vertex_ids = [1, 2, 3, 4, 5]
 julia> values = [v1_x, v1_y, v1_z; v2_x, v2_y, v2_z; v3_x, v3_y, v3_z; v4_x, v4_y, v4_z; v5_x, v5_y, v5_z]
-julia> write_block_vector_data(data_id, vertex_ids, values)
+julia> writeBlockVectorData(data_id, vertex_ids, values)
 ```
 """
 writeBlockVectorData
@@ -712,7 +712,7 @@ Write vector data for a 2D problem with 5 vertices:
 julia> data_id = 1
 julia> vertex_id = 5
 julia> value = [v5_x, v5_y]
-julia> write_vector_data(data_id, vertex_id, value)
+julia> writeVectorData(data_id, vertex_id, value)
 ```
 
 Write vector data for a 3D (D=3) problem with 5 (N=5) vertices:
@@ -720,7 +720,7 @@ Write vector data for a 3D (D=3) problem with 5 (N=5) vertices:
 julia> data_id = 1
 julia> vertex_id = 5
 julia> value = [v5_x, v5_y, v5_z]
-julia> write_vector_data(data_id, vertex_id, value)
+julia> writeVectorData(data_id, vertex_id, value)
 ```
 """
 writeVectorData
@@ -741,7 +741,22 @@ This function writes values of specified vertices to a dataID. Values are provid
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
 - `values::AbstractArray{Float64}`: The array holding the values.
     
+# Notes
 
+Previous calls:
+ - Count of available elements at values matches the given size
+ - Count of available elements at vertex_ids matches the given size
+ - [`initialize`](@initialize) has been called
+
+# Examples
+
+Write block scalar data for a 2D and 3D problem with 5 (N=5) vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = [1, 2, 3, 4, 5]
+julia> writeBlockScalarData(data_id, vertex_ids, values)
+```
 """
 writeBlockScalarData
 
@@ -754,10 +769,25 @@ writeBlockScalarData
 Write scalar data, the value of a specified vertex to a dataID.
 
 # Arguments
-- `dataID::Integer`: ID of the data to be written. Obtained by getDataID().
+- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@getDataID).
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
 - `value::Float64`: The value to write.
 
+# Notes
+
+Previous calls:
+ - [`initialize`](@initialize) 
+
+# Examples
+
+Write scalar data for a 2D or 3D problem with 5 vertices:
+
+```jldoctest
+julia> data_id = 1
+julia> vertex_id = 5
+julia> value = v5
+julia> writeScalarData(data_id, vertex_id, value)
+```
 """
 writeScalarData
 
@@ -779,6 +809,31 @@ the number of vector values. In 2D, the z-components are removed.
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
 - `values::AbstractArray{Float64}`: Array where read values are written to.
 
+# Notes
+
+Previous calls:
+    count of available elements at values matches the configured dimension * size
+    count of available elements at vertex_ids matches the given size
+    initialize() has been called
+
+# Examples
+
+Read block vector data for a 2D problem with 5 vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = readBlockVectorData(data_id, vertex_ids)
+julia> values.shape
+julia> (5, 2)
+```
+Read block vector data for a 3D system with 5 vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = readBlockVectorData(data_id, vertex_ids)
+julia> values.shape
+julia> (5, 3)
+```
 """
 readBlockVectorData
 
@@ -798,6 +853,30 @@ Read a value of a specified vertex from a dataID. Values are provided as a block
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
 - `values::AbstractArray{Float64}`: Array where read values are written to.
 
+# Notes
+
+Previous calls:
+ - count of available elements at value matches the configured dimension
+ - [`initialize`](@initialize) has been called
+
+# Examples
+
+Read vector data for 2D problem:
+```jldoctest
+julia> data_id = 1
+julia> vertex_id = 5
+julia> value = readVectorData(data_id, vertex_id)
+julia> value.shape
+(1, 2)
+```
+Read vector data for 2D problem:
+```jldoctest
+julia> data_id = 1
+julia> vertex_id = 5
+julia> value = readVectorData(data_id, vertex_id)
+julia> value.shape
+(1, 3)
+```
 """
 readVectorData
 
@@ -814,6 +893,25 @@ Read scalar data as a block, values of specified vertices from a dataID. Values 
 - `size::Integer`: 	Number n of vertices. 
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
 - `values::AbstractArray{Float64}`: Array where read values are written to.
+
+# Notes
+
+Previous calls:
+ - count of available elements at values matches the given size
+ - count of available elements at vertex_ids matches the given size
+ - [`initialize`](@initialize) has been called
+
+# Examples
+
+Read block scalar data for 2D and 3D problems with 5 vertices:
+```jldoctest
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = readBlockScalarData(data_id, vertex_ids)
+julia> values.size
+5
+```
+
 """
 readBlockScalarData
 
@@ -830,6 +928,19 @@ Read scalar data of a vertex.
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
 - `values::AbstractArray{Float64}`: Array where read value is written to.
 
+# Notes
+
+Previous calls:
+- initialize() has been called.
+
+# Examples
+
+Read scalar data for 2D and 3D problems:
+```jldoctest
+julia> data_id = 1
+julia> vertex_id = 5
+julia> value = readScalarData(data_id, vertex_id)
+```
 """
 readScalarData
 
@@ -851,10 +962,15 @@ getVersionInformation
 
 @doc """
 
-    mapReadDataTo(fromMeshID::Integer)
+    mapReadDataFrom(fromMeshID::Integer)
 
-Compute and map all write data mapped from mesh with given ID.
+Compute and map all write data mapped from the mesh with given ID. This is an explicit request
+to map write data from the Mesh associated with [`fromMeshID`](@fromMeshID). It also computes the mapping if necessary.
 
+# Notes
+
+Previous calls:
+ - A mapping to [`fromMeshID`](@fromMeshID) was configured
 """
 mapWriteDataFrom
 
@@ -864,7 +980,14 @@ mapWriteDataFrom
 
     mapReadDataTo(fromMeshID::Integer)
 
-Compute and map all read data mapped to mesh with given ID.
+Compute and map all read data mapped to the mesh with given ID.
+This is an explicit request to map read data to the Mesh associated with toMeshID.
+It also computes the mapping if necessary.
+
+# Notes
+
+Previous calls:
+ - A mapping to [`toMeshID`](@toMeshID) was configured.
 """
 mapReadDataTo
 
