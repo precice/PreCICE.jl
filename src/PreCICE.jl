@@ -4,12 +4,15 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 """ 
 
 
-# TODO add 'return nothing' keyword to void functions
+# These were proposed by the previous maintainer:
+# TODO add 'return nothing' keyword to void functions    # does this make sense? not done by documenter.jl
 # TODO add Julia's exception handling to the ccalls
 # TODO maybe load libprecice.so only once with Libdl.dlopen() instead of calling it in each method?
 # TODO get rid of global variables
 
+# new TODO's
 # TODO createSolverInterfaceWithCommunicator documentation
+# TODO does it make sense to set the data_id by hand in the example
 
 libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
 defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
@@ -75,7 +78,7 @@ Create the coupling interface and configure it. Must get called before any other
 
 # Examples
 ```julia
-julia>createSolverInterface("SolverOne", "./precice-config.xml", 0, 1)
+createSolverInterface("SolverOne", "./precice-config.xml", 0, 1)
 ```
 """
 function createSolverInterface(participantName::String, 
@@ -127,7 +130,7 @@ end
 
 @doc """
 
-    initializeData()::nothing
+    initializeData()
 
 Initializes coupling data. The starting values for coupling data are zero by default.
 To provide custom values, first set the data using the Data Access methods and
@@ -192,7 +195,7 @@ end
 
 @doc """
 
-    finalize()::nothing
+    finalize()
 
 Finalize the coupling to the coupling supervisor.
 
@@ -374,7 +377,7 @@ end
 
 @doc """
 
-    markActionFulfilled(action::String)::nothing
+    markActionFulfilled(action::String)
 
 Indicate preCICE that a required action has been fulfilled by a solver. 
 
@@ -412,9 +415,7 @@ Return the ID belonging to the given mesh name.
 # Examples
 
 ```julia
-julia>meshid = getMeshID("MeshOne")
-julia>meshid
-0
+meshid = getMeshID("MeshOne")
 ```
 """
 function getMeshID(meshName::String)
@@ -480,7 +481,7 @@ Previous calls:
 
 # Examples
 ```julia
-julia> v1_id = setMeshVertex(mesh_id, [1,1,1])
+v1_id = setMeshVertex(mesh_id, [1,1,1])
 ```
 """
 function setMeshVertex(meshID::Integer, position::AbstractArray{Float64})
@@ -514,20 +515,16 @@ Previous calls:
 
 Return data structure for a 2D problem with 5 vertices:
 ```julia
-julia>meshID = getMeshID("MeshOne")
-julia>vertexIDs = [1,2,3,4]
-julia>positions = getMeshVertices(meshID, vertexIDs)
-julia>size(positions)
-(5, 2)
+meshID = getMeshID("MeshOne")
+vertexIDs = [1,2,3,4]
+positions = getMeshVertices(meshID, vertexIDs)
 ```
 Return data structure for a 3D problem with 5 vertices:
 
 ```julia
-julia> mesh_id = getMeshID("MeshOne")
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> positions = getMeshVertices(mesh_id, vertex_ids)
-julia> size(positions)
-(5, 3)
+mesh_id = getMeshID("MeshOne")
+vertex_ids = [1, 2, 3, 4, 5]
+positions = getMeshVertices(mesh_id, vertex_ids)
 ```
 """
 function getMeshVertices(meshID::Integer, size::Integer, ids::AbstractArray{Cint}, positions::AbstractArray{Float64})
@@ -561,8 +558,8 @@ Previous calls:
 
 # Examples
 ```julia
-julia> vertices = [1,1,1,2,2,2,3,3,3]
-julia> vertex_ids = setMeshVertices(mesh_id, 3, vertices)
+vertices = [1,1,1,2,2,2,3,3,3]
+vertex_ids = setMeshVertices(mesh_id, 3, vertices)
 ```
 """
 function setMeshVertices(meshID::Integer, size::Integer, positions::AbstractArray{Float64})
@@ -611,11 +608,9 @@ Previous calls:
  # Examples
  Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
 ```julia
-julia>meshID = getMeshID("MeshOne")
-julia>positions = [1 1; 2 2; 3 3; 4 4; 5 5]
-julia>size(positions)
-(5, 2)
-julia>vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
+meshID = getMeshID("MeshOne")
+positions = [1 1; 2 2; 3 3; 4 4; 5 5]
+vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 ```
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, size::Integer, positions::AbstractArray{Float64}, ids::AbstractArray{Cint})
@@ -779,17 +774,17 @@ Examples
 
 Write block vector data for a 2D problem with 5 vertices:
 ```julia
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = [v1_x, v1_y; v2_x, v2_y; v3_x, v3_y; v4_x, v4_y; v5_x, v5_y])
-julia> writeBlockVectorData(data_id, vertex_ids, values)
+data_id = 1
+vertex_ids = [1, 2, 3, 4, 5]
+values = [v1_x, v1_y; v2_x, v2_y; v3_x, v3_y; v4_x, v4_y; v5_x, v5_y])
+writeBlockVectorData(data_id, vertex_ids, values)
 ```
 Write block vector data for a 3D (D=3) problem with 5 (N=5) vertices:
 ```julia
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = [v1_x, v1_y, v1_z; v2_x, v2_y, v2_z; v3_x, v3_y, v3_z; v4_x, v4_y, v4_z; v5_x, v5_y, v5_z]
-julia> writeBlockVectorData(data_id, vertex_ids, values)
+data_id = 1
+vertex_ids = [1, 2, 3, 4, 5]
+values = [v1_x, v1_y, v1_z; v2_x, v2_y, v2_z; v3_x, v3_y, v3_z; v4_x, v4_y, v4_z; v5_x, v5_y, v5_z]
+writeBlockVectorData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
@@ -824,18 +819,18 @@ Examples:
 
 Write vector data for a 2D problem with 5 vertices:
 ```julia
-julia> data_id = 1
-julia> vertex_id = 5
-julia> value = [v5_x, v5_y]
-julia> writeVectorData(data_id, vertex_id, value)
+data_id = 1
+vertex_id = 5
+value = [v5_x, v5_y]
+writeVectorData(data_id, vertex_id, value)
 ```
 
 Write vector data for a 3D (D=3) problem with 5 (N=5) vertices:
 ```julia
-julia> data_id = 1
-julia> vertex_id = 5
-julia> value = [v5_x, v5_y, v5_z]
-julia> writeVectorData(data_id, vertex_id, value)
+data_id = 1
+vertex_id = 5
+value = [v5_x, v5_y, v5_z]
+writeVectorData(data_id, vertex_id, value)
 ```
 """
 function writeVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
@@ -868,17 +863,17 @@ Previous calls:
 
 Write block scalar data for a 2D and 3D problem with 5 (N=5) vertices:
 ```julia
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = [1, 2, 3, 4, 5]
-julia> writeBlockScalarData(data_id, vertex_ids, values)
+data_id = 1
+vertex_ids = [1, 2, 3, 4, 5]
+values = [1, 2, 3, 4, 5]
+writeBlockScalarData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
     ccall((:precicec_writeBlockScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
-
+# TODO example is strange
 @doc """
 
     writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
@@ -900,10 +895,10 @@ Previous calls:
 Write scalar data for a 2D or 3D problem with 5 vertices:
 
 ```julia
-julia> data_id = 1
-julia> vertex_id = 5
-julia> value = v5
-julia> writeScalarData(data_id, vertex_id, value)
+data_id = 1
+vertex_id = 5
+value = v5
+writeScalarData(data_id, vertex_id, value)
 ```
 """
 function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
@@ -938,20 +933,16 @@ Previous calls:
 # Examples
 
 Read block vector data for a 2D problem with 5 vertices:
-```jldoctest
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = readBlockVectorData(data_id, vertex_ids)
-julia> values.shape
-julia> (5, 2)
+```julia
+data_id = 1
+vertex_ids = [1, 2, 3, 4, 5]
+values = readBlockVectorData(data_id, vertex_ids)
 ```
 Read block vector data for a 3D system with 5 vertices:
-```jldoctest
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = readBlockVectorData(data_id, vertex_ids)
-julia> values.shape
-julia> (5, 3)
+```julia
+data_id = 1
+vertex_ids = [1, 2, 3, 4, 5]
+values = readBlockVectorData(data_id, vertex_ids)
 ```
 """
 function readBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
@@ -982,19 +973,15 @@ Previous calls:
 
 Read vector data for 2D problem:
 ```julia
-julia> data_id = 1
-julia> vertex_id = 5
-julia> value = readVectorData(data_id, vertex_id)
-julia> value.shape
-(1, 2)
+data_id = 1
+vertex_id = 5
+value = readVectorData(data_id, vertex_id)
 ```
 Read vector data for 2D problem:
 ```julia
-julia> data_id = 1
-julia> vertex_id = 5
-julia> value = readVectorData(data_id, vertex_id)
-julia> value.shape
-(1, 3)
+data_id = 1
+vertex_id = 5
+value = readVectorData(data_id, vertex_id)
 ```
 """
 function readVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
@@ -1026,11 +1013,9 @@ Previous calls:
 
 Read block scalar data for 2D and 3D problems with 5 vertices:
 ```julia
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = readBlockScalarData(data_id, vertex_ids)
-julia> values.size
-5
+data_id = 1
+vertex_ids = [1, 2, 3, 4, 5]
+values = readBlockScalarData(data_id, vertex_ids)
 ```
 """
 function readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
@@ -1058,9 +1043,9 @@ Previous calls:
 
 Read scalar data for 2D and 3D problems:
 ```julia
-julia> data_id = 1
-julia> vertex_id = 5
-julia> value = readScalarData(data_id, vertex_id)
+data_id = 1
+vertex_id = 5
+value = readScalarData(data_id, vertex_id)
 ```
 """
 function readScalarData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
