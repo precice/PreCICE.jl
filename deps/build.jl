@@ -1,5 +1,6 @@
 
 # check if environmental variable is set and is a real path, if not throw error
+using PreCICE
 
 libprecicePath = split(readlines(`whereis libprecice`)[], ' ')[2]
 

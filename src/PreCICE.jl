@@ -13,8 +13,8 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 # TODO createSolverInterfaceWithCommunicator documentation
 # TODO does it make sense to set the data_id by hand in the example
 
-libprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
-defaultLibprecicePath = "/usr/lib/x86_64-linux-gnu/libprecice.so"
+libprecicePath = "/usr/local/lib/libprecice.so"
+defaultLibprecicePath = "/usr/local/lib/libprecice.so"
 
 
 export 
@@ -54,7 +54,7 @@ end
 
 
 @doc """
-Reset custom path configurations and use the binary at the default path "/usr/lib/x86_64-linux-gnu/libprecice.so".
+Reset custom path configurations and use the binary at the default path "/usr/local/lib/libprecice.so".
 """
 function resetPathToLibprecice() 
 global libprecicePath = defaultLibprecicePath
