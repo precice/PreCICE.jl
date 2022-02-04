@@ -1061,6 +1061,7 @@ Return a semicolon-separated String containing:
  - the configuration of preCICE including MPI, PETSC, PYTHON
 """
 function getVersionInformation()
+    @info libprecicePath
     versionCstring = ccall((:precicec_getVersionInformation, libprecicePath), Cstring, ())
     return unsafe_string(versionCstring)
 end

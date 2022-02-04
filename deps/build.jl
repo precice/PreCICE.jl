@@ -1,12 +1,13 @@
 
-# check if environmental variable is set and is a real path, if not throw error
 using PreCICE
 
 libprecicePath = split(readlines(`whereis libprecice`)[], ' ')[2]
 @info "will use PreCICE library at: $libprecicePath"
 PreCICE.setPathToLibprecice(string(libprecicePath))
+@info PreCICE.libprecicePath
 
 
+# TODO check if environmental variable is set and is a real path, if not throw error
 if haskey(ENV, "PRECICE_JL_BINARY")
     libprecicePath = ENV["PRECICE_JL_BINARY"]
     @info("detected custom preCICE binary configuration: $libprecicePath")
