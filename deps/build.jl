@@ -3,7 +3,7 @@
 using PreCICE
 
 libprecicePath = split(readlines(`whereis libprecice`)[], ' ')[2]
-
+@info "will use PreCICE library at: $libprecicePath"
 PreCICE.setPathToLibprecice(string(libprecicePath))
 
 
