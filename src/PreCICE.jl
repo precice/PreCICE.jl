@@ -138,19 +138,19 @@ call this method to finally exchange the data.
 
 Serial Coupling Scheme: 
 - Only the first participant has to call this method, the second participant
-receives the values on calling [`initialize`](@initialize).
+receives the values on calling [`initialize`](@ref).
 
 Parallel Coupling Scheme:
 - Values in both directions are exchanged.
-- Both participants need to call [`initializeData`](@initializeData).
+- Both participants need to call [`initializeData`](@ref).
 
 # Notes
 
 Previous calls:
- - [`initialize`](@initialize) has been called successfully.
+ - [`initialize`](@ref) has been called successfully.
  - The action `WriteInitialData` is required
- - [`advance`](@advance) has not yet been called.
- - [`finalize`](@finalize) has not yet been called.
+ - [`advance`](@ref) has not yet been called.
+ - [`finalize`](@ref) has not yet been called.
 
 Tasks completed:
  - Initial coupling data was exchanged.
@@ -174,10 +174,10 @@ Return the maximum length of next timestep to be computed by solver.
 # Notes
 
 Previous calls:
- - [`initialize`](@initialize) has been called successfully.
+ - [`initialize`](@ref) has been called successfully.
  - The solver has computed one timestep.
  - The solver has written all coupling data.
- - [`finalize`](@finalize) has not yet been called.
+ - [`finalize`](@ref) has not yet been called.
 
 Tasks completed:
  - Coupling data values specified in the configuration are exchanged.
@@ -202,7 +202,7 @@ Finalize the coupling to the coupling supervisor.
 # Notes
 
 Previous calls:
- - [`initialize`](@initialize) has been called successfully.
+ - [`initialize`](@ref) has been called successfully.
 
 Tasks completed:
  - Communication channels are closed.
@@ -235,14 +235,14 @@ A coupling is ongoing as long as
  - the maximum number of timesteps has not been reached, and
  - the final time has not been reached.
 
-The user should call [`finalize`](@finalize) after this function returns false.
+The user should call [`finalize`](@ref) after this function returns false.
 
 
 
 # Notes
 
 Previous calls:
- - [`initialize`](@initialize) has been called successfully.
+ - [`initialize`](@ref) has been called successfully.
 """
 function isCouplingOngoing()::Bool
     ans::Integer = ccall((:precicec_isCouplingOngoing, libprecicePath), Cint, ())
@@ -264,7 +264,7 @@ The following reasons require several solver time steps per coupling time step:
 # Notes
 
 Previous calls:
- - [`initialize`](@initialize) has been called successfully.
+ - [`initialize`](@ref) has been called successfully.
 
 """
 function isTimeWindowComplete()::Bool
@@ -309,16 +309,16 @@ end
     isReadDataAvailable()::Bool
 
 Check if new data to be read is available. Data is classified to be new, if it has been received
-while calling [`initialize`](@initialize) and before calling [`advance`](@advance), or in the last call of [`advance`](@advance).
+while calling [`initialize`](@ref) and before calling [`advance`](@ref), or in the last call of [`advance`](@ref).
 This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
-timesteps than the limits returned in [`intitialize`](@initialize) and [`advance`](@advance).
+timesteps than the limits returned in [`intitialize`](@ref) and [`advance`](@ref).
 It is allowed to read data even if this function returns false. This is not recommended
 due to performance reasons. Use this function to prevent unnecessary reads.
 
 #Notes
 
 Previous calls:
- - [`initialize`](@initialize) has been called successfully.
+ - [`initialize`](@ref) has been called successfully.
 """
 function isReadDataAvailable()::Bool
     ans::Integer = ccall((:precicec_isReadDataAvailable, libprecicePath), Cint, ())
@@ -331,9 +331,9 @@ end
 
     isWriteDataRequired(computedTimestepLength::Float64)::Bool
 
-Check if new data has to be written before calling [`advance`](@advance).
+Check if new data has to be written before calling [`advance`](@ref).
 This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
-timesteps than the limits returned in [`intitialize`](@initialize) and [`advance`](@advance).
+timesteps than the limits returned in [`intitialize`](@ref) and [`advance`](@ref).
 It is allowed to write data even if this function returns false. This is not recommended
 due to performance reasons. Use this function to prevent unnecessary writes.
 
@@ -346,7 +346,7 @@ Return whether new data has to be written.
 # Notes
 
 Previous calls:
- - [`initialize`](@initialize) has been called successfully.
+ - [`initialize`](@ref) has been called successfully.
 """
 function isWriteDataRequired(computedTimestepLength::Float64)::Bool
     ans::Integer = ccall((:precicec_isWriteDataRequired, libprecicePath), Cint, (Cdouble,), computedTimestepLength)
@@ -362,7 +362,7 @@ Checks if the provided action is required.
     
 Some features of preCICE require a solver to perform specific actions, in order to be
 in valid state for a coupled simulation. A solver is made eligible to use those features,
-by querying for the required actions, performing them on demand, and calling [`markActionfulfilled`](@markActionFulfilled)
+by querying for the required actions, performing them on demand, and calling [`markActionfulfilled`](@ref)
 to signalize preCICE the correct behavior of the solver.
 
 # Arguments
@@ -472,7 +472,7 @@ Create a mesh vertex on a coupling mesh and return its id.
 
 # See also
 
-[`getDimensions`](@getDimensions), [`setMeshVertices`](@setMeshVertices)
+[`getDimensions`](@ref), [`setMeshVertices`](@ref)
 
 # Notes
 
@@ -548,13 +548,13 @@ Create multiple mesh vertices on a coupling mesh and return an array holding the
                  
 # Notes
 Previous calls:
- - [`initialize`](@initialize) has not yet been called
+ - [`initialize`](@ref) has not yet been called
  - count of available elements at positions matches the configured `dimension` * `size`
  - count of available elements at ids matches size
 
 
 # See also
-[`getDimensions`](@getDimensions), [`setMeshVertex`](@setMeshVertex)
+[`getDimensions`](@ref), [`setMeshVertex`](@ref)
 
 # Examples
 ```julia
@@ -589,7 +589,7 @@ end
 
 Get mesh vertex IDs from positions.
 
-Prefer to reuse the IDs returned from calls to [`setMeshVertex`](@setMeshVertex) and [`setMeshVertices`](@setMeshVertices).
+Prefer to reuse the IDs returned from calls to [`setMeshVertex`](@ref) and [`setMeshVertices`](@ref).
 
 # Arguments
 - `meshID::Integer`: ID of the mesh to retrieve positions from.
@@ -768,7 +768,7 @@ values = (d0x, d0y, d0z, d1x, d1y, d1z, ...., dnx, dny, dnz), where n is the num
 Previous calls:
  - count of available elements at `values` matches the configured `dimension` * `size`
  - count of available elements at `vertex_ids` matches the given size
- - [`initialize`](@initialize) has been called
+ - [`initialize`](@ref) has been called
 
 Examples
 
@@ -805,7 +805,7 @@ The 2D-format of value is a array of shape 2
 The 3D-format of value is a array of shape 3
 
 # Arguments
-- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@getDataID).
+- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
 - `valueIndex::Integer`: Index of the vertex. 
 - `dataValue::AbstractArray{Float64}`: The array holding the values.
 
@@ -813,7 +813,7 @@ The 3D-format of value is a array of shape 3
         
 Previous calls:
  - Count of available elements at `value` matches the configured dimension
- - [`initialize`](@initialize) has been called
+ - [`initialize`](@ref) has been called
 
 Examples:
 
@@ -857,7 +857,7 @@ This function writes values of specified vertices to a dataID. Values are provid
 Previous calls:
  - Count of available elements at `values` matches the given size
  - Count of available elements at `vertex_ids` matches the given size
- - [`initialize`](@initialize) has been called
+ - [`initialize`](@ref) has been called
 
 # Examples
 
@@ -881,14 +881,14 @@ end
 Write scalar data, the value of a specified vertex to a dataID.
 
 # Arguments
-- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@getDataID).
+- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
 - `value::Float64`: The value to write.
 
 # Notes
 
 Previous calls:
- - [`initialize`](@initialize) 
+ - [`initialize`](@ref) 
 
 # Examples
 
@@ -928,7 +928,7 @@ the number of vector values. In 2D, the z-components are removed.
 Previous calls:
     count of available elements at `values` matches the configured `dimension * size`
     count of available elements at `vertex_ids` matches the given size
-    [`initialize`](@initialize) has been called
+    [`initialize`](@ref) has been called
 
 # Examples
 
@@ -967,7 +967,7 @@ Read a value of a specified vertex from a dataID. Values are provided as a block
 
 Previous calls:
  - count of available elements at value matches the configured dimension
- - [`initialize`](@initialize) has been called
+ - [`initialize`](@ref) has been called
 
 # Examples
 
@@ -1007,7 +1007,7 @@ Read scalar data as a block, values of specified vertices from a dataID. Values 
 Previous calls:
  - count of available elements at `values` matches the given size
  - count of available elements at `vertex_ids` matches the given size
- - [`initialize`](@initialize) has been called
+ - [`initialize`](@ref) has been called
 
 # Examples
 
@@ -1037,7 +1037,7 @@ Read scalar data of a vertex.
 # Notes
 
 Previous calls:
-- [`initialize`](@initialize) has been called.
+- [`initialize`](@ref) has been called.
 
 # Examples
 
@@ -1073,12 +1073,12 @@ end
     mapReadDataFrom(fromMeshID::Integer)
 
 Compute and map all write data mapped from the mesh with given ID. This is an explicit request
-to map write data from the Mesh associated with [`fromMeshID`](@fromMeshID). It also computes the mapping if necessary.
+to map write data from the Mesh associated with [`fromMeshID`](@ref). It also computes the mapping if necessary.
 
 # Notes
 
 Previous calls:
- - A mapping to [`fromMeshID`](@fromMeshID) was configured
+ - A mapping to [`fromMeshID`](@ref) was configured
 """
 function mapWriteDataFrom(fromMeshID::Integer)
     ccall((:precicec_mapWriteDataFrom, libprecicePath), Cvoid, (Cint,), fromMeshID)
@@ -1090,13 +1090,13 @@ end
     mapReadDataTo(fromMeshID::Integer)
 
 Compute and map all read data mapped to the mesh with given ID.
-This is an explicit request to map read data to the Mesh associated with [`toMeshID`](@toMeshID).
+This is an explicit request to map read data to the Mesh associated with [`toMeshID`](@ref).
 It also computes the mapping if necessary.
 
 # Notes
 
 Previous calls:
- - A mapping to [`toMeshID`](@toMeshID) was configured.
+ - A mapping to [`toMeshID`](@ref) was configured.
 """
 function mapReadDataTo(fromMeshID::Integer)
     ccall((:precicec_mapReadDataTo, libprecicePath), Cvoid, (Cint,), fromMeshID)
