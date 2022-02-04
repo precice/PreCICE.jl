@@ -13,8 +13,8 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 # TODO createSolverInterfaceWithCommunicator documentation
 # TODO does it make sense to set the data_id by hand in the example
 
-libprecicePath = "/usr/local/lib/libprecice.so"
-defaultLibprecicePath = "/usr/local/lib/libprecice.so"
+libprecicePath = string(split(readlines(`whereis libprecice`)[], ' ')[2])
+defaultLibprecicePath = string(split(readlines(`whereis libprecice`)[], ' ')[2])
 
 
 export 
@@ -1061,6 +1061,7 @@ Return a semicolon-separated String containing:
  - the configuration of preCICE including MPI, PETSC, PYTHON
 """
 function getVersionInformation()
+    @info "type=$(typeof(libprecicePath))"
     @info libprecicePath
     versionCstring = ccall((:precicec_getVersionInformation, libprecicePath), Cstring, ())
     return unsafe_string(versionCstring)
