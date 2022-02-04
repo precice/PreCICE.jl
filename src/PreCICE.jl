@@ -1,15 +1,13 @@
 module PreCICE
 """
 The `PreCICE` module provides the bindings for using the preCICE api. For more information, visit https://precice.org/.
-""" 
+"""
 
 
-# These were proposed by the previous maintainer:
-# TODO add 'return nothing' keyword to void functions    # does this make sense? not done by documenter.jl
+# TODO add 'return nothing' keyword to void functions
 # TODO add Julia's exception handling to the ccalls
 # TODO maybe load libprecice.so only once with Libdl.dlopen() instead of calling it in each method?
 
-# new TODO's
 # TODO createSolverInterfaceWithCommunicator documentation
 # TODO does it make sense to set the data_id by hand in the example
 
@@ -69,12 +67,28 @@ function createSolverInterface(participantName::String,
             solverProcessSize)
 end
 
+@doc """
+    createSolverInterfaceWithCommunicator(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer, communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}})
 
+TODO: Documentation or [WIP] tag. The data types of the communicator are not yet verified.
+
+# See also:
+
+[`createSolverInterface`](@ref)
+
+# Arguments
+
+- `participantName::String`: Name of the participant from the xml configuration that is using the interface.
+- `configFilename::String`: Name (with path) of the xml configuration file.
+- `solverProcessIndex::Integer`: If the solver code runs with several processes, each process using preCICE has to specify its index, which has to start from 0 and end with solverProcessSize - 1.
+- `solverProcessSize::Integer`: The number of solver processes of this participant using preCICE.
+- `communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}`: TODO ?
+"""
 function createSolverInterfaceWithCommunicator(participantName::String, 
                                                 configFilename::String, 
                                                 solverProcessIndex::Integer,  
                                                 solverProcessSize::Integer, 
-                                                communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}) # test if type of com is correct
+                                                communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}})
     ccall((:precicec_createSolverInterface_withCommunicator, "libprecice"), 
             Cvoid, 
             (Ptr{Int8}, Ptr{Int8}, Int, Int, Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}), 
@@ -212,8 +226,6 @@ A coupling is ongoing as long as
  - the final time has not been reached.
 
 The user should call [`finalize`](@ref) after this function returns false.
-
-
 
 # Notes
 
@@ -581,8 +593,9 @@ Previous calls:
  - count of available elements at positions matches the configured `dimension * size`
  - count of available elements at ids matches size
 
- # Examples
- Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
+# Examples
+
+Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
 ```julia
 meshID = getMeshID("MeshOne")
 positions = [1 1; 2 2; 3 3; 4 4; 5 5]
@@ -655,7 +668,6 @@ WARNING: This routine is supposed to be used, when no edge information is availa
 - `secondVertexID::Integer`: ID of the second vertex of the edge.
 - `thirdEdgeID::Integer`: ID of the third edge of the triangle.
 
-
 # Notes
 
 Previous calls:
@@ -709,7 +721,7 @@ edge IDs, since it needs to check, whether an edge is created already or not.
 - `thirdEdgeID::Integer`: ID of the third edge of the Quad.
 - `fourthEdgeID::Integer`: ID of the fourth edge of the Quad.
 
-Notes
+# Notes
 
 Previous calls:
  - Edges with `firstVertexID`, `secondEdgeID`, `thirdVertexID`, and `fourthEdgeID` were added
@@ -746,7 +758,7 @@ Previous calls:
  - count of available elements at `vertex_ids` matches the given size
  - [`initialize`](@ref) has been called
 
-Examples
+# Examples
 
 Write block vector data for a 2D problem with 5 vertices:
 ```julia
@@ -791,7 +803,7 @@ Previous calls:
  - Count of available elements at `value` matches the configured dimension
  - [`initialize`](@ref) has been called
 
-Examples:
+# Examples:
 
 Write vector data for a 2D problem with 5 vertices:
 ```julia
@@ -873,7 +885,7 @@ Write scalar data for a 2D or 3D problem with 5 vertices:
 ```julia
 data_id = 1
 vertex_id = 5
-value = v5
+value = 1.0
 writeScalarData(data_id, vertex_id, value)
 ```
 """
