@@ -28,9 +28,19 @@ Once the package is added at the beginning of the Julia script you can access th
 
 ## Adding the package when preCICE is installed at custom paths
 
-If you installed preCICE at a custom path, errors like ```ERROR: could not load library "/..."``` can occur after adding the Julia bindings package. In such cases set the path to your library with `PreCICE.setPathToLibprecice("path/to/my/libprecice.so")` or reset it with `PreCICE.resetPathToLibprecice()`
+If you installed preCICE at a custom path, errors like ```ERROR: could not load library "/..."``` can occur after adding the Julia bindings package. 
 
-By default this package assumes the `libprecice.so` is at `/usr/lib/x86_64-linux-gnu/`.
+Set your custom path through the environment variable `PRECICE_JL_BINARY` and rebuild this package:
+
+```julia
+~$ export PRECICE_JL_BINARY=/usr/lib/x86_64-linux-gnu/
+~$ julia (--project)
+julia> ]
+pkg> build PreCICE
+julia> using PreCICE
+...
+```
+
 
 ## Usage
 

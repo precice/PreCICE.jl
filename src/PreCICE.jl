@@ -14,10 +14,9 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 # TODO does it make sense to set the data_id by hand in the example
 
 
-
 export 
     # construction and configuration
-    setPathToLibprecice, resetPathToLibprecice, createSolverInterface, createSolverInterfaceWithCommunicator,
+    createSolverInterface, createSolverInterfaceWithCommunicator,
 
     # steering methods
     initialize, initializeData, advance, finalize,
@@ -197,6 +196,7 @@ Return the number of spatial dimensions configured. Currently, two and three dim
 can be solved using preCICE. The dimension is specified in the XML configuration.
 """
 function getDimensions()::Integer
+
     dim::Integer = ccall((:precicec_getDimensions, "libprecice"), Cint, ())
     return dim
 end
