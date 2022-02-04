@@ -1,6 +1,10 @@
 
 # check if environmental variable is set and is a real path, if not throw error
 
+libprecicePath = split(readlines(`whereis libprecice`)[], ' ')[2]
+
+PreCICE.setPathToLibprecice(string(libprecicePath))
+
 
 if haskey(ENV, "PRECICE_JL_BINARY")
     libprecicePath = ENV["PRECICE_JL_BINARY"]
