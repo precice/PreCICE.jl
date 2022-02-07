@@ -478,20 +478,19 @@ function setMeshVertex(meshID::Integer, position::AbstractArray{Float64})
 end
 
 
-# TODO Example has wrong arguments
 @doc """
 
-    getMeshVertices(meshID::Integer, size::Integer, ids::AbstractArray{Cint}, positions::AbstractArray{Float64})::AbstractArray{Float64}
+    getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})::AbstractArray{Float64}
 
-Get vertex positions for multiple vertex ids from a given mesh.
+Return vertex positions for multiple vertex ids from a given mesh.
+
+The 2D-format for positions is (d0x, d0y, d1x, d1y, ..., dnx, dny),
+the 3D-format for positions is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
+
 
 # Arguments
 - `meshID::Integer`:  The id of the mesh to read the vertices from.
-- `size::Integer`:  Number of vertices to lookup.
-- `ids::AbstractArray{Cint}`:  The id of the mesh to read the vertices from.
-- `positions::AbstractArray{Float64}`:  Positions to write the coordinates to.
-                                        The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny),
-                                        the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
+- `ids::AbstractArray{Cint}`:  The ids of the vertices to get the positions from.
 
 # Notes
 
@@ -502,21 +501,28 @@ Previous calls:
 # Examples
 
 Return data structure for a 2D problem with 5 vertices:
-```julia
-meshID = getMeshID("MeshOne")
-vertexIDs = [1,2,3,4]
-positions = getMeshVertices(meshID, vertexIDs)
+```julia-repl
+julia> meshID = getMeshID("MeshOne")
+julia> vertexIDs = [1,2,3,4]
+julia> positions = getMeshVertices(meshID, vertexIDs)
+julia> size(positions)
+(8,)
 ```
 Return data structure for a 3D problem with 5 vertices:
 
-```julia
-mesh_id = getMeshID("MeshOne")
-vertex_ids = [1, 2, 3, 4, 5]
-positions = getMeshVertices(mesh_id, vertex_ids)
+```julia-repl
+julia> mesh_id = getMeshID("MeshOne")
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> positions = getMeshVertices(mesh_id, vertex_ids)
+julia> size(positions)
+(15,)
 ```
 """
-function getMeshVertices(meshID::Integer, size::Integer, ids::AbstractArray{Cint}, positions::AbstractArray{Float64})
-    ccall((:precicec_getMeshVertices, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, size, ids, positions)
+function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
+    _size = length(ids)
+    positions = Array{Float64,1}(undef,_size*getDimensions())
+    ccall((:precicec_getMeshVertices, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, _size, ids, positions)
+    return positions
 end
 
 
@@ -573,19 +579,17 @@ end
 # TODO Example has the wrong arguments
 @doc """
 
-    getMeshVertexIDsFromPositions(meshID::Integer, size::Integer, positions::AbstractArray{Float64}, ids::AbstractArray{Cint})
+    getMeshVertexIDsFromPositions(meshID::Integer, size::Integer, positions::AbstractArray{Float64})::AbstractArray{Int}
 
-Get mesh vertex IDs from positions.
+Return mesh vertex IDs from positions.
 
 Prefer to reuse the IDs returned from calls to [`setMeshVertex`](@ref) and [`setMeshVertices`](@ref).
 
 # Arguments
 - `meshID::Integer`: ID of the mesh to retrieve positions from.
-- `size::Integer`: Number of vertices to lookup.
 - `positions::AbstractArray{Float64}`: Positions to find ids for.
                                        The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny),
                                        the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
-- `ids::AbstractArray{Cint}`: IDs corresponding to positions.
 
 # Notes
 
@@ -598,12 +602,15 @@ Previous calls:
 Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
 ```julia
 meshID = getMeshID("MeshOne")
-positions = [1 1; 2 2; 3 3; 4 4; 5 5]
+positions = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
 vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 ```
 """
-function getMeshVertexIDsFromPositions(meshID::Integer, size::Integer, positions::AbstractArray{Float64}, ids::AbstractArray{Cint})
-    ccall((:precicec_getMeshVertexIDsFromPositions, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, size, positions, ids)
+function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
+    _size = Cint(length(positions)÷getDimensions())
+    ids = Array{Cint,1}(undef,size)
+    ccall((:precicec_getMeshVertexIDsFromPositions, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, ids)
+    return ids
 end
 
 
@@ -861,7 +868,6 @@ function writeBlockScalarData(dataID::Integer, size::Integer, valueIndices::Abst
     ccall((:precicec_writeBlockScalarData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
-# TODO example is strange
 @doc """
 
     writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
@@ -893,12 +899,11 @@ function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float6
     ccall((:precicec_writeScalarData, "libprecice"), Cvoid, (Cint, Cint, Cdouble), dataID, valueIndex, dataValue)
 end
 
-# TODO: is the form correct?
 @doc """
 
-    readBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
 
-Read vector data values given as block.
+Read and return vector data values given as block.
 
 The block contains the vector values in the following form:
 
@@ -907,9 +912,7 @@ the number of vector values. In 2D, the z-components are removed.
 
 # Arguments
 - `dataID::Integer`: ID of the data to be read.
-- `size::Integer`: 	Number n of vertices. 
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-- `values::AbstractArray{Float64}`: Array where read values are written to.
 
 # Notes
 
@@ -921,35 +924,38 @@ Previous calls:
 # Examples
 
 Read block vector data for a 2D problem with 5 vertices:
-```julia
-data_id = 1
-vertex_ids = [1, 2, 3, 4, 5]
-values = readBlockVectorData(data_id, vertex_ids)
+```julia-repl
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = readBlockVectorData(data_id, vertex_ids)
+julia> size(values)
+(10,)
 ```
 Read block vector data for a 3D system with 5 vertices:
-```julia
-data_id = 1
-vertex_ids = [1, 2, 3, 4, 5]
-values = readBlockVectorData(data_id, vertex_ids)
+```julia-repl
+julia> data_id = 1
+julia> vertex_ids = [1, 2, 3, 4, 5]
+julia> values = readBlockVectorData(data_id, vertex_ids)
+julia> size(values)
+(15,)
 ```
 """
-function readBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    ccall((:precicec_readBlockVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
+function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
+    _size=length(valueIndices)
+    values = Array{Float64,1}(undef,_size*getDimensions)
+    ccall((:precicec_readBlockVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
+    return values
 end
 
-# TODO continuous block of memory?
 @doc """
 
-    readVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
+    readVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})::AbstractArray{Float64}
 
-Read vector data form a vertex.
-
-Read a value of a specified vertex from a dataID. Values are provided as a block of continuous memory.
+Read and return vector data from a vertex.
 
 # Arguments
 - `dataID::Integer`: ID of the data to be read.
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-- `values::AbstractArray{Float64}`: Array where read values are written to.
 
 # Notes
 
@@ -959,36 +965,28 @@ Previous calls:
 
 # Examples
 
-Read vector data for 2D problem:
-```julia
-data_id = 1
-vertex_id = 5
-value = readVectorData(data_id, vertex_id)
-```
-Read vector data for 2D problem:
 ```julia
 data_id = 1
 vertex_id = 5
 value = readVectorData(data_id, vertex_id)
 ```
 """
-function readVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
+function readVectorData(dataID::Integer, valueIndex::Integer)
+    dataValue = Array{Float64,1}(undef,getDimensions())
     ccall((:precicec_readVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
+    return dataValue
 end
 
 
-# TODO continuous block of memory?
 @doc """
 
-    readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})::AbstractArray{Float64}
 
-Read scalar data as a block, values of specified vertices from a dataID. Values are provided as a block of continuous memory. `valueIndices` contains the indices of the vertices.
+Read and return scalar data as a block, values of specified vertices from a dataID.
 
 # Arguments
 - `dataID::Integer`: ID of the data to be read.
-- `size::Integer`: 	Number n of vertices. 
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-- `values::AbstractArray{Float64}`: Array where read values are written to.
 
 # Notes
 
@@ -1006,21 +1004,23 @@ vertex_ids = [1, 2, 3, 4, 5]
 values = readBlockScalarData(data_id, vertex_ids)
 ```
 """
-function readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    ccall((:precicec_readScalarVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
+function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    _size=length(valueIndices)
+    values = Array{Float64,1}(undef,_size)
+    ccall((:precicec_readScalarVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
+    return values
 end
 
 
 @doc """
 
-    readScalarData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
+    readScalarData(dataID::Integer, valueIndex::Integer)::Float64
 
-Read scalar data of a vertex.
+Read and return scalar data of a vertex.
 
 # Arguments
 - `dataID::Integer`: ID of the data to be read.
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-- `values::AbstractArray{Float64}`: Array where read value is written to.
 
 # Notes
 
@@ -1036,8 +1036,10 @@ vertex_id = 5
 value = readScalarData(data_id, vertex_id)
 ```
 """
-function readScalarData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
+function readScalarData(dataID::Integer, valueIndex::Integer)
+    dataValue = Float64(0.0)
     ccall((:precicec_readScalarData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
+    return dataValue
 end
 
 
