@@ -231,7 +231,6 @@ Return the number of spatial dimensions configured. Currently, two and three dim
 can be solved using preCICE. The dimension is specified in the XML configuration.
 """
 function getDimensions()::Integer
-
     dim::Integer = ccall((:precicec_getDimensions, libprecicePath), Cint, ())
     return dim
 end
@@ -600,7 +599,7 @@ end
 # TODO Example has the wrong arguments
 @doc """
 
-    getMeshVertexIDsFromPositions(meshID::Integer, size::Integer, positions::AbstractArray{Float64})::AbstractArray{Int}
+    getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})::AbstractArray{Int}
 
 Return mesh vertex IDs from positions.
 
@@ -1001,7 +1000,7 @@ end
 
 @doc """
 
-    readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})::AbstractArray{Float64}
+    readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
 
 Read and return scalar data as a block, values of specified vertices from a dataID.
 
@@ -1025,7 +1024,7 @@ vertex_ids = [1, 2, 3, 4, 5]
 values = readBlockScalarData(data_id, vertex_ids)
 ```
 """
-function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size=length(valueIndices)
     values = Array{Float64,1}(undef,_size)
     ccall((:precicec_readScalarVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
