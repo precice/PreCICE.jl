@@ -16,7 +16,6 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 libprecicePath = string(split(readlines(`whereis libprecice`)[], ' ')[2])
 defaultLibprecicePath = string(split(readlines(`whereis libprecice`)[], ' ')[2])
 
-
 export 
     # construction and configuration
     createSolverInterface, createSolverInterfaceWithCommunicator,
