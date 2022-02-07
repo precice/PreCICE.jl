@@ -2,7 +2,6 @@ using PreCICE
 using Test
 
 
-
 @testset "PreCICE.jl" begin
     
     @testset "Low-Level-API" begin
