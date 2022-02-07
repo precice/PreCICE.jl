@@ -1,7 +1,6 @@
 
+
 # check if environmental variable is set and is a real path, if not throw error
-
-
 if haskey(ENV, "PRECICE_JL_BINARY")
     libprecicePath = ENV["PRECICE_JL_BINARY"]
     @info("detected custom preCICE binary configuration: $libprecicePath")
