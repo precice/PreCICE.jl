@@ -962,7 +962,7 @@ julia> size(values)
 """
 function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size=length(valueIndices)
-    values = Array{Float64,1}(undef,_size*getDimensions)
+    values = Array{Float64,1}(undef,_size*getDimensions())
     ccall((:precicec_readBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
     return values
 end
