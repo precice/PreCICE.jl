@@ -1,2 +1,5 @@
 Manifest.toml
 binarybuilder
+solverdummy/*.log
+solverdummy/*.json
+solverdummy/precice-run/
