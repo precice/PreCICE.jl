@@ -1,11 +1,9 @@
-# import Pkg; Pkg.activate("..")
 using PreCICE
 
 commRank = 0
 commSize = 1
 
 if size(ARGS, 1) < 2
-    print(ARGS)
     println("ERROR: pass config path, solver name and mesh name, example: julia solverdummy.jl ./precice-config.xml SolverOne MeshOne")
     exit(1)
 end
