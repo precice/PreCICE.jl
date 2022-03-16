@@ -10,7 +10,7 @@ using Test
     end
 
     @testset "Solverdummies" begin
-        include("solverdummy.jl")
+        include("test_solverdummy.jl")
         @test isnothing(test_solverdummy())
     end
 end
