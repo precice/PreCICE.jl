@@ -1,5 +1,10 @@
 using PreCICE
 
+@doc """
+    test_solverdummy()
+
+Runs two instances of the Julia solverdummy. When they run without throwing any error the test passes.
+"""
 function test_solverdummy()
     try
         # run two seperate instances of the solverdummy
