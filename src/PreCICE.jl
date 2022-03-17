@@ -11,9 +11,6 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 # TODO createSolverInterfaceWithCommunicator documentation
 # TODO does it make sense to set the data_id by hand in the example
 
-libprecicePath = string(split(readlines(`whereis libprecice`)[], ' ')[2])
-defaultLibprecicePath = string(split(readlines(`whereis libprecice`)[], ' ')[2])
-
 export 
     # construction and configuration
     createSolverInterface, createSolverInterfaceWithCommunicator,
@@ -41,25 +38,6 @@ export
 
 @doc """
 
-setPathToLibprecice(pathToPrecice::String) 
-
-Configure which preCICE binary to use. Set it if preCICE was installed at a custom directory.
-"""
-function setPathToLibprecice(pathToPrecice::String) 
-global libprecicePath = pathToPrecice
-end
-
-
-@doc """
-Reset custom path configurations and use the binary at the default path "/usr/local/lib/libprecice.so".
-"""
-function resetPathToLibprecice() 
-global libprecicePath = defaultLibprecicePath
-end
-
-
-@doc """
-
     createSolverInterface(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer)
 
 Create the coupling interface and configure it. Must get called before any other method of this interface.
@@ -79,7 +57,7 @@ function createSolverInterface(participantName::String,
                                 configFilename::String,   
                                 solverProcessIndex::Integer,  
                                 solverProcessSize::Integer)
-    ccall((:precicec_createSolverInterface, libprecicePath), 
+    ccall((:precicec_createSolverInterface, "libprecice"), 
             Cvoid, 
             (Ptr{Int8},Ptr{Int8}, Cint, Cint), 
             participantName, 
@@ -110,7 +88,7 @@ function createSolverInterfaceWithCommunicator(participantName::String,
                                                 solverProcessIndex::Integer,  
                                                 solverProcessSize::Integer, 
                                                 communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}) # test if type of com is correct
-    ccall((:precicec_createSolverInterface_withCommunicator, libprecicePath), 
+    ccall((:precicec_createSolverInterface_withCommunicator, "libprecice"), 
             Cvoid, 
             (Ptr{Int8}, Ptr{Int8}, Int, Int, Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}), 
             participantName, 
@@ -133,7 +111,7 @@ This function handles:
 Return the maximum length of first timestep to be computed by the solver.
 """
 function initialize()::Float64
-    dt::Float64 = ccall((:precicec_initialize, libprecicePath), Cdouble, ())
+    dt::Float64 = ccall((:precicec_initialize, "libprecice"), Cdouble, ())
     return dt
 end
 
@@ -166,7 +144,7 @@ Tasks completed:
  - Initial coupling data was exchanged.
 """
 function initializeData()
-    ccall((:precicec_initialize_data, libprecicePath), Cvoid, ())
+    ccall((:precicec_initialize_data, "libprecice"), Cvoid, ())
 end
 
 
@@ -198,7 +176,7 @@ Tasks completed:
  - Meshes with data are exported to files if configured.
 """
 function advance(computedTimestepLength::Float64)::Float64
-    dt::Float64 = ccall((:precicec_advance, libprecicePath), Cdouble, (Cdouble,), computedTimestepLength)
+    dt::Float64 = ccall((:precicec_advance, "libprecice"), Cdouble, (Cdouble,), computedTimestepLength)
     return dt
 end
 
@@ -219,7 +197,7 @@ Tasks completed:
  - Meshes and data are deallocated.
 """
 function finalize()
-    ccall((:precicec_finalize, libprecicePath), Cvoid, ())
+    ccall((:precicec_finalize, "libprecice"), Cvoid, ())
 end
 
 
@@ -231,7 +209,7 @@ Return the number of spatial dimensions configured. Currently, two and three dim
 can be solved using preCICE. The dimension is specified in the XML configuration.
 """
 function getDimensions()::Integer
-    dim::Integer = ccall((:precicec_getDimensions, libprecicePath), Cint, ())
+    dim::Integer = ccall((:precicec_getDimensions, "libprecice"), Cint, ())
     return dim
 end
 
@@ -253,7 +231,7 @@ Previous calls:
  - [`initialize`](@ref) has been called successfully.
 """
 function isCouplingOngoing()::Bool
-    ans::Integer = ccall((:precicec_isCouplingOngoing, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_isCouplingOngoing, "libprecice"), Cint, ())
     return ans
 end
 
@@ -276,7 +254,7 @@ Previous calls:
 
 """
 function isTimeWindowComplete()::Bool
-    ans::Integer = ccall((:precicec_isTimeWindowComplete, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_isTimeWindowComplete, "libprecice"), Cint, ())
     return ans
 end
 
@@ -291,7 +269,7 @@ The solver may still have to evaluate the fine model representation.
 DEPRECATED: Only necessary for deprecated manifold mapping.
 """
 function hasToEvaluateSurrogateModel()::Bool
-    ans::Integer = ccall((:precicec_hasToEvaluateSurrogateModel, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_hasToEvaluateSurrogateModel, "libprecice"), Cint, ())
     return ans
 end
 
@@ -307,7 +285,7 @@ DEPRECATED: Only necessary for deprecated manifold mapping.
 Return whether the solver has to evaluate the fine model representation.
 """
 function hasToEvaluateFineModel()::Bool
-    ans::Integer = ccall((:precicec_hasToEvaluateFineModel, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_hasToEvaluateFineModel, "libprecice"), Cint, ())
     return ans
 end
 
@@ -329,7 +307,7 @@ Previous calls:
  - [`initialize`](@ref) has been called successfully.
 """
 function isReadDataAvailable()::Bool
-    ans::Integer = ccall((:precicec_isReadDataAvailable, libprecicePath), Cint, ())
+    ans::Integer = ccall((:precicec_isReadDataAvailable, "libprecice"), Cint, ())
     return ans
 end
 
@@ -357,7 +335,7 @@ Previous calls:
  - [`initialize`](@ref) has been called successfully.
 """
 function isWriteDataRequired(computedTimestepLength::Float64)::Bool
-    ans::Integer = ccall((:precicec_isWriteDataRequired, libprecicePath), Cint, (Cdouble,), computedTimestepLength)
+    ans::Integer = ccall((:precicec_isWriteDataRequired, "libprecice"), Cint, (Cdouble,), computedTimestepLength)
     return ans
 end
 
@@ -378,7 +356,7 @@ to signalize preCICE the correct behavior of the solver.
 
 """
 function isActionRequired(action::String)::Bool
-    ans::Integer = ccall((:precicec_isActionRequired, libprecicePath), Cint, (Ptr{Int8},), action)
+    ans::Integer = ccall((:precicec_isActionRequired, "libprecice"), Cint, (Ptr{Int8},), action)
     return ans
 end
 
@@ -398,7 +376,7 @@ Previous calls:
  - The solver fulfilled the specified action.
 """
 function markActionFulfilled(action::String)
-    ccall((:precicec_markActionFulfilled, libprecicePath), Cvoid, (Ptr{Int8},), action)
+    ccall((:precicec_markActionFulfilled, "libprecice"), Cvoid, (Ptr{Int8},), action)
 end
 
 
@@ -409,7 +387,7 @@ end
 Check if the mesh with given name is used by a solver. 
 """
 function hasMesh(meshName::String)::Bool
-    ans::Integer = ccall((:precicec_hasMesh, libprecicePath), Cint, (Ptr{Int8},), meshName)
+    ans::Integer = ccall((:precicec_hasMesh, "libprecice"), Cint, (Ptr{Int8},), meshName)
     return ans
 end
 
@@ -427,7 +405,7 @@ meshid = getMeshID("MeshOne")
 ```
 """
 function getMeshID(meshName::String)
-    ans::Integer = ccall((:precicec_getMeshID, libprecicePath), Cint, (Ptr{Int8},), meshName)
+    ans::Integer = ccall((:precicec_getMeshID, "libprecice"), Cint, (Ptr{Int8},), meshName)
     return ans
 end
 
@@ -445,7 +423,7 @@ Return true if the mesh is already used.
 
 """
 function hasData(dataName::String, meshID::Integer)::Bool
-    ans::Integer = ccall((:precicec_hasData, libprecicePath), Cint, (Ptr{Int8}, Cint), dataName, meshID)
+    ans::Integer = ccall((:precicec_hasData, "libprecice"), Cint, (Ptr{Int8}, Cint), dataName, meshID)
     return ans
 end
 
@@ -463,7 +441,7 @@ Return the data id belonging to the given name.
 The given name (`dataName`) has to be one of the names specified in the configuration file. The data ID obtained can be used to read and write data to and from the coupling mesh.
 """
 function getDataID(dataName::String, meshID::Integer)
-    id::Integer = ccall((:precicec_getDataID, libprecicePath), Cint, (Ptr{Int8}, Cint), dataName, meshID)
+    id::Integer = ccall((:precicec_getDataID, "libprecice"), Cint, (Ptr{Int8}, Cint), dataName, meshID)
     return id
 end
 
@@ -493,7 +471,7 @@ v1_id = setMeshVertex(mesh_id, [1,1,1])
 ```
 """
 function setMeshVertex(meshID::Integer, position::AbstractArray{Float64})
-    id::Integer = ccall((:precicec_setMeshVertex, libprecicePath), Cint, (Cint, Ref{Float64}), meshID, position)
+    id::Integer = ccall((:precicec_setMeshVertex, "libprecice"), Cint, (Cint, Ref{Float64}), meshID, position)
     return id
 end
 
@@ -541,7 +519,7 @@ julia> size(positions)
 function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
     _size = length(ids)
     positions = Array{Float64,1}(undef,_size*getDimensions())
-    ccall((:precicec_getMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, _size, ids, positions)
+    ccall((:precicec_getMeshVertices, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, _size, ids, positions)
     return positions
 end
 
@@ -578,7 +556,7 @@ vertex_ids = setMeshVertices(mesh_id, 3, vertices)
 """
 function setMeshVertices(meshID::Integer, size::Integer, positions::AbstractArray{Float64})
     vertexIDs = Array{Int32, 1}(undef, size)
-    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, size, positions, vertexIDs)
+    ccall((:precicec_setMeshVertices, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, size, positions, vertexIDs)
     return vertexIDs 
 end
 
@@ -591,7 +569,7 @@ Return the number of vertices of a mesh.
 
 """
 function getMeshVertexSize(meshID::Integer)::Integer
-    size::Integer = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Cint,), meshID)
+    size::Integer = ccall((:precicec_getMeshVertexSize, "libprecice"), Cint, (Cint,), meshID)
     return size
 end
 
@@ -629,7 +607,7 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
     _size = Cint(length(positions)÷getDimensions())
     ids = Array{Cint,1}(undef,size)
-    ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, ids)
+    ccall((:precicec_getMeshVertexIDsFromPositions, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, ids)
     return ids
 end
 
@@ -652,7 +630,7 @@ Previous calls:
 
 """
 function setMeshEdge(meshID::Integer, firstVertexID::Integer, secondVertexID::Integer)::Integer
-    edgeID::Integer = ccall((:precicec_setMeshEdge, libprecicePath), Cint, (Cint, Cint, Cint), meshID, firstVertexID, secondVertexID)
+    edgeID::Integer = ccall((:precicec_setMeshEdge, "libprecice"), Cint, (Cint, Cint, Cint), meshID, firstVertexID, secondVertexID)
     return edgeID
 end
 
@@ -675,7 +653,7 @@ Previous calls:
  - Edges with `first_edge_id`, `second_edge_id`, and `third_edge_id` were added to the mesh with the ID `meshID`
 """
 function setMeshTriangle(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
-    ccall((:precicec_setMeshTriangle, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
+    ccall((:precicec_setMeshTriangle, "libprecice"), Cvoid, (Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
 end
 
 
@@ -701,7 +679,7 @@ Previous calls:
  - Edges with `firstVertexID`, `secondVertexID`, and `thirdEdgeID` were added to the mesh with the ID `meshID`
 """
 function setMeshTriangleWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
-    ccall((:precicec_setMeshTriangleWithEdges, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
+    ccall((:precicec_setMeshTriangleWithEdges, "libprecice"), Cvoid, (Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID)
 end
 
 
@@ -727,7 +705,7 @@ Previous calls:
     to the mesh with the ID `mesh_id`
 """
 function setMeshQuad(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID, fourthEdgeID::Integer)
-    ccall((:precicec_setMeshQuad, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID, fourthEdgeID)
+    ccall((:precicec_setMeshQuad, "libprecice"), Cvoid, (Cint, Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID, fourthEdgeID)
 end
 
 
@@ -755,7 +733,7 @@ Previous calls:
     to the mesh with the ID `mesh_id`
 """
 function setMeshQuadWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
-    ccall((:precicec_setMeshQuadWithEdges, libprecicePath), Cvoid, (Cint, Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID, fourthEdgeID)
+    ccall((:precicec_setMeshQuadWithEdges, "libprecice"), Cvoid, (Cint, Cint, Cint, Cint, Cint), meshID, firstEdgeID, secondEdgeID, thirdEdgeID, fourthEdgeID)
 end
 
 
@@ -803,7 +781,7 @@ writeBlockVectorData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
+    ccall((:precicec_writeBlockVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
 
@@ -849,7 +827,7 @@ writeVectorData(data_id, vertex_id, value)
 ```
 """
 function writeVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
-    ccall((:precicec_writeVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
+    ccall((:precicec_writeVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
 end
 
 # TODO same as above
@@ -885,7 +863,7 @@ writeBlockScalarData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    ccall((:precicec_writeBlockScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
+    ccall((:precicec_writeBlockScalarData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
 end
 
 @doc """
@@ -916,7 +894,7 @@ writeScalarData(data_id, vertex_id, value)
 ```
 """
 function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
-    ccall((:precicec_writeScalarData, libprecicePath), Cvoid, (Cint, Cint, Cdouble), dataID, valueIndex, dataValue)
+    ccall((:precicec_writeScalarData, "libprecice"), Cvoid, (Cint, Cint, Cdouble), dataID, valueIndex, dataValue)
 end
 
 @doc """
@@ -963,7 +941,7 @@ julia> size(values)
 function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size=length(valueIndices)
     values = Array{Float64,1}(undef,_size*getDimensions())
-    ccall((:precicec_readBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
+    ccall((:precicec_readBlockVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
     return values
 end
 
@@ -993,7 +971,7 @@ value = readVectorData(data_id, vertex_id)
 """
 function readVectorData(dataID::Integer, valueIndex::Integer)
     dataValue = Array{Float64,1}(undef,getDimensions())
-    ccall((:precicec_readVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
+    ccall((:precicec_readVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
     return dataValue
 end
 
@@ -1027,7 +1005,7 @@ values = readBlockScalarData(data_id, vertex_ids)
 function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size=length(valueIndices)
     values = Array{Float64,1}(undef,_size)
-    ccall((:precicec_readScalarVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
+    ccall((:precicec_readScalarVectorData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
     return values
 end
 
@@ -1058,7 +1036,7 @@ value = readScalarData(data_id, vertex_id)
 """
 function readScalarData(dataID::Integer, valueIndex::Integer)
     dataValue = Float64(0.0)
-    ccall((:precicec_readScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
+    ccall((:precicec_readScalarData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
     return dataValue
 end
 
@@ -1073,7 +1051,7 @@ Return a semicolon-separated String containing:
  - the configuration of preCICE including MPI, PETSC, PYTHON
 """
 function getVersionInformation()
-    versionCstring = ccall((:precicec_getVersionInformation, libprecicePath), Cstring, ())
+    versionCstring = ccall((:precicec_getVersionInformation, "libprecice"), Cstring, ())
     return unsafe_string(versionCstring)
 end
 
@@ -1091,7 +1069,7 @@ Previous calls:
  - A mapping to [`fromMeshID`](@ref) was configured
 """
 function mapWriteDataFrom(fromMeshID::Integer)
-    ccall((:precicec_mapWriteDataFrom, libprecicePath), Cvoid, (Cint,), fromMeshID)
+    ccall((:precicec_mapWriteDataFrom, "libprecice"), Cvoid, (Cint,), fromMeshID)
 end
 
 
@@ -1109,7 +1087,7 @@ Previous calls:
  - A mapping to [`toMeshID`](@ref) was configured.
 """
 function mapReadDataTo(fromMeshID::Integer)
-    ccall((:precicec_mapReadDataTo, libprecicePath), Cvoid, (Cint,), fromMeshID)
+    ccall((:precicec_mapReadDataTo, "libprecice"), Cvoid, (Cint,), fromMeshID)
 end
 
 
@@ -1121,7 +1099,7 @@ Return the name of action for writing initial data.
 
 """
 function actionWriteInitialData()
-    msgCstring = ccall((:precicec_actionWriteInitialData, libprecicePath), Cstring, ())
+    msgCstring = ccall((:precicec_actionWriteInitialData, "libprecice"), Cstring, ())
     return unsafe_string(msgCstring)
 end
 
@@ -1133,7 +1111,7 @@ end
 Return name of action for writing iteration checkpoint.
 """
 function actionWriteIterationCheckpoint()
-    msgCstring = ccall((:precicec_actionWriteIterationCheckpoint, libprecicePath), Cstring, ())
+    msgCstring = ccall((:precicec_actionWriteIterationCheckpoint, "libprecice"), Cstring, ())
     return unsafe_string(msgCstring)
 end
 
@@ -1145,7 +1123,7 @@ end
 Return name of action for reading iteration checkpoint
 """
 function actionReadIterationCheckpoint()
-    msgCstring = ccall((:precicec_actionReadIterationCheckpoint, libprecicePath), Cstring, ())
+    msgCstring = ccall((:precicec_actionReadIterationCheckpoint, "libprecice"), Cstring, ())
     return unsafe_string(msgCstring)
 end
 
