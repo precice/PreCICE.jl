@@ -7,11 +7,11 @@ jobs:
     container: precice/precice
     strategy:
       matrix:
-        julia-version: [stable, lts]
+        julia-version: ['stable', 'lts']
         julia-arch: [x64, x86]
     
     steps:
-      - name: Install Julia 1.6.1
+      - name: Install Julia
         uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.julia-version }}     
