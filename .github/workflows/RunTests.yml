@@ -5,13 +5,16 @@ jobs:
   run_tests:
     runs-on: ubuntu-latest
     container: precice/precice
+    strategy:
+      matrix:
+        julia-version: [stable, lts]
+        julia-arch: [x64, x86]
     
     steps:
-
       - name: Install Julia 1.6.1
-        uses: julia-actions/setup-julia@v1.6.1
+        uses: julia-actions/setup-julia@v1
         with:
-          version: 1.6.1         
+          version: ${{ matrix.julia-version }}     
         
       - uses: actions/checkout@v2
 
