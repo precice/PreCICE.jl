@@ -2,9 +2,29 @@ name: Run Tests
 on: [push]
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: precice/precice
+    strategy:
+      matrix:
+        julia-version: ['^1.6']
+        julia-arch: [x64, x86]
+    
+    steps:
+      - name: Install Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.julia-version }}     
+        
+      - uses: actions/checkout@v2
+
+      - name: Build Package
+        uses: julia-actions/julia-buildpkg@v1
+
   run_tests:
     runs-on: ubuntu-latest
     container: precice/precice
+    needs: [build]
     strategy:
       matrix:
         julia-version: ['^1.6']
