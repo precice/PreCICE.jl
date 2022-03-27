@@ -4,8 +4,8 @@ using Test
 
 @testset "PreCICE.jl" begin
     
-    @testset "Low-Level-API" begin
-        include("low-level-api.jl")
+    @testset "Build" begin
+        include("test_build.jl")
         @test isnothing(test_binary_location_found())
     end
 
