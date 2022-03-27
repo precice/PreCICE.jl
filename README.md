@@ -63,6 +63,8 @@ This package works with official Julia binaries listed below. See the [Platform 
 
 ## Supported versions
 
-`1.6` and newer
+The package is tested for Julia versions `1.6.0`, `1.6.5`, `1.7.0` and the newest release Julia releasse according to the official [`versions.json`](https://julialang-s3.julialang.org/bin/versions.json).
+
+It is known that versions `<1.6` are not supported.
 
 [Unofficial Julia binaries](https://julialang.org/downloads/platform/#platform_specific_instructions_for_unofficial_binaries) may not be compatible.
