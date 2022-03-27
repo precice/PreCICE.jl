@@ -7,7 +7,7 @@ jobs:
     container: precice/precice
     strategy:
       matrix:
-        julia-version: ['^1.6']
+        julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
         julia-arch: [x64, x86]
     
     steps:
@@ -27,7 +27,7 @@ jobs:
     needs: [build]
     strategy:
       matrix:
-        julia-version: ['^1.6']
+        julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
         julia-arch: [x64, x86]
     
     steps:
