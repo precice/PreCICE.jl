@@ -6,9 +6,13 @@
 
 This package provides Julia language bindings for the C++ library [preCICE](https://github.com/precice/precice). It is a Julia package that wraps the API of preCICE.
 
-## Adding the package to a Julia environment or script
+## Adding and using the package
 
-You can use the Julia bindings for preCICE by adding them as a package in a Julia environment or also directly including the package in a Julia script. For both usages you need to have preCICE installed on the system. For preCICE installation you can look at the [installation documentation](https://precice.org/installation-overview.html). You can directly add the Julia bindings to your Julia environment in the following way:
+You can use the Julia bindings for preCICE by adding them as a package in a Julia environment or also directly including the package in a Julia script. For both type of usages you need to have preCICE installed on the system. For preCICE installation you can look at the [installation documentation](https://precice.org/installation-overview.html). 
+
+### Adding the package using the repository link
+
+Add the Julia bindings to the Julia environment in the following way:
 
 ```julia
 julia> ]
@@ -17,18 +21,27 @@ Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
 ```
 
-Once the package is added you can directly access preCICE API commands in the Julia environment, for example `getVersionInformation()`. Alternatively you can also include the package in your Julia script in the following way:
+Alternatively you can also include the package in a Julia script in the following way:
 
 ```julia
 import Pkg; Pkg.add(url="https://github.com/precice/julia-bindings.git")
 using PreCICE
 ```
 
-Once the package is added at the beginning of the Julia script you can access the preCICE API commands in the script.
+### Adding the package from a local folder
 
-## Adding the package when preCICE is installed at custom paths
+If you have cloned or downloaded the Julia bindings on your local machine, add the Julia bindings to your Julia environment in the following way:
 
-If you installed preCICE at a custom path, errors like ```ERROR: could not load library "/..."``` can occur after adding the Julia bindings package. 
+```julia
+julia> ]
+pkg> add <path-to-repository>
+Then exit the package mode with 🔙 or Ctrl + c
+julia> using PreCICE
+```
+
+## Adding the package when preCICE is installed at a custom path
+
+If you installed preCICE at a custom path, errors of the form ```ERROR: could not load library "/..."``` can occur after adding the Julia bindings package.
 
 Set your custom path through the environment variable `PRECICE_JL_BINARY` and rebuild this package:
 
