@@ -54,7 +54,6 @@ julia> using PreCICE
 ...
 ```
 
-
 ## Usage
 
 You can look at [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdummy) as an example of how to use the Julia bindings for preCICE.
@@ -76,6 +75,8 @@ This package works with official Julia binaries listed below. See the [Platform 
 
 ## Supported versions
 
-`1.6` and newer
+The package is tested for Julia versions `1.6.0`, `1.6.5`, `1.7.0` and the two newest [Julia releases](https://github.com/JuliaLang/julia/releases).
+
+Versions prior to `v1.6.0` are not supported.
 
 [Unofficial Julia binaries](https://julialang.org/downloads/platform/#platform_specific_instructions_for_unofficial_binaries) may not be compatible.
