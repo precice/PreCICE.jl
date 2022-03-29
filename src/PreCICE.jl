@@ -512,21 +512,15 @@ the 3D-format for positions is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz
 - `meshID::Integer`:  The id of the mesh to read the vertices from.
 - `ids::AbstractArray{Cint}`:  The ids of the vertices to get the positions from.
 
-# Notes
-
-Previous calls:
- - count of available elements at positions matches the configured `dimension * size`.
- - count of available elements at ids matches size.
-
 # Examples
 
 Return data structure for a 2D problem with 5 vertices:
 ```julia-repl
 julia> meshID = getMeshID("MeshOne")
-julia> vertexIDs = [1,2,3,4]
+julia> vertexIDs = [1,2,3,4,5]
 julia> positions = getMeshVertices(meshID, vertexIDs)
 julia> size(positions)
-(8,)
+(10,)
 ```
 Return data structure for a 3D problem with 5 vertices:
 
@@ -548,14 +542,13 @@ end
 
 @doc """
 
-    setMeshVertices(meshID::Integer, size::Integer, positions::AbstractArray{Float64})
+    setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
 
 Create multiple mesh vertices on a coupling mesh and return an array holding their ids.
 
 
 # Arguments
 - `meshID::Integer`: The id of the mesh to add the vertices to. 
-- `size::Integer`: Number of vertices to create.
 - `positions::AbstractArray{Float64}`: An array holding the coordinates of the vertices.
                                     The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny), 
                                     the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
@@ -573,12 +566,13 @@ Previous calls:
 # Examples
 ```julia
 vertices = [1,1,1,2,2,2,3,3,3]
-vertex_ids = setMeshVertices(mesh_id, 3, vertices)
+vertex_ids = setMeshVertices(mesh_id, vertices)
 ```
 """
-function setMeshVertices(meshID::Integer, size::Integer, positions::AbstractArray{Float64})
-    vertexIDs = Array{Int32, 1}(undef, size)
-    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, size, positions, vertexIDs)
+function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
+    _size =Cint(length(positions)/PreCICE.getDimensions())
+    vertexIDs = Array{Int32, 1}(undef, _size)
+    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, vertexIDs)
     return vertexIDs 
 end
 
@@ -591,8 +585,8 @@ Return the number of vertices of a mesh.
 
 """
 function getMeshVertexSize(meshID::Integer)::Integer
-    size::Integer = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Cint,), meshID)
-    return size
+    _size ::Integer = ccall((:precicec_getMeshVertex_size, libprecicePath), Cint, (Cint,), meshID)
+    return _size
 end
 
 
@@ -611,12 +605,6 @@ Prefer to reuse the IDs returned from calls to [`setMeshVertex`](@ref) and [`set
                                        The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny),
                                        the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
 
-# Notes
-
-Previous calls:
- - count of available elements at positions matches the configured `dimension * size`
- - count of available elements at ids matches size
-
 # Examples
 
 Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
@@ -627,8 +615,8 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 ```
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
-    _size = Cint(length(positions)÷getDimensions())
-    ids = Array{Cint,1}(undef,size)
+    _size = Cint(length(positions)/getDimensions())
+    ids = Array{Cint,1}(undef,_size)
     ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, ids)
     return ids
 end
@@ -762,7 +750,7 @@ end
 # TODO is the form of the vector correct? or can this be passed as a matrix instead of a vector?
 @doc """
 
-    writeBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
 Write vector data values given as block. This function writes values of specified vertices to a `dataID`.
 Values are provided as a block of continuous memory. Values are stored in a Matrix [N x D] where N = number
@@ -774,15 +762,12 @@ values = (d0x, d0y, d0z, d1x, d1y, d1z, ...., dnx, dny, dnz), where n is the num
 
 # Arguments
 - `dataID::Integer`: ID of the data to be written.
-- `size::Integer`: Number n of vertices. 
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices. 
 - `values::AbstractArray{Float64}`: Values of the data to be written.
 
 # Notes
 
 Previous calls:
- - count of available elements at `values` matches the configured `dimension` * `size`
- - count of available elements at `vertex_ids` matches the given size
  - [`initialize`](@ref) has been called
 
 # Examples
@@ -802,8 +787,9 @@ values = [v1_x, v1_y, v1_z; v2_x, v2_y, v2_z; v3_x, v3_y, v3_z; v4_x, v4_y, v4_z
 writeBlockVectorData(data_id, vertex_ids, values)
 ```
 """
-function writeBlockVectorData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
+function writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    _size =length(valueIndices)
+    ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
 end
 
 
@@ -855,7 +841,7 @@ end
 # TODO same as above
 @doc """
 
-    writeBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
 Write scalar data given as block.
 
@@ -863,15 +849,12 @@ This function writes values of specified vertices to a dataID. Values are provid
 
 # Arguments
 - `dataID::Integer`: ID of the data to be written. Obtained by getDataID().
-- `size::Integer`: 	Number n of vertices. 
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
 - `values::AbstractArray{Float64}`: The array holding the values.
     
 # Notes
 
 Previous calls:
- - Count of available elements at `values` matches the given size
- - Count of available elements at `vertex_ids` matches the given size
  - [`initialize`](@ref) has been called
 
 # Examples
@@ -884,8 +867,9 @@ values = [1, 2, 3, 4, 5]
 writeBlockScalarData(data_id, vertex_ids, values)
 ```
 """
-function writeBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    ccall((:precicec_writeBlockScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, size, valueIndices, values)
+function writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    _size =length(valueIndices)
+    ccall((:precicec_writeBlockScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
 end
 
 @doc """
@@ -937,9 +921,7 @@ the number of vector values. In 2D, the z-components are removed.
 # Notes
 
 Previous calls:
-    count of available elements at `values` matches the configured `dimension * size`
-    count of available elements at `vertex_ids` matches the given size
-    [`initialize`](@ref) has been called
+- [`initialize`](@ref) has been called
 
 # Examples
 
@@ -961,7 +943,7 @@ julia> size(values)
 ```
 """
 function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
-    _size=length(valueIndices)
+    _size =length(valueIndices)
     values = Array{Float64,1}(undef,_size*getDimensions())
     ccall((:precicec_readBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
     return values
@@ -1000,7 +982,7 @@ end
 
 @doc """
 
-    readBlockScalarData(dataID::Integer, size::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
+    readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
 
 Read and return scalar data as a block, values of specified vertices from a dataID.
 
@@ -1011,9 +993,7 @@ Read and return scalar data as a block, values of specified vertices from a data
 # Notes
 
 Previous calls:
- - count of available elements at `values` matches the given size
- - count of available elements at `vertex_ids` matches the given size
- - [`initialize`](@ref) has been called
+- [`initialize`](@ref) has been called
 
 # Examples
 
@@ -1025,8 +1005,8 @@ values = readBlockScalarData(data_id, vertex_ids)
 ```
 """
 function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
-    _size=length(valueIndices)
-    values = Array{Float64,1}(undef,_size)
+    _size =length(valueIndices)
+    values = Array{Float64,1}(undef,size)
     ccall((:precicec_readScalarVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
     return values
 end
