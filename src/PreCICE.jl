@@ -568,7 +568,7 @@ vertex_ids = setMeshVertices(mesh_id, vertices)
 ```
 """
 function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
-    _size = Cint(length(positions)/PreCICE.getDimensions())
+    _size = div(length(positions),PreCICE.getDimensions())
     vertexIDs = Array{Int32, 1}(undef, _size)
     ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, vertexIDs)
     return vertexIDs 
@@ -613,7 +613,7 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 ```
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
-    _size = Cint(length(positions)/getDimensions())
+    _size = div(length(positions),getDimensions())
     ids = Array{Cint,1}(undef, _size)
     ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, ids)
     return ids
