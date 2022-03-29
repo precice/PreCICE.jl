@@ -81,7 +81,7 @@ function createSolverInterface(participantName::String,
                                 solverProcessSize::Integer)
     ccall((:precicec_createSolverInterface, libprecicePath), 
             Cvoid, 
-            (Ptr{Int8},Ptr{Int8}, Cint, Cint), 
+            (Ptr{Int8}, Ptr{Int8}, Cint, Cint), 
             participantName, 
             configFilename, 
             solverProcessIndex, 
@@ -534,7 +534,7 @@ julia> size(positions)
 """
 function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
     _size = length(ids)
-    positions = Array{Float64,1}(undef,_size*getDimensions())
+    positions = Array{Float64,1}(undef, _size*getDimensions())
     ccall((:precicec_getMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, _size, ids, positions)
     return positions
 end
@@ -570,7 +570,7 @@ vertex_ids = setMeshVertices(mesh_id, vertices)
 ```
 """
 function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
-    _size =Cint(length(positions)/PreCICE.getDimensions())
+    _size = Cint(length(positions)/PreCICE.getDimensions())
     vertexIDs = Array{Int32, 1}(undef, _size)
     ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, vertexIDs)
     return vertexIDs 
@@ -585,7 +585,7 @@ Return the number of vertices of a mesh.
 
 """
 function getMeshVertexSize(meshID::Integer)::Integer
-    _size ::Integer = ccall((:precicec_getMeshVertex_size, libprecicePath), Cint, (Cint,), meshID)
+    _size ::Integer = ccall((:precicec_getMeshVertexSize, libprecicePath), Cint, (Cint,), meshID)
     return _size
 end
 
@@ -616,7 +616,7 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
     _size = Cint(length(positions)/getDimensions())
-    ids = Array{Cint,1}(undef,_size)
+    ids = Array{Cint,1}(undef, _size)
     ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, ids)
     return ids
 end
@@ -788,7 +788,7 @@ writeBlockVectorData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    _size =length(valueIndices)
+    _size = length(valueIndices)
     ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
 end
 
@@ -868,7 +868,7 @@ writeBlockScalarData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    _size =length(valueIndices)
+    _size = length(valueIndices)
     ccall((:precicec_writeBlockScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
 end
 
@@ -943,8 +943,8 @@ julia> size(values)
 ```
 """
 function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
-    _size =length(valueIndices)
-    values = Array{Float64,1}(undef,_size*getDimensions())
+    _size = length(valueIndices)
+    values = Array{Float64,1}(undef, _size*getDimensions())
     ccall((:precicec_readBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
     return values
 end
@@ -1005,8 +1005,8 @@ values = readBlockScalarData(data_id, vertex_ids)
 ```
 """
 function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
-    _size =length(valueIndices)
-    values = Array{Float64,1}(undef,size)
+    _size = length(valueIndices)
+    values = Array{Float64,1}(undef, _size)
     ccall((:precicec_readScalarVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
     return values
 end
