@@ -497,16 +497,13 @@ function setMeshVertex(meshID::Integer, position::AbstractArray{Float64})
     return id
 end
 
-
 @doc """
 
     getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})::AbstractArray{Float64}
 
 Return vertex positions for multiple vertex ids from a given mesh.
 
-The 2D-format for positions is (d0x, d0y, d1x, d1y, ..., dnx, dny),
-the 3D-format for positions is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
-
+The shape for positions is [N x D] where N = number of vertices and D = dimensions of geometry
 
 # Arguments
 - `meshID::Integer`:  The id of the mesh to read the vertices from.
@@ -520,7 +517,7 @@ julia> meshID = getMeshID("MeshOne")
 julia> vertexIDs = [1,2,3,4,5]
 julia> positions = getMeshVertices(meshID, vertexIDs)
 julia> size(positions)
-(10,)
+(2,5)
 ```
 Return data structure for a 3D problem with 5 vertices:
 
@@ -529,14 +526,14 @@ julia> mesh_id = getMeshID("MeshOne")
 julia> vertex_ids = [1, 2, 3, 4, 5]
 julia> positions = getMeshVertices(mesh_id, vertex_ids)
 julia> size(positions)
-(15,)
+(5,3)
 ```
 """
 function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
     _size = length(ids)
     positions = Array{Float64,1}(undef, _size*getDimensions())
     ccall((:precicec_getMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, _size, ids, positions)
-    return positions
+    return transpose(reshape(positions,(_size,getDimensions())))
 end
 
 
@@ -550,8 +547,7 @@ Create multiple mesh vertices on a coupling mesh and return an array holding the
 # Arguments
 - `meshID::Integer`: The id of the mesh to add the vertices to. 
 - `positions::AbstractArray{Float64}`: An array holding the coordinates of the vertices.
-                                    The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny), 
-                                    the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
+                                       It has the shape [N x D] where N = number of vertices and D = dimensions of geometry
                  
 # Notes
 Previous calls:
@@ -562,15 +558,18 @@ Previous calls:
 [`getDimensions`](@ref), [`setMeshVertex`](@ref)
 
 # Examples
+Example for a 3D Problem with 5 vertices
 ```julia
-vertices = [1,1,1,2,2,2,3,3,3]
+vertices = [1 1 1;2 2 2;3 3 3]
 vertex_ids = setMeshVertices(mesh_id, vertices)
 ```
 """
 function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
-    _size = div(length(positions),PreCICE.getDimensions())
+    _size,dimensions = size(positions)
+    @assert dimensions==getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+    
     vertexIDs = Array{Int32, 1}(undef, _size)
-    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, vertexIDs)
+    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, reshape(transpose(positions),:), vertexIDs)
     return vertexIDs 
 end
 
@@ -588,7 +587,6 @@ function getMeshVertexSize(meshID::Integer)::Integer
 end
 
 
-# TODO Example has the wrong arguments
 @doc """
 
     getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})::AbstractArray{Int}
@@ -599,23 +597,21 @@ Prefer to reuse the IDs returned from calls to [`setMeshVertex`](@ref) and [`set
 
 # Arguments
 - `meshID::Integer`: ID of the mesh to retrieve positions from.
-- `positions::AbstractArray{Float64}`: Positions to find ids for.
-                                       The 2D-format is (d0x, d0y, d1x, d1y, ..., dnx, dny),
-                                       the 3D-format is (d0x, d0y, d0z, d1x, d1y, d1z, ..., dnx, dny, dnz).
+- `positions::AbstractArray{Float64}`: Positions to find ids for. The format is [N x D] where N = number of vertices and D = dimensions of geometry.
 
 # Examples
 
 Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
 ```julia
 meshID = getMeshID("MeshOne")
-positions = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
+positions = [1 1; 2 2; 3 3; 4 4; 5 5]
 vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 ```
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
-    _size = div(length(positions),getDimensions())
+    _size,dimensions = size(positions)
     ids = Array{Cint,1}(undef, _size)
-    ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, positions, ids)
+    ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, reshape(transpose(positions),:), ids)
     return ids
 end
 
@@ -745,18 +741,12 @@ function setMeshQuadWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeI
 end
 
 
-# TODO is the form of the vector correct? or can this be passed as a matrix instead of a vector?
 @doc """
 
     writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
 Write vector data values given as block. This function writes values of specified vertices to a `dataID`.
-Values are provided as a block of continuous memory. Values are stored in a Matrix [N x D] where N = number
-of vertices and D = dimensions of geometry 
-
-The block must contain the vector values in the following form: 
-
-values = (d0x, d0y, d0z, d1x, d1y, d1z, ...., dnx, dny, dnz), where n is the number of vector values. In 2D, the z-components are removed.
+Values must be provided in a Matrix with shape [N x D] where N = number of vertices and D = dimensions of geometry 
 
 # Arguments
 - `dataID::Integer`: ID of the data to be written.
@@ -774,34 +764,29 @@ Write block vector data for a 2D problem with 5 vertices:
 ```julia
 data_id = 1
 vertex_ids = [1, 2, 3, 4, 5]
-values = [v1_x, v1_y; v2_x, v2_y; v3_x, v3_y; v4_x, v4_y; v5_x, v5_y])
+values = [v1_x v1_y; v2_x v2_y; v3_x v3_y; v4_x v4_y; v5_x v5_y])
 writeBlockVectorData(data_id, vertex_ids, values)
 ```
 Write block vector data for a 3D (D=3) problem with 5 (N=5) vertices:
 ```julia
 data_id = 1
 vertex_ids = [1, 2, 3, 4, 5]
-values = [v1_x, v1_y, v1_z; v2_x, v2_y, v2_z; v3_x, v3_y, v3_z; v4_x, v4_y, v4_z; v5_x, v5_y, v5_z]
+values = [v1_x v1_y v1_z; v2_x v2_y v2_z; v3_x v3_y v3_z; v4_x v4_y v4_z; v5_x v5_y v5_z]
 writeBlockVectorData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    _size = length(valueIndices)
-    ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
+    _size,dimensions = size(valueIndices)
+    ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, reshape(transpose(values),:))
 end
 
 
-# TODO Are they provided as a block of continuous memory?
 @doc """
 
     writeVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
 
 Write vectorial floating-point data to a vertex. This function writes a value of a specified vertex to a dataID.
-Values are provided as a block of continuous memory.
-
-The 2D-format of value is a array of shape 2
-
-The 3D-format of value is a array of shape 3
+Values are provided as a block of continuous memory in the shape of (D,) with D = dimensions of geometry
 
 # Arguments
 - `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
@@ -836,7 +821,7 @@ function writeVectorData(dataID::Integer, valueIndex::Integer, dataValue::Abstra
     ccall((:precicec_writeVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, dataValue)
 end
 
-# TODO same as above
+
 @doc """
 
     writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
@@ -870,6 +855,7 @@ function writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}
     ccall((:precicec_writeBlockScalarData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
 end
 
+
 @doc """
 
     writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
@@ -901,6 +887,7 @@ function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float6
     ccall((:precicec_writeScalarData, libprecicePath), Cvoid, (Cint, Cint, Cdouble), dataID, valueIndex, dataValue)
 end
 
+
 @doc """
 
     readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
@@ -909,8 +896,7 @@ Read and return vector data values given as block.
 
 The block contains the vector values in the following form:
 
-values = (d0x, d0y, d0z, d1x, d1y, d1z, ...., dnx, dny, dnz), where n is 
-the number of vector values. In 2D, the z-components are removed.
+`size(values) = (N, D)`, N = number of vertices and D = dimensions of geometry
 
 # Arguments
 - `dataID::Integer`: ID of the data to be read.
@@ -944,7 +930,7 @@ function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size*getDimensions())
     ccall((:precicec_readBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
-    return values
+    return reshape(transpose(values),(_size,getDimensions()))
 end
 
 @doc """
