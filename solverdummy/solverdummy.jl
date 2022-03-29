@@ -44,7 +44,7 @@ for i in 1:numberOfVertices, j in 1:dimensions
         vertices[j + dimensions * (i-1)] = i
 end
 
-vertexIDs = PreCICE.setMeshVertices(meshID, numberOfVertices, vertices)
+vertexIDs = PreCICE.setMeshVertices(meshID, vertices)
 
 let # setting local scope for dt outside of the while loop
 
@@ -67,7 +67,7 @@ while PreCICE.isCouplingOngoing()
     end
 
     if PreCICE.isWriteDataRequired(dt)
-        PreCICE.writeBlockVectorData(writeDataID, numberOfVertices, vertexIDs, writeData)
+        PreCICE.writeBlockVectorData(writeDataID, vertexIDs, writeData)
     end
 
     dt = PreCICE.advance(dt)
