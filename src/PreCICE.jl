@@ -556,8 +556,6 @@ Create multiple mesh vertices on a coupling mesh and return an array holding the
 # Notes
 Previous calls:
  - [`initialize`](@ref) has not yet been called
- - count of available elements at positions matches the configured `dimension` * `size`
- - count of available elements at ids matches size
 
 
 # See also
