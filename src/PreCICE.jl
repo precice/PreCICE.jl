@@ -610,6 +610,8 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
     _size,dimensions = size(positions)
+    @assert dimensions==getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+
     ids = Array{Cint,1}(undef, _size)
     ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, reshape(transpose(positions),:), ids)
     return ids
@@ -777,6 +779,8 @@ writeBlockVectorData(data_id, vertex_ids, values)
 """
 function writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
     _size,dimensions = size(valueIndices)
+    @assert dimensions==getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+
     ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, reshape(transpose(values),:))
 end
 
