@@ -3,6 +3,9 @@ uuid = "57fbd4af-5cc3-4712-aac0-6930e7658184"
 authors = ["preCICE <https://precice.org/> and contributors"]
 version = "0.1.0"
 
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
 [compat]
 julia = "1.6"
 
