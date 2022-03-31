@@ -778,7 +778,7 @@ writeBlockVectorData(data_id, vertex_ids, values)
 ```
 """
 function writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-    _size,dimensions = size(valueIndices)
+    _size,dimensions = size(values)
     @assert dimensions==getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
 
     ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, reshape(transpose(values),:))
