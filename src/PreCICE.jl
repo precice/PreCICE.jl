@@ -1,5 +1,4 @@
 module PreCICE
-using LinearAlgebra
 """
 The `PreCICE` module provides the bindings for using the preCICE api. For more information, visit https://precice.org/.
 """
@@ -535,8 +534,7 @@ function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
     positions = Array{Float64,1}(undef, _size*getDimensions())
     ccall((:precicec_getMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), meshID, _size, ids, positions)
     return_positions = similar(positions,_size,getDimensions())
-    transpose!(return_positions,reshape(positions,(_size,getDimensions())))
-    return return_positions
+    return permutedims(return_positions,reshape(positions,(_size,getDimensions())))
 end
 
 
@@ -571,11 +569,10 @@ function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
     _size,dimensions = size(positions)
     @assert dimensions==getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
     
-    transposed_positions = similar(positions)
-    transpose!(transposed_positions,positions)
+    positions = permutedims(positions) # transpose
 
     vertexIDs = Array{Int32, 1}(undef, _size)
-    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, reshape(transposed_positions,:), vertexIDs)
+    ccall((:precicec_setMeshVertices, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, reshape(positions,:), vertexIDs)
     return vertexIDs 
 end
 
@@ -618,11 +615,10 @@ function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray
     _size,dimensions = size(positions)
     @assert dimensions==getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
 
-    transposed_positions = similar(positions)
-    transpose!(transposed_positions,positions)
+    positions = permutedims(positions)
 
     ids = Array{Cint,1}(undef, _size)
-    ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, reshape(transposed_positions,:), ids)
+    ccall((:precicec_getMeshVertexIDsFromPositions, libprecicePath), Cvoid, (Cint, Cint, Ref{Cdouble}, Ref{Cint}), meshID, _size, reshape(positions,:), ids)
     return ids
 end
 
@@ -790,9 +786,9 @@ function writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}
     _size,dimensions = size(values)
     @assert dimensions==getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
 
-    transposed_values = similar(values)
-    transpose!(transposed_values,values)
-    ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, reshape(transposed_values,:))
+    values = permutedims(values)
+
+    ccall((:precicec_writeBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, reshape(values,:))
 end
 
 
@@ -945,9 +941,7 @@ function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size*getDimensions())
     ccall((:precicec_readBlockVectorData, libprecicePath), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, values)
-    return_values = similar(values, _size,getDimensions())
-    transpose!(return_values,reshape(values,(_size,getDimensions())))
-    return return_values
+    return permutedims(reshape(values,(_size,getDimensions())))
 end
 
 @doc """
