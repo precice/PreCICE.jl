@@ -36,20 +36,20 @@ numberOfVertices = 3
 readDataID  = PreCICE.getDataID(dataReadName, meshID)
 writeDataID = PreCICE.getDataID(dataWriteName, meshID)
 
-writeData = zeros(numberOfVertices * dimensions)
+writeData = zeros(numberOfVertices, dimensions)
 
-vertices = Array{Float64, 1}(undef, numberOfVertices * dimensions)
+vertices = Array{Float64, 2}(undef, numberOfVertices, dimensions)
 
 for i in 1:numberOfVertices, j in 1:dimensions
-        vertices[j + dimensions * (i-1)] = i
+        vertices[i,j] = i
 end
 
-vertexIDs = PreCICE.setMeshVertices(meshID, numberOfVertices, vertices)
+vertexIDs = PreCICE.setMeshVertices(meshID, vertices)
 
 let # setting local scope for dt outside of the while loop
 
 dt = PreCICE.initialize()
-readData = zeros(numberOfVertices * dimensions)
+readData = zeros(numberOfVertices, dimensions)
 
 while PreCICE.isCouplingOngoing()
     
@@ -62,12 +62,12 @@ while PreCICE.isCouplingOngoing()
         readData = PreCICE.readBlockVectorData(readDataID, vertexIDs) 
     end
 
-    for i in 1:(numberOfVertices * dimensions)
-        writeData[i] = readData[i] + 1.0
+    for i in 1:numberOfVertices,j in 1:dimensions
+        writeData[i,j] = readData[i,j] + 1.0
     end
 
     if PreCICE.isWriteDataRequired(dt)
-        PreCICE.writeBlockVectorData(writeDataID, numberOfVertices, vertexIDs, writeData)
+        PreCICE.writeBlockVectorData(writeDataID, vertexIDs, writeData)
     end
 
     dt = PreCICE.advance(dt)
