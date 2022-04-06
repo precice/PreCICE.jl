@@ -1,7 +1,7 @@
 name = "PreCICE"
 uuid = "57fbd4af-5cc3-4712-aac0-6930e7658184"
 authors = ["preCICE <https://precice.org/> and contributors"]
-version = "2.4.0-0-rc1"
+version = "2.3.0-0"
 
 [compat]
 julia = "1.6"
