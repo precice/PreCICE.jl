@@ -1,4 +1,4 @@
-if VERSION<v"1.6"
+if VERSION < v"1.6"
     error("Julia version $VERSION not compatible with PreCICE Adapter")
 end
 
@@ -10,10 +10,10 @@ if haskey(ENV, "PRECICE_JL_BINARY")
     try
         Libc.Libdl.dlopen(libprecice)
         push!(Libc.Libdl.DL_LOAD_PATH, libprecice)
-    catch e 
+    catch e
         @warn "could not load custom preCICE binary at location: $libprecice"
         @warn "will search the system locations for a valid library."
         throw(e)
     end
-    
+
 end
