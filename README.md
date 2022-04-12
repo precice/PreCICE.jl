@@ -10,13 +10,13 @@ This package provides Julia language bindings for the C++ library [preCICE](http
 
 You can use the Julia bindings for preCICE by adding them as a package in a Julia environment or also directly including the package in a Julia script. For both type of usages you need to have preCICE installed on the system. For preCICE installation you can look at the [installation documentation](https://precice.org/installation-overview.html). 
 
-### Adding the package
+### Adding the package using the repository link
 
 Add the Julia bindings to the Julia environment in the following way:
 
 ```julia
 julia> ]
-pkg> add PreCICE 
+pkg> add https://github.com/precice/julia-bindings.git 
 Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
 ```
@@ -39,18 +39,13 @@ Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
 ```
 
-## Troubleshooting
+## Adding the package when preCICE is installed at a custom path
 
 If you installed preCICE at a custom path, errors of the form ```ERROR: could not load library "/..."``` can occur after adding the Julia bindings package.
 
-Make sure the preCICE library is in the system library path through `echo $LD_LIBRARY_PATH` and otherwise update the variable with the correct path.
-```
-~$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<path-to-precice.so>
-```
+Set your custom path through the environment variable `PRECICE_JL_BINARY` and rebuild this package:
 
-A different way to fix this error is to set your custom path through the environment variable `PRECICE_JL_BINARY`. Afterwards you need to rebuild this package:
-
-```julia-repl
+```julia
 ~$ export PRECICE_JL_BINARY=/usr/lib/x86_64-linux-gnu/
 ~$ julia (--project)
 julia> ]
@@ -67,7 +62,7 @@ You can look at [solverdummy](https://github.com/precice/julia-bindings/tree/mai
 
 To use a certain branch of this package, add `#branchname` after the package url, for example if the branch `mpi-parallelization` is to be tested:
 
-```julia-repl
+```julia
 julia> ]
 pkg> add https://github.com/precice/julia-bindings.git#mpi-parallelization
 Then exit the package mode with 🔙 or Ctrl + c
