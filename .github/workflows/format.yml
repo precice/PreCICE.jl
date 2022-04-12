@@ -1,13 +1,7 @@
 name: format-check
 
-on:
-  push:
-    branches:
-      - 'main'
-      - 'release-'
-      - 'develop'
-    tags: '*'
-  pull_request:
+on: 
+  push
 
 jobs:
   build:
