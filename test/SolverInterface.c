@@ -4,7 +4,8 @@
 #include <string.h>
 
 // Im not sure if the functions with fake_read_write_buffer are correct
-// pointers also not sure in readscalardata,actionwriteinitialdata
+// pointers also not sure in readscalardata,actionwriteinitialdata.
+// in readscalardata, the python bindings have `&value` instead of `*value` but this gives an error on my system
 double *fake_read_write_buffer;
 const int SIZE = 6;
 int fake_dimensions;
@@ -147,6 +148,7 @@ char precicec_hasData(const char *dataName, int meshID)
 
 int precicec_getDataID(const char *dataName, int meshID)
 {
+    printf("%s", dataName);
     if (meshID == fake_mesh_id && dataName == fake_data_name)
     {
         return fake_data_id;
@@ -243,7 +245,7 @@ void precicec_mapWriteDataFrom(int fromMeshID)
 
 void precicec_writeBlockVectorData(int dataID, int size, const int *valueIndices, const double *values)
 {
-    for (int i = 0; i < size * getDimensions(); i++)
+    for (int i = 0; i < size * precicec_getDimensions(); i++)
     {
         fake_read_write_buffer[i] = values[i];
     }
@@ -251,7 +253,7 @@ void precicec_writeBlockVectorData(int dataID, int size, const int *valueIndices
 
 void precicec_writeVectorData(int dataID, int valueIndex, const double *value)
 {
-    for (int i = 0; i < getDimensions(); i++)
+    for (int i = 0; i < precicec_getDimensions(); i++)
     {
         fake_read_write_buffer[i] = value[i];
     }
@@ -272,7 +274,7 @@ void precicec_writeScalarData(int dataID, int valueIndex, double value)
 
 void precicec_readBlockVectorData(int dataID, int size, const int *valueIndices, double *values)
 {
-    for (int i = 0; i < size * getDimensions(); i++)
+    for (int i = 0; i < size * precicec_getDimensions(); i++)
     {
         values[i] = fake_read_write_buffer[i];
     }
@@ -280,7 +282,7 @@ void precicec_readBlockVectorData(int dataID, int size, const int *valueIndices,
 
 void precicec_readVectorData(int dataID, int valueIndex, double *value)
 {
-    for (int i = 0; i < getDimensions(); i++)
+    for (int i = 0; i < precicec_getDimensions(); i++)
     {
         value[i] = fake_read_write_buffer[i];
     }
