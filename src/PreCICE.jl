@@ -544,7 +544,7 @@ end
 
 @doc """
 
-    getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})::AbstractArray{Float64}
+    getMeshVertices(meshID::Integer, ids::AbstractArray{Int})::AbstractArray{Float64}
 
 Return vertex positions for multiple vertex ids from a given mesh.
 
@@ -574,8 +574,9 @@ julia> size(positions)
 (5,3)
 ```
 """
-function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
+function getMeshVertices(meshID::Integer, ids::AbstractArray{Int})
     _size = length(ids)
+    ids = convert(AbstractArray{Cint}, ids) # when passed Int64 convert to Cint=Int32
     positions = Array{Float64,1}(undef, _size * getDimensions())
     ccall(
         (:precicec_getMeshVertices, "libprecice"),
@@ -586,8 +587,7 @@ function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
         ids,
         positions,
     )
-    return_positions = similar(positions, _size, getDimensions())
-    return permutedims(return_positions, reshape(positions, (_size, getDimensions())))
+    return permutedims(reshape(positions, (_size, getDimensions())))
 end
 
 
@@ -620,7 +620,7 @@ vertex_ids = setMeshVertices(mesh_id, vertices)
 """
 function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
     _size, dimensions = size(positions)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
 
     positions = permutedims(positions) # transpose
 
@@ -675,7 +675,7 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
     _size, dimensions = size(positions)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
 
     positions = permutedims(positions)
 
@@ -886,7 +886,7 @@ end
 
 @doc """
 
-    writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Int}, values::AbstractArray{Float64})
 
 Write vector data values given as block. This function writes values of specified vertices to a `dataID`.
 Values must be provided in a Matrix with shape [N x D] where N = number of vertices and D = dimensions of geometry 
@@ -920,11 +920,12 @@ writeBlockVectorData(data_id, vertex_ids, values)
 """
 function writeBlockVectorData(
     dataID::Integer,
-    valueIndices::AbstractArray{Cint},
+    valueIndices::AbstractArray{Int},
     values::AbstractArray{Float64},
 )
+    valueIndices = convert(AbstractArray{Cint}, valueIndices) # when passed Int64 convert to Cint=Int32
     _size, dimensions = size(values)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
 
     values = permutedims(values)
 
@@ -994,7 +995,7 @@ end
 
 @doc """
 
-    writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Int}, values::AbstractArray{Float64})
 
 Write scalar data given as block.
 
@@ -1022,9 +1023,10 @@ writeBlockScalarData(data_id, vertex_ids, values)
 """
 function writeBlockScalarData(
     dataID::Integer,
-    valueIndices::AbstractArray{Cint},
+    valueIndices::AbstractArray{Int},
     values::AbstractArray{Float64},
 )
+    valueIndices = convert(AbstractArray{Cint}, valueIndices) # when passed Int64 convert to Cint=Int32
     _size = length(valueIndices)
     ccall(
         (:precicec_writeBlockScalarData, "libprecice"),
@@ -1079,7 +1081,7 @@ end
 
 @doc """
 
-    readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
+    readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Int})::AbstractArray{Float64}
 
 Read and return vector data values given as block.
 
@@ -1115,7 +1117,8 @@ julia> size(values)
 (15,)
 ```
 """
-function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
+function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Int})
+    valueIndices = convert(AbstractArray{Cint}, valueIndices) # when passed Int64 convert to Cint=Int32
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size * getDimensions())
     ccall(
@@ -1127,7 +1130,7 @@ function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
         valueIndices,
         values,
     )
-    return permutedims(reshape(values, (_size, getDimensions())))
+    return permutedims(reshape(values, (getDimensions(), _size)))
 end
 
 @doc """
@@ -1170,7 +1173,7 @@ end
 
 @doc """
 
-    readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
+    readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Int})::AbstractArray{Float64}
 
 Read and return scalar data as a block, values of specified vertices from a dataID.
 
@@ -1192,11 +1195,12 @@ vertex_ids = [1, 2, 3, 4, 5]
 values = readBlockScalarData(data_id, vertex_ids)
 ```
 """
-function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
+function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Int})
+    valueIndices = convert(AbstractArray{Cint}, valueIndices)
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size)
     ccall(
-        (:precicec_readScalarVectorData, "libprecice"),
+        (:precicec_readBlockScalarData, "libprecice"),
         Cvoid,
         (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
         dataID,
