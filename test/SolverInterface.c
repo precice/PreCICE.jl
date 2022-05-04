@@ -148,8 +148,7 @@ char precicec_hasData(const char *dataName, int meshID)
 
 int precicec_getDataID(const char *dataName, int meshID)
 {
-    printf("%s", dataName);
-    if (meshID == fake_mesh_id && dataName == fake_data_name)
+    if (meshID == fake_mesh_id && strcmp(dataName, fake_data_name) == 0)
     {
         return fake_data_id;
     }
@@ -269,7 +268,10 @@ void precicec_writeBlockScalarData(int dataID, int size, const int *valueIndices
 
 void precicec_writeScalarData(int dataID, int valueIndex, double value)
 {
+    printf("%f", fake_read_write_buffer[0]);
+    printf("%f", value);
     fake_read_write_buffer[0] = value;
+    printf("%f", fake_read_write_buffer[0]);
 }
 
 void precicec_readBlockVectorData(int dataID, int size, const int *valueIndices, double *values)
@@ -308,15 +310,15 @@ char *precicec_getVersionInformation()
 
 const char *precicec_actionWriteInitialData()
 {
-    return "dummy_write_initial_data";
+    return "dummyWriteInitialData";
 }
 
 const char *precicec_actionWriteIterationCheckpoint()
 {
-    return "dummy_write_iteration";
+    return "dummyWriteIteration";
 }
 
 const char *precicec_actionReadIterationCheckpoint()
 {
-    return "dummy_read_iteration";
+    return "dummyReadIteration";
 }
