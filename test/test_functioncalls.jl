@@ -124,7 +124,7 @@ function readWriteScalarData()
     writeData = 3.0
     PreCICE.writeScalarData(1, 1, writeData)
     readData = PreCICE.readScalarData(1, 1)
-    println(readData, " ", writeData)
+    println("read,writeData", readData, " ", writeData)
     return writeData == readData
 end
 
@@ -158,7 +158,6 @@ function getDataID()
     fakeDataName = "FakeData"  # compare to test/SolverInterface.c, fake_data_name
     fakeData_ID = 15  # compare to test/SolverInterface.c, fake_data_id
     data_ID = PreCICE.getDataID(fakeDataName, fakeMeshId)
-    println(data_ID, " ", fakeData_ID)
     return data_ID == fakeData_ID
 end
 

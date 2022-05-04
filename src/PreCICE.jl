@@ -1246,6 +1246,7 @@ function readScalarData(dataID::Integer, valueIndex::Integer)
         valueIndex,
         dataValue,
     )
+    println("dataValue", dataValue)
     return dataValue
 end
 
