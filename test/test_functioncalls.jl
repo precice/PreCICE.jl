@@ -35,7 +35,7 @@ function setMeshVertices()
     fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
     nFakeVertices = 3  # compare to test/SolverInterface.c, n_fake_vertices
     positions = rand(Cdouble, (nFakeVertices, fakeDimension))
-    expectedOutput = range(0, nFakeVertices - 1)
+    expectedOutput = 0:(nFakeVertices-1)
     actualOutput = PreCICE.setMeshVertices(fakeMeshId, positions)
     return expectedOutput == actualOutput
 end
@@ -75,7 +75,7 @@ function getMeshVertexIDsFromPositions()
     fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
     nFakeVertices = 3  # compare to test/SolverInterface.c, n_fake_vertices
     positions = rand(Cdouble, (nFakeVertices, fakeDimension))
-    fakeVertexIds = range(0, nFakeVertices - 1)
+    fakeVertexIds = 0:(nFakeVertices-1)
     vertexIds = PreCICE.getMeshVertexIDsFromPositions(fakeMeshId, positions)
     return fakeVertexIds == vertexIds
 end
@@ -99,7 +99,7 @@ function getMeshVertices()
         fakeVertices[i, 2] = i - 1 + nFakeVertices
         fakeVertices[i, 3] = i - 1 + 2 * nFakeVertices
     end
-    vertices = PreCICE.getMeshVertices(fakeMeshId, range(0, nFakeVertices - 1))
+    vertices = PreCICE.getMeshVertices(fakeMeshId, 0:(nFakeVertices-1))
     return fakeVertices == vertices
 end
 
@@ -124,7 +124,7 @@ function readWriteScalarData()
     writeData = 3.0
     PreCICE.writeScalarData(1, 1, writeData)
     readData = PreCICE.readScalarData(1, 1)
-    println("read,writeData", readData, " ", writeData)
+    println("read,writeData ", readData, " ", writeData)
     return writeData == readData
 end
 
