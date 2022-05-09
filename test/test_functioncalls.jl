@@ -99,23 +99,23 @@ function getMeshVertices()
         fakeVertices[i, 2] = i - 1 + nFakeVertices
         fakeVertices[i, 3] = i - 1 + 2 * nFakeVertices
     end
-    vertices = PreCICE.getMeshVertices(fakeMeshId, 0:(nFakeVertices-1))
+    vertices = PreCICE.getMeshVertices(fakeMeshId, Cint[0:(nFakeVertices-1)...])
     return fakeVertices == vertices
 end
 
 function readWriteBlockScalarData()
     PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
     writeData = [3.0, 7.0, 8.0]
-    PreCICE.writeBlockScalarData(1, 1:3, writeData)
-    readData = PreCICE.readBlockScalarData(1, [1, 2, 3])
+    PreCICE.writeBlockScalarData(1, Cint[1, 2, 3], writeData)
+    readData = PreCICE.readBlockScalarData(1, Cint[1, 2, 3])
     return writeData == readData
 end
 
 function readWriteBlockScalarDataEmpty()
     PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
     writeData = Float64[]
-    PreCICE.writeBlockScalarData(1, Int[], writeData)
-    readData = PreCICE.readBlockScalarData(1, Int[])
+    PreCICE.writeBlockScalarData(1, Cint[], writeData)
+    readData = PreCICE.readBlockScalarData(1, Cint[])
     return isempty(readData)
 end
 
@@ -131,8 +131,8 @@ end
 function readWriteBlockVectorData()
     PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
     writeData = [3.0 7.0 8.0; 7.0 6.0 5.0]
-    PreCICE.writeBlockVectorData(1, [1, 2], writeData)
-    readData = PreCICE.readBlockVectorData(1, [1, 2])
+    PreCICE.writeBlockVectorData(1, Cint[1, 2], writeData)
+    readData = PreCICE.readBlockVectorData(1, Cint[1, 2])
     return writeData == readData
 end
 
@@ -146,7 +146,7 @@ end
 
 function readWriteVectorData()
     PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
-    writeData = [1, 2, 3.0]
+    writeData = [1.0, 2.0, 3.0]
     PreCICE.writeVectorData(1, 1, writeData)
     readData = PreCICE.readVectorData(1, 1)
     return writeData == readData
