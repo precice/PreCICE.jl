@@ -1233,7 +1233,7 @@ value = readScalarData(data_id, vertex_id)
 ```
 """
 function readScalarData(dataID::Integer, valueIndex::Integer)
-    dataValue = Float64(0.0)
+    dataValue = [Float64(0.0)]
     ccall(
         (:precicec_readScalarData, "libprecice"),
         Cvoid,
@@ -1242,7 +1242,7 @@ function readScalarData(dataID::Integer, valueIndex::Integer)
         valueIndex,
         dataValue,
     )
-    return dataValue
+    return dataValue[1]
 end
 
 
