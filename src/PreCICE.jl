@@ -574,9 +574,8 @@ julia> size(positions)
 (5,3)
 ```
 """
-function getMeshVertices(meshID::Integer, ids::AbstractArray{Int})
+function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
     _size = length(ids)
-    ids = convert(AbstractArray{Cint}, ids) # when passed Int64 convert to Cint=Int32
     positions = Array{Float64,1}(undef, _size * getDimensions())
     ccall(
         (:precicec_getMeshVertices, "libprecice"),
@@ -920,10 +919,9 @@ writeBlockVectorData(data_id, vertex_ids, values)
 """
 function writeBlockVectorData(
     dataID::Integer,
-    valueIndices::AbstractArray{Int},
+    valueIndices::AbstractArray{Cint},
     values::AbstractArray{Float64},
 )
-    valueIndices = convert(AbstractArray{Cint}, valueIndices) # when passed Int64 convert to Cint=Int32
     _size, dimensions = size(values)
     @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
 
@@ -1023,10 +1021,9 @@ writeBlockScalarData(data_id, vertex_ids, values)
 """
 function writeBlockScalarData(
     dataID::Integer,
-    valueIndices::AbstractArray{Int},
+    valueIndices::AbstractArray{Cint},
     values::AbstractArray{Float64},
 )
-    valueIndices = convert(AbstractArray{Cint}, valueIndices) # when passed Int64 convert to Cint=Int32
     _size = length(valueIndices)
     ccall(
         (:precicec_writeBlockScalarData, "libprecice"),
@@ -1117,8 +1114,7 @@ julia> size(values)
 (15,)
 ```
 """
-function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Int})
-    valueIndices = convert(AbstractArray{Cint}, valueIndices) # when passed Int64 convert to Cint=Int32
+function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size * getDimensions())
     ccall(
@@ -1195,8 +1191,7 @@ vertex_ids = [1, 2, 3, 4, 5]
 values = readBlockScalarData(data_id, vertex_ids)
 ```
 """
-function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Int})
-    valueIndices = convert(AbstractArray{Cint}, valueIndices)
+function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size)
     ccall(
