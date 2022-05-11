@@ -586,7 +586,12 @@ function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
         ids,
         positions,
     )
+<<<<<<< HEAD
     return permutedims(reshape(positions, (_size, getDimensions())))
+=======
+    return_positions = similar(positions, _size, getDimensions())
+    return permutedims(return_positions, reshape(positions, (_size, getDimensions())))
+>>>>>>> develop
 end
 
 
@@ -619,7 +624,11 @@ vertex_ids = setMeshVertices(mesh_id, vertices)
 """
 function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
     _size, dimensions = size(positions)
+<<<<<<< HEAD
     @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+=======
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+>>>>>>> develop
 
     positions = permutedims(positions) # transpose
 
@@ -674,7 +683,11 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
     _size, dimensions = size(positions)
+<<<<<<< HEAD
     @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+=======
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+>>>>>>> develop
 
     positions = permutedims(positions)
 
@@ -923,7 +936,11 @@ function writeBlockVectorData(
     values::AbstractArray{Float64},
 )
     _size, dimensions = size(values)
+<<<<<<< HEAD
     @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+=======
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+>>>>>>> develop
 
     values = permutedims(values)
 
@@ -1126,7 +1143,11 @@ function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
         valueIndices,
         values,
     )
+<<<<<<< HEAD
     return permutedims(reshape(values, (getDimensions(), _size)))
+=======
+    return permutedims(reshape(values, (_size, getDimensions())))
+>>>>>>> develop
 end
 
 @doc """
@@ -1195,7 +1216,11 @@ function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size)
     ccall(
+<<<<<<< HEAD
         (:precicec_readBlockScalarData, "libprecice"),
+=======
+        (:precicec_readScalarVectorData, "libprecice"),
+>>>>>>> develop
         Cvoid,
         (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
         dataID,
@@ -1232,7 +1257,11 @@ value = readScalarData(data_id, vertex_id)
 ```
 """
 function readScalarData(dataID::Integer, valueIndex::Integer)
+<<<<<<< HEAD
     dataValue = Float64(0.0)
+=======
+    dataValue = [Float64(0.0)]
+>>>>>>> develop
     ccall(
         (:precicec_readScalarData, "libprecice"),
         Cvoid,
@@ -1241,8 +1270,12 @@ function readScalarData(dataID::Integer, valueIndex::Integer)
         valueIndex,
         dataValue,
     )
+<<<<<<< HEAD
     println("dataValue", dataValue)
     return dataValue
+=======
+    return dataValue[1]
+>>>>>>> develop
 end
 
 
