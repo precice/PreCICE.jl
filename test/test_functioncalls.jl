@@ -124,7 +124,6 @@ function readWriteScalarData()
     writeData = 3.0
     PreCICE.writeScalarData(1, 1, writeData)
     readData = PreCICE.readScalarData(1, 1)
-    println("read,writeData ", readData, " ", writeData)
     return writeData == readData
 end
 

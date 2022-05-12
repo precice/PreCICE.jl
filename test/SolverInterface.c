@@ -268,10 +268,7 @@ void precicec_writeBlockScalarData(int dataID, int size, const int *valueIndices
 
 void precicec_writeScalarData(int dataID, int valueIndex, double value)
 {
-    printf("%f", fake_read_write_buffer[0]);
-    printf("%f", value);
     fake_read_write_buffer[0] = value;
-    printf("%f", fake_read_write_buffer[0]);
 }
 
 void precicec_readBlockVectorData(int dataID, int size, const int *valueIndices, double *values)
@@ -300,7 +297,7 @@ void precicec_readBlockScalarData(int dataID, int size, const int *valueIndices,
 
 void precicec_readScalarData(int dataID, int valueIndex, double *value)
 {
-    value = &fake_read_write_buffer[0];
+    value[0] = fake_read_write_buffer[0];
 }
 
 char *precicec_getVersionInformation()
