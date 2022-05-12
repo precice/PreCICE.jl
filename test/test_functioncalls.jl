@@ -94,7 +94,7 @@ function getMeshVertices()
     nFakeVertices = 3  # compare to test/SolverInterface.c, n_fake_vertices
     fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
     fakeVertices = zeros(Cdouble, nFakeVertices, fakeDimension)
-    for i in 1:nFakeVertices
+    for i = 1:nFakeVertices
         fakeVertices[i, 1] = i - 1
         fakeVertices[i, 2] = i - 1 + nFakeVertices
         fakeVertices[i, 3] = i - 1 + 2 * nFakeVertices
