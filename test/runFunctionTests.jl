@@ -2,7 +2,7 @@ using Test
 
 @testset "Othertests" begin
     @testset "Function calls" begin
-        # println("Make sure you ran `push!(Libc.Libdl.DL_LOAD_PATH,\"$(dirname(abspath(PROGRAM_FILE))))\")`")
+        println("Make sure you ran `make` in $(dirname(abspath(PROGRAM_FILE))))")
         push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
         # add fake libprecice.so into load path        
         include("test_functioncalls.jl")
