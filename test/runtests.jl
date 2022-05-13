@@ -15,18 +15,18 @@ using Test
     end
 
     @testset "Function calls" begin
-        println(dirname(abspath(PROGRAM_FILE)) ∉ Libc.Libdl.DL_LOAD_PATH)
-        println(Libc.Libdl.DL_LOAD_PATH)
         if dirname(abspath(PROGRAM_FILE)) ∉ Libc.Libdl.DL_LOAD_PATH
-            error("""Please run:
-        ` cd $(dirname(abspath(PROGRAM_FILE))) && make && julia
-        push!(Libc.Libdl.DL_LOAD_PATH, "$(dirname(abspath(PROGRAM_FILE)))") `
-        And then test PreCICE again
-        """)
+            println("""Please run:
+            ``` 
+            cd $(dirname(abspath(PROGRAM_FILE))) && make && julia
+            push!(Libc.Libdl.DL_LOAD_PATH, "$(dirname(abspath(PROGRAM_FILE)))")
+            ```
+            And then test PreCICE again
+            """)
+            return
+
         end
         println("Make sure you ran `make` in $(dirname(abspath(PROGRAM_FILE))))")
-        push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
-        # add fake libprecice.so into load path
         include("test_functioncalls.jl")
         @test constructor()
         @test version()
@@ -50,8 +50,6 @@ using Test
         @test actionWriteInitialData()
         @test actionWriteIterationCheckpoint()
         @test actionReadIterationCheckpoint()
-
-        # pop!(Libc.Libdl.DL_LOAD_PATH)
     end
 
 end
