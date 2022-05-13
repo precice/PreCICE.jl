@@ -586,8 +586,7 @@ function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
         ids,
         positions,
     )
-    return_positions = similar(positions, _size, getDimensions())
-    return permutedims(return_positions, reshape(positions, (_size, getDimensions())))
+    return permutedims(reshape(positions, (getDimensions(), _size)))
 end
 
 
@@ -1127,7 +1126,7 @@ function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
         valueIndices,
         values,
     )
-    return permutedims(reshape(values, (_size, getDimensions())))
+    return permutedims(reshape(values, (getDimensions(), _size)))
 end
 
 @doc """
