@@ -2,6 +2,7 @@ using PreCICE
 using Test
 
 
+push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
 @testset "PreCICE.jl" begin
 
     @testset "Build" begin
@@ -24,9 +25,8 @@ using Test
             And then test PreCICE again
             """)
             return
-
         end
-        println("Make sure you ran `make` in $(dirname(abspath(PROGRAM_FILE))))")
+
         include("test_functioncalls.jl")
         @test constructor()
         @test version()
@@ -53,3 +53,4 @@ using Test
     end
 
 end
+pop!(Libc.Libdl.DL_LOAD_PATH)

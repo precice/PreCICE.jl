@@ -41,11 +41,5 @@ jobs:
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
 
-      - name: Add to path
-        run: |
-          cd ~/.julia/packages/PreCICE/
-          cd `ls`/test
-          make
-
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
