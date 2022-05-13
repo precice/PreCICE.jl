@@ -42,4 +42,5 @@ jobs:
         uses: julia-actions/julia-buildpkg@v1
 
       - name: Run tests
-        uses: julia-actions/julia-runtest@v1
+        run: julia -e 'using Pkg; Pkg.test("PreCICE")'
+        # uses: julia-actions/julia-runtest@v1
