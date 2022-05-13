@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
-        julia-arch: [x64, x86]
+        julia-arch: [x64]
     
     steps:
       - name: Install Julia
