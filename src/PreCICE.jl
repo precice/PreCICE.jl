@@ -586,7 +586,7 @@ function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
         ids,
         positions,
     )
-    return permutedims(reshape(positions, (_size, getDimensions())))
+    return permutedims(reshape(positions, (getDimensions(), _size)))
 end
 
 
