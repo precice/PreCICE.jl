@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
-        julia-arch: [x64]
+        julia-arch: [x64, x86]
     
     steps:
       - name: Install Julia
@@ -42,5 +42,4 @@ jobs:
         uses: julia-actions/julia-buildpkg@v1
 
       - name: Run tests
-        run: julia -e 'using Pkg; Pkg.test("PreCICE")'
-        # uses: julia-actions/julia-runtest@v1
+        uses: julia-actions/julia-runtest@v1
