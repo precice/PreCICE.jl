@@ -544,7 +544,7 @@ end
 
 @doc """
 
-    getMeshVertices(meshID::Integer, ids::AbstractArray{Int})::AbstractArray{Float64}
+    getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})::AbstractArray{Float64}
 
 Return vertex positions for multiple vertex ids from a given mesh.
 
@@ -885,7 +885,7 @@ end
 
 @doc """
 
-    writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Int}, values::AbstractArray{Float64})
+    writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
 Write vector data values given as block. This function writes values of specified vertices to a `dataID`.
 Values must be provided in a Matrix with shape [N x D] where N = number of vertices and D = dimensions of geometry 
@@ -993,7 +993,7 @@ end
 
 @doc """
 
-    writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Int}, values::AbstractArray{Float64})
+    writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
 Write scalar data given as block.
 
@@ -1078,7 +1078,7 @@ end
 
 @doc """
 
-    readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Int})::AbstractArray{Float64}
+    readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
 
 Read and return vector data values given as block.
 
@@ -1169,7 +1169,7 @@ end
 
 @doc """
 
-    readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Int})::AbstractArray{Float64}
+    readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
 
 Read and return scalar data as a block, values of specified vertices from a dataID.
 
