@@ -40,9 +40,9 @@ jobs:
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
-        
+
       - name: install make
-        run: sudo apt-get install build-essential
+        run: apt-get install build-essential
 
       - name: Build Fake Solverinterface
         run: |
