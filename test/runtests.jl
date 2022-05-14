@@ -16,41 +16,42 @@ push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
     end
 
     @testset "Function calls" begin
-        if dirname(abspath(PROGRAM_FILE)) ∉ Libc.Libdl.DL_LOAD_PATH
-            println("""Please run:
+        if !isfile(join(dirname(abspath(PROGRAM_FILE)), "libprecice.so"))
+            @info("""
+            To run the function tests, please run:
             ``` 
             cd $(dirname(abspath(PROGRAM_FILE))) && make && julia
-            push!(Libc.Libdl.DL_LOAD_PATH, "$(dirname(abspath(PROGRAM_FILE)))")
             ```
             And then test PreCICE again
             """)
-            return
-        end
+        else
+            # push!(Libc.Libdl.DL_LOAD_PATH, "$(dirname(abspath(PROGRAM_FILE)))")
 
-        include("test_functioncalls.jl")
-        @test constructor()
-        @test version()
-        @test getDimensions()
-        @test getMeshId()
-        @test setMeshVertices()
-        # @test setMeshVerticesEmpty()
-        @test setMeshVertex()
-        @test setMeshVertexEmpty()
-        @test getMeshVertexIDsFromPositions()
-        @test getMeshVertexSize()
-        @test getMeshVertices()
-        @test readWriteBlockScalarData()
-        @test readWriteBlockScalarDataEmpty()
-        @test readWriteScalarData()
-        @test readWriteBlockVectorData()
-        # @test readWriteBlockVectorDataEmpty()
-        @test readWriteVectorData()
-        @test getDataID()
-        @test getVersionInformation()
-        @test actionWriteInitialData()
-        @test actionWriteIterationCheckpoint()
-        @test actionReadIterationCheckpoint()
-    end
+            include("test_functioncalls.jl")
+            @test constructor()
+            @test version()
+            @test getDimensions()
+            @test getMeshId()
+            @test setMeshVertices()
+            # @test setMeshVerticesEmpty()
+            @test setMeshVertex()
+            @test setMeshVertexEmpty()
+            @test getMeshVertexIDsFromPositions()
+            @test getMeshVertexSize()
+            @test getMeshVertices()
+            @test readWriteBlockScalarData()
+            @test readWriteBlockScalarDataEmpty()
+            @test readWriteScalarData()
+            @test readWriteBlockVectorData()
+            # @test readWriteBlockVectorDataEmpty()
+            @test readWriteVectorData()
+            @test getDataID()
+            @test getVersionInformation()
+            @test actionWriteInitialData()
+            @test actionWriteIterationCheckpoint()
+            @test actionReadIterationCheckpoint()
+        end #if
+    end # testset
 
 end
 pop!(Libc.Libdl.DL_LOAD_PATH)

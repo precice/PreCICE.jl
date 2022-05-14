@@ -75,6 +75,13 @@ julia> ]
 pkg> test PreCICE
 ```
 
+This checks if the preCICE bindings can be found and accessed correctly.
+You can also test the full functionality of PreCICE.jl. If not set up, the output of the previous test shows an info on what command you need to execute. It will be along the lines of:
+```
+cd /home/<user>/.julia/packages/PreCICE/<code>/test && make
+```
+After this, you can run the tests again, resulting individual 22 tests being executed.
+
 ## Dependencies
 
 This package works with official Julia binaries listed below. See the [Platform Specific Instructions for official Binaries](https://julialang.org/downloads/platform/)  or [Julia's documentation](https://docs.julialang.org/en/v1/manual/getting-started/) if you are not sure how to download them.
