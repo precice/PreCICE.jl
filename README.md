@@ -69,7 +69,7 @@ The [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdumm
 
 ## Testing PreCICE.jl
 
-To test the bindings run:
+To test the bindings, run:
 ```julia-repl
 julia> ]
 pkg> test PreCICE
