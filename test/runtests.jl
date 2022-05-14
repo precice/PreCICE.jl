@@ -20,7 +20,7 @@ push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
             @info("""
             To run the function tests, please run:
             ``` 
-            cd $(dirname(abspath(PROGRAM_FILE))) && make && julia
+            cd $(dirname(abspath(PROGRAM_FILE))) && make
             ```
             And then test PreCICE again
             """)
