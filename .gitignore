@@ -3,3 +3,6 @@ binarybuilder
 solverdummy/*.log
 solverdummy/*.json
 solverdummy/precice-run/
+*.o
+*.so
+deps/build.log

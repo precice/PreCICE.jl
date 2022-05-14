@@ -24,7 +24,7 @@ julia> using PreCICE
 Alternatively you can also include the package in a Julia script in the following way:
 
 ```julia
-import Pkg; Pkg.add(url="https://github.com/precice/julia-bindings.git")
+import Pkg; Pkg.add("PreCICE")
 using PreCICE
 ```
 
@@ -32,11 +32,16 @@ using PreCICE
 
 If you have cloned or downloaded the Julia bindings on your local machine, add the Julia bindings to your Julia environment in the following way:
 
-```julia
+```julia-repl
 julia> ]
 pkg> add <path-to-repository>
 Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
+```
+
+Alternatively, you can install a specific branch of this repository with the following command:
+```julia-repl
+pkg> add https://github.com/precice/PreCICE.jl#<branch-name>
 ```
 
 ## Troubleshooting
@@ -62,16 +67,20 @@ julia> using PreCICE
 
 The [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdummy) shows an example of how to use the Julia bindings for preCICE.
 
-## Testing new features that are on branches of this repository
+## Testing PreCICE.jl
 
-To use a certain branch of this package, add `#branchname` after the package url, for example if the branch `mpi-parallelization` is to be tested:
-
+To test the bindings, run:
 ```julia-repl
 julia> ]
-pkg> add https://github.com/precice/julia-bindings.git#mpi-parallelization
-Then exit the package mode with 🔙 or Ctrl + c
-julia> using PreCICE
+pkg> test PreCICE
 ```
+
+This checks if the preCICE bindings can be found and accessed correctly.
+You can also test the full functionality of PreCICE.jl. If not set up, the output of the previous test shows an info on what command you need to execute. It will be along the lines of:
+```
+cd /home/<user>/.julia/packages/PreCICE/<code>/test && make
+```
+After this, you can run the tests again, resulting individual 22 tests being executed.
 
 ## Dependencies
 

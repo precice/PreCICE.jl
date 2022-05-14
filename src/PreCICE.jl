@@ -619,7 +619,7 @@ vertex_ids = setMeshVertices(mesh_id, vertices)
 """
 function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
     _size, dimensions = size(positions)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
 
     positions = permutedims(positions) # transpose
 
@@ -674,7 +674,7 @@ vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
 """
 function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
     _size, dimensions = size(positions)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
 
     positions = permutedims(positions)
 
@@ -923,7 +923,7 @@ function writeBlockVectorData(
     values::AbstractArray{Float64},
 )
     _size, dimensions = size(values)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $get_dimensions()"
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
 
     values = permutedims(values)
 
@@ -1195,7 +1195,7 @@ function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size)
     ccall(
-        (:precicec_readScalarVectorData, "libprecice"),
+        (:precicec_readBlockScalarData, "libprecice"),
         Cvoid,
         (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
         dataID,
