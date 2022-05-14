@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Im not sure if the functions with fake_read_write_buffer are correct
-// pointers also not sure in readscalardata,actionwriteinitialdata.
-// in readscalardata, the python bindings have `&value` instead of `*value` but this gives an error on my system
 double *fake_read_write_buffer;
 const int SIZE = 6;
 int fake_dimensions;
