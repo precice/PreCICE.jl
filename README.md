@@ -39,7 +39,7 @@ Then exit the package mode with 🔙 or Ctrl + c
 julia> using PreCICE
 ```
 
-You can alternatively also install a specific branch from this repository:
+Alternatively, you can install a specific branch of this repository with the following command:
 ```julia-repl
 pkg> add https://github.com/precice/PreCICE.jl#<branch-name>
 ```
