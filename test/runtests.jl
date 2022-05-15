@@ -16,7 +16,7 @@ push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
     end
 
     @testset "Function calls" begin
-        if !isfile(join(dirname(abspath(PROGRAM_FILE)), "libprecice.so"))
+        if !isfile(joinpath(dirname(abspath(PROGRAM_FILE)), "libprecice.so"))
             @info("""
             To run the function tests, please run:
             ``` 
