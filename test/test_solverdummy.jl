@@ -25,7 +25,7 @@ function test_solverdummy()
         wait(s)
 
         # cleanup
-        rm("precice-run/", recursive=true)
+        rm("precice-run/", recursive = true)
         files = readdir()
         for file in files
             if (endswith(file, "json") || endswith(file, "log"))
