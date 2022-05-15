@@ -25,8 +25,6 @@ push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
             And then test PreCICE again
             """)
         else
-            # push!(Libc.Libdl.DL_LOAD_PATH, "$(dirname(abspath(PROGRAM_FILE)))")
-
             include("test_functioncalls.jl")
             @test constructor()
             @test version()
