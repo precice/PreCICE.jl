@@ -11,12 +11,12 @@ function test_solverdummy()
         path = "$(Sys.BINDIR)/julia"
         t = @task begin
             run(
-                `$path ../solverdummy/solverdummy.jl ../solverdummy/precice-config.xml SolverOne  MeshOne`,
+                `$path ../solverdummy/solverdummy.jl ../solverdummy/precice-config.xml SolverOne`,
             )
         end
         s = @task begin
             run(
-                `$path ../solverdummy/solverdummy.jl ../solverdummy/precice-config.xml SolverTwo  MeshTwo`,
+                `$path ../solverdummy/solverdummy.jl ../solverdummy/precice-config.xml SolverTwo`,
             )
         end
         schedule(t)
