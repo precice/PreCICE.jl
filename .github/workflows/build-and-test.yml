@@ -41,5 +41,15 @@ jobs:
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
 
+      - name: install make
+        run: |
+         apt update
+         apt install make
+
+      - name: Build Fake Solverinterface
+        run: |
+          cd test
+          make
+
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
