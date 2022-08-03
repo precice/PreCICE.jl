@@ -67,7 +67,15 @@ export
     getVersionInformation,
     actionWriteInitialData,
     actionWriteIterationCheckpoint,
-    actionReadIterationCheckpoint
+    actionReadIterationCheckpoint,
+
+    # Gradient related 
+
+    isGradientDataRequired,
+    writeScalarGradientData,
+    writeVectorGradientData,
+    writeBlockScalarGradientData,
+    writeBlockVectorGradientData,
 
 
 @doc """
@@ -1332,5 +1340,149 @@ function actionReadIterationCheckpoint()
     return unsafe_string(msgCstring)
 end
 
+@doc """
+
+        isGradientDataRequired(dataID::Integer)
+        
+Checks if the given data set requires gradient data. We check if the data object has been intialized with the gradient flag.
+# Arguments
+- `dataID::Integer`: ID of the data to be checked. Obtained by [`getDataID`](@ref).
+
+"""
+function isGradientDataRequired(dataID::Integer)
+    return ccall((:precicec_isGradientDataRequired, "libprecice"), Cbool, dataID)
+end
+
+@doc """
+
+writeBlockVectorGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+
+
+Write gradient data of a vector data as a block, the value of a specified vertices to a dataID.
+
+# Arguments
+- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
+- `valueIndices::AbstractArray{Cint}`: Indices of the vertex.
+- `gradientValues::AbstractArray{Float64}`: The gradient values to write.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@ref) 
+
+# Examples
+
+Write gradient values of a vector data for a 2D problem with 2 vertices:
+
+```julia
+data_id = 1
+valueIndices = [1,2,3]
+gradientValues = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+writeBlockVectorGradientData(data_id, vertex_id, gradientValue)
+```
+
+"""
+function writeBlockVectorGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+    _size = length(gradientValues)
+    ccall((:precicec_writeBlockVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, gradientValues)
+end
+
+@doc """
+
+    writeScalarGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+
+Write gradient data of a scalar data, the value of a specified vertex to a dataID.
+
+# Arguments
+- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
+- `valueIndex::Integer`: Indice of the vertex.
+- `gradientValues::AbstractArray{Float64}`: The gradient values to write.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@ref) 
+
+# Examples
+
+Write gradient values of a scalar data for a 3D problem with 5 vertices:
+
+```julia
+data_id = 1
+vertex_id = 5
+gradientValues = [1.0, 2.0, 3.0]
+writeScalarGradientData(data_id, vertex_id, gradientValue)
+```
+
+"""
+function writeScalarGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+    ccall((:precicec_writeScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
+end
+
+
+@doc """
+
+    writeVectorGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+
+Write gradient data of a vector data, the value of a specified vertex to a dataID.
+
+# Arguments
+- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
+- `valueIndex::Integer`: Indice of the vertex.
+- `gradientValues::AbstractArray{Float64}`: The gradient values to write.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@ref) 
+
+# Examples
+
+Write gradient values of a vector data for a 3D problem with 5 vertices:
+
+```julia
+data_id = 1
+vertex_id = 5
+gradientValues = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 1.0, 2.0, 3.0]
+writeVectorGradientData(data_id, vertex_id, gradientValue)
+```
+"""
+function writeVectorGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+    ccall((:precicec_writeVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
+end
+
+@doc """
+
+writeBlockScalarGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+
+
+Write gradient data of a scalar data as a block, the value of a specified vertices to a dataID.
+
+# Arguments
+- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
+- `valueIndices::AbstractArray{Cint}`: Indices of the vertex.
+- `gradientValues::AbstractArray{Float64}`: The gradient values to write.
+
+# Notes
+
+Previous calls:
+ - [`initialize`](@ref) 
+
+# Examples
+
+Write gradient values of a vector data for a 2D problem with 3 vertices:
+
+```julia
+data_id = 1
+valueIndices = [1,2,3]
+gradientValues = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+writeBlockScalarGradientData(data_id, vertex_id, gradientValue)
+```
+
+"""
+function writeBlockScalarGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+    _size = length(gradientValues)
+    ccall((:precicec_writeBlockScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, gradientValues)
+end
 
 end # module
