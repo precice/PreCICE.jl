@@ -1350,7 +1350,7 @@ Checks if the given data set requires gradient data. We check if the data object
 
 """
 function isGradientDataRequired(dataID::Integer)
-    return ccall((:precicec_isGradientDataRequired, "libprecice"), Cbool, dataID)
+    return ccall((:precicec_isGradientDataRequired, "libprecice"), Cbool, Cint, dataID)
 end
 
 @doc """
