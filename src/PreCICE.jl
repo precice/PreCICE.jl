@@ -1342,7 +1342,7 @@ end
 
 @doc """
 
-        isGradientDataRequired(dataID::Integer)
+    isGradientDataRequired(dataID::Integer)::Bool
         
 Checks if the given data set requires gradient data. We check if the data object has been intialized with the gradient flag.
 # Arguments
@@ -1350,12 +1350,12 @@ Checks if the given data set requires gradient data. We check if the data object
 
 """
 function isGradientDataRequired(dataID::Integer)
-    return ccall((:precicec_isGradientDataRequired, "libprecice"), Cbool, Cint, dataID)
+        return ccall((:precicec_isGradientDataRequired, "libprecice"), Cint, (Cint,), dataID)
 end
 
 @doc """
 
-writeBlockVectorGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+    writeBlockVectorGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
 
 
 Write gradient data of a vector data as a block, the value of a specified vertices to a dataID.
@@ -1378,12 +1378,14 @@ Write gradient values of a vector data for a 2D problem with 2 vertices:
 data_id = 1
 valueIndices = [1,2,3]
 gradientValues = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-writeBlockVectorGradientData(data_id, vertex_id, gradientValue)
+writeBlockVectorGradientData(data_id, valueIndices, gradientValue)
 ```
 
 """
 function writeBlockVectorGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
-    _size = length(gradientValues)
+    _size, dimensions = size(gradientValues)
+    @assert dimensions == getDimensions()*getDimensions() "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
+
     ccall((:precicec_writeBlockVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, gradientValues)
 end
 
@@ -1410,12 +1412,15 @@ Write gradient values of a scalar data for a 3D problem with 5 vertices:
 ```julia
 data_id = 1
 vertex_id = 5
-gradientValues = [1.0, 2.0, 3.0]
+gradientValues = [1.0 2.0 3.0]
 writeScalarGradientData(data_id, vertex_id, gradientValue)
 ```
 
 """
 function writeScalarGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+    _size, dimensions = size(gradientValues)
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+   
     ccall((:precicec_writeScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
 end
 
@@ -1443,17 +1448,20 @@ Write gradient values of a vector data for a 3D problem with 5 vertices:
 ```julia
 data_id = 1
 vertex_id = 5
-gradientValues = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 1.0, 2.0, 3.0]
+gradientValues = [1.0 2.0 3.0 4.0 5.0 6.0 1.0 2.0 3.0]
 writeVectorGradientData(data_id, vertex_id, gradientValue)
 ```
 """
 function writeVectorGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+    _size, dimensions = size(gradientValues)
+    @assert dimensions == getDimensions()*getDimensions() "Dimensions of vector data in write_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
+
     ccall((:precicec_writeVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
 end
 
 @doc """
 
-writeBlockScalarGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+    writeBlockScalarGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
 
 
 Write gradient data of a scalar data as a block, the value of a specified vertices to a dataID.
@@ -1475,13 +1483,15 @@ Write gradient values of a vector data for a 2D problem with 3 vertices:
 ```julia
 data_id = 1
 valueIndices = [1,2,3]
-gradientValues = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-writeBlockScalarGradientData(data_id, vertex_id, gradientValue)
+gradientValues = [1.0 2.0; 3.0 4.0; 5.0 6.0]
+writeBlockScalarGradientData(data_id, valueIndices, gradientValue)
 ```
 
 """
 function writeBlockScalarGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
-    _size = length(gradientValues)
+    _size, dimensions = size(gradientValues)
+    @assert dimensions == getDimensions() "Dimensions of vector data in write_block_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+
     ccall((:precicec_writeBlockScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, gradientValues)
 end
 
