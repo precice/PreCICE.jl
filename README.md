@@ -6,6 +6,8 @@
 
 This package provides Julia language bindings for the C++ library [preCICE](https://github.com/precice/precice). It is a Julia package that wraps the API of preCICE.
 
+Note that the first two digits of the version number of the bindings indicate the preCICE major and minor version that the bindings support. The last digit represents the version of the bindings. Example: `v2.5.1` and `v2.5.2` of the bindings represent versions `1` and `2` of the bindings that are compatible with preCICE `v2.5.0`.
+
 ## Adding and using the package
 
 The Julia bindings for preCICE can be used by either by adding them as a package in a Julia environment or also directly including the package in a Julia script. For both type of usages preCICE needs to be installed on the system. For preCICE installation, have a look at the [installation documentation](https://precice.org/installation-overview.html).
@@ -40,6 +42,7 @@ julia> using PreCICE
 ```
 
 Alternatively, you can install a specific branch of this repository with the following command:
+
 ```julia-repl
 pkg> add https://github.com/precice/PreCICE.jl#<branch-name>
 ```
@@ -70,6 +73,7 @@ The [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdumm
 ## Testing PreCICE.jl
 
 To test the bindings, run:
+
 ```julia-repl
 julia> ]
 pkg> test PreCICE
@@ -77,9 +81,11 @@ pkg> test PreCICE
 
 This checks if the preCICE bindings can be found and accessed correctly.
 You can also test the full functionality of PreCICE.jl. If not set up, the output of the previous test shows an info on what command you need to execute. It will be along the lines of:
+
 ```
 cd /home/<user>/.julia/packages/PreCICE/<code>/test && make
 ```
+
 After this, you can run the tests again, resulting individual 22 tests being executed.
 
 ## Dependencies
