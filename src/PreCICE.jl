@@ -1376,8 +1376,8 @@ Write gradient values of a vector data for a 2D problem with 2 vertices:
 
 ```julia
 data_id = 1
-valueIndices = [1,2,3]
-gradientValues = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+valueIndices = [1,2]
+gradientValues = [1.0 2.0 3.0 4.0; 5.0 6.0 7.0 8.0]
 writeBlockVectorGradientData(data_id, valueIndices, gradientValue)
 ```
 
@@ -1385,7 +1385,7 @@ writeBlockVectorGradientData(data_id, valueIndices, gradientValue)
 function writeBlockVectorGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
     _size, dimensions = size(gradientValues)
     @assert dimensions == getDimensions()*getDimensions() "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
-
+    gradientValues = reshape(permutedims(gradientValues),:)
     ccall((:precicec_writeBlockVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, gradientValues)
 end
 
@@ -1491,8 +1491,8 @@ writeBlockScalarGradientData(data_id, valueIndices, gradientValue)
 function writeBlockScalarGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
     _size, dimensions = size(gradientValues)
     @assert dimensions == getDimensions() "Dimensions of vector data in write_block_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-
-    ccall((:precicec_writeBlockScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, gradientValues)
+    gradientValues = reshape(permutedims(gradientValues),:)
+    ccall((:precicec_writeBlockScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble},), dataID, _size, valueIndices, gradientValues)
 end
 
 end # module
