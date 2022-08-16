@@ -75,7 +75,7 @@ export
     writeScalarGradientData,
     writeVectorGradientData,
     writeBlockScalarGradientData,
-    writeBlockVectorGradientData,
+    writeBlockVectorGradientData
 
 
 @doc """
