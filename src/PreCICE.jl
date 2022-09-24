@@ -1381,7 +1381,7 @@ Write gradient values of a vector data for a 2D problem with 2 vertices:
 data_id = 1
 valueIndices = [1,2]
 gradientValues = [1.0 2.0 3.0 4.0; 5.0 6.0 7.0 8.0]
-writeBlockVectorGradientData(data_id, valueIndices, gradientValue)
+PreCICE.writeBlockVectorGradientData(data_id, valueIndices, gradientValue)
 ```
 
 """
@@ -1422,12 +1422,12 @@ Write gradient values of a scalar data for a 3D problem with 5 vertices:
 data_id = 1
 vertex_id = 5
 gradientValues = [1.0 2.0 3.0]
-writeScalarGradientData(data_id, vertex_id, gradientValue)
+PreCICE.writeScalarGradientData(data_id, vertex_id, gradientValue)
 ```
 
 """
 function writeScalarGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
-    dimensions = size(gradientValues)
+    dimensions = length(gradientValues)
     @assert dimensions == getDimensions() "Dimensions of vector data in write_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
    
     ccall((:precicec_writeScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
@@ -1464,11 +1464,11 @@ Write gradient values of a vector data for a 3D problem with 5 vertices:
 data_id = 1
 vertex_id = 5
 gradientValues = [1.0 2.0 3.0 4.0 5.0 6.0 1.0 2.0 3.0]
-writeVectorGradientData(data_id, vertex_id, gradientValue)
+PreCICE.writeVectorGradientData(data_id, vertex_id, gradientValue)
 ```
 """
 function writeVectorGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
-    dimensions = size(gradientValues)
+    dimensions = length(gradientValues)
     @assert dimensions == getDimensions()*getDimensions() "Dimensions of vector data in write_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
 
     ccall((:precicec_writeVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
@@ -1499,7 +1499,7 @@ Write gradient values of a vector data for a 2D problem with 3 vertices:
 data_id = 1
 valueIndices = [1,2,3]
 gradientValues = [1.0 2.0; 3.0 4.0; 5.0 6.0]
-writeBlockScalarGradientData(data_id, valueIndices, gradientValue)
+PreCICE.writeBlockScalarGradientData(data_id, valueIndices, gradientValue)
 ```
 
 """

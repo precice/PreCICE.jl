@@ -184,3 +184,57 @@ function actionReadIterationCheckpoint()
     dummyConstant = "dummyReadIteration"  # compare to test/SolverInterface.c
     return returnConstant == dummyConstant
 end
+
+function isGradientDataRequired()
+    PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
+    fakeDataId = 0  # compare to test/SolverInterface.c, fake_data_id
+    returnConstant = PreCICE.isGradientDataRequired(fakeDataId)
+    dummyConstant = 0 
+    return returnConstant == dummyConstant
+end
+
+function writeBlockScalarGradientData()
+    PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
+    fakeDataId = 0  # compare to test/SolverInterface.c, fake_data_id
+    gradientData = [1.0 2 3; 6 7 8; 9 10 11]
+    nVertices = 3
+    ndims = 3
+    fakeIndices = Cint[0:(nVertices-1)...]
+    PreCICE.writeBlockScalarGradientData(fakeDataId, fakeIndices, gradientData)
+    readData = PreCICE.readBlockScalarData(fakeDataId,  Cint[0:(nVertices*ndims-1)...])
+    return reshape(permutedims(gradientData),:) == readData
+end
+
+function writeScalarGradientData()
+    PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
+    fakeDataId = 0  # compare to test/SolverInterface.c, fake_data_id
+    gradientData = [1.0, 2, 3]
+    ndims = 3
+    fakeIndex = 0
+    PreCICE.writeScalarGradientData(fakeDataId,fakeIndex, gradientData)
+    readData = PreCICE.readBlockScalarData(fakeDataId,  Cint[0:(ndims-1)...])
+    return gradientData == readData    
+end
+
+function writeBlockVectorGradientData()
+    PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
+    fakeDataId = 0  # compare to test/SolverInterface.c, fake_data_id
+    nVertices = 2
+    ndims = 3
+    gradientData = rand(nVertices, ndims*ndims)
+    fakeIndices = Cint[0:(nVertices-1)...]
+    PreCICE.writeBlockVectorGradientData(fakeDataId, fakeIndices, gradientData)
+    readData = PreCICE.readBlockVectorData(fakeDataId,  Cint[0:(nVertices*ndims-1)...])
+    return reshape(permutedims(gradientData),:) == reshape(permutedims(readData),:)
+end
+
+function writeVectorGradientData()
+    PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
+    fakeDataId = 0  # compare to test/SolverInterface.c, fake_data_id
+    ndims = 3
+    gradientData = rand(ndims*ndims)
+    fakeIndex = 0
+    PreCICE.writeVectorGradientData(fakeDataId, fakeIndex, gradientData)
+    readData = PreCICE.readBlockVectorData(fakeDataId,  Cint[0:(ndims-1)...])
+    return gradientData == reshape(permutedims(readData),:)
+end

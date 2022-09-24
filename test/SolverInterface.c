@@ -124,6 +124,11 @@ char precicec_isActionRequired(const char *action)
     return 0;
 }
 
+char precicec_isGradientDataRequired(int dataID)
+{
+    return 0;
+}
+
 void precicec_precicec_markActionFulfilled(const char *action)
 {
 }
@@ -315,4 +320,36 @@ const char *precicec_actionWriteIterationCheckpoint()
 const char *precicec_actionReadIterationCheckpoint()
 {
     return "dummyReadIteration";
+}
+
+void precicec_writeBlockScalarGradientData(int dataID, int size, const int *valueIndices, const double *values)
+{
+    for (int i = 0; i < size*precicec_getDimensions(); i++)
+    {   
+        fake_read_write_buffer[i] = values[i];
+    }
+}
+
+void precicec_writeScalarGradientData(int dataID, int valueIndex, const double *value)
+{
+    for (int i = 0; i < precicec_getDimensions(); i++)
+    {
+        fake_read_write_buffer[i] = value[i];
+    }
+}
+
+void precicec_writeBlockVectorGradientData(int dataID, int size, const int *valueIndices, double *values)
+{
+    for (int i = 0; i < size*precicec_getDimensions()*precicec_getDimensions(); i++)
+    {
+        fake_read_write_buffer[i] = values[i];
+    }
+}
+
+void precicec_writeVectorGradientData(int dataID, int valueIndex, double *value)
+{
+    for (int i = 0; i < precicec_getDimensions()*precicec_getDimensions(); i++)
+    {
+        fake_read_write_buffer[i] = value[i];
+    }
 }

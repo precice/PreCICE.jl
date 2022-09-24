@@ -48,6 +48,11 @@ push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
             @test actionWriteInitialData()
             @test actionWriteIterationCheckpoint()
             @test actionReadIterationCheckpoint()
+            @test isGradientDataRequired()
+            @test writeBlockScalarGradientData()
+            @test writeScalarGradientData()
+            @test writeBlockVectorGradientData()
+            @test writeVectorGradientData()
         end #if
     end # testset
 
