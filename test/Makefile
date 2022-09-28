@@ -2,7 +2,7 @@ CC=gcc
  
 CFLAGS=-c -Wall -fPIC
  
-SOURCES=SolverInterface.c 
+SOURCES=DummySolverInterface.c 
 OBJECTS=$(SOURCES:.c=.o)
  
 .c.o:
