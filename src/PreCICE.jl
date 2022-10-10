@@ -1350,7 +1350,7 @@ Checks if the given data set requires gradient data. We check if the data object
 
 """
 function isGradientDataRequired(dataID::Integer)
-        return ccall((:precicec_isGradientDataRequired, "libprecice"), Cint, (Cint,), dataID)
+    return ccall((:precicec_isGradientDataRequired, "libprecice"), Cint, (Cint,), dataID)
 end
 
 @doc """
@@ -1385,11 +1385,23 @@ PreCICE.writeBlockVectorGradientData(data_id, valueIndices, gradientValue)
 ```
 
 """
-function writeBlockVectorGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+function writeBlockVectorGradientData(
+    dataID::Integer,
+    valueIndices::AbstractArray{Cint},
+    gradientValues::AbstractArray{Float64},
+)
     _size, dimensions = size(gradientValues)
-    @assert dimensions == getDimensions()*getDimensions() "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
-    gradientValues = reshape(permutedims(gradientValues),:)
-    ccall((:precicec_writeBlockVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble}), dataID, _size, valueIndices, gradientValues)
+    @assert dimensions == getDimensions() * getDimensions() "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
+    gradientValues = reshape(permutedims(gradientValues), :)
+    ccall(
+        (:precicec_writeBlockVectorGradientData, "libprecice"),
+        Cvoid,
+        (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
+        dataID,
+        _size,
+        valueIndices,
+        gradientValues,
+    )
 end
 
 @doc """
@@ -1426,11 +1438,22 @@ PreCICE.writeScalarGradientData(data_id, vertex_id, gradientValue)
 ```
 
 """
-function writeScalarGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+function writeScalarGradientData(
+    dataID::Integer,
+    valueIndex::Integer,
+    gradientValues::AbstractArray{Float64},
+)
     dimensions = length(gradientValues)
     @assert dimensions == getDimensions() "Dimensions of vector data in write_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-   
-    ccall((:precicec_writeScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
+
+    ccall(
+        (:precicec_writeScalarGradientData, "libprecice"),
+        Cvoid,
+        (Cint, Cint, Ref{Cdouble}),
+        dataID,
+        valueIndex,
+        gradientValues,
+    )
 end
 
 
@@ -1467,11 +1490,22 @@ gradientValues = [1.0 2.0 3.0 4.0 5.0 6.0 1.0 2.0 3.0]
 PreCICE.writeVectorGradientData(data_id, vertex_id, gradientValue)
 ```
 """
-function writeVectorGradientData(dataID::Integer, valueIndex::Integer, gradientValues::AbstractArray{Float64})
+function writeVectorGradientData(
+    dataID::Integer,
+    valueIndex::Integer,
+    gradientValues::AbstractArray{Float64},
+)
     dimensions = length(gradientValues)
-    @assert dimensions == getDimensions()*getDimensions() "Dimensions of vector data in write_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
+    @assert dimensions == getDimensions() * getDimensions() "Dimensions of vector data in write_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
 
-    ccall((:precicec_writeVectorGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cdouble}), dataID, valueIndex, gradientValues)
+    ccall(
+        (:precicec_writeVectorGradientData, "libprecice"),
+        Cvoid,
+        (Cint, Cint, Ref{Cdouble}),
+        dataID,
+        valueIndex,
+        gradientValues,
+    )
 end
 
 @doc """
@@ -1503,11 +1537,23 @@ PreCICE.writeBlockScalarGradientData(data_id, valueIndices, gradientValue)
 ```
 
 """
-function writeBlockScalarGradientData(dataID::Integer, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+function writeBlockScalarGradientData(
+    dataID::Integer,
+    valueIndices::AbstractArray{Cint},
+    gradientValues::AbstractArray{Float64},
+)
     _size, dimensions = size(gradientValues)
     @assert dimensions == getDimensions() "Dimensions of vector data in write_block_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-    gradientValues = reshape(permutedims(gradientValues),:)
-    ccall((:precicec_writeBlockScalarGradientData, "libprecice"), Cvoid, (Cint, Cint, Ref{Cint}, Ref{Cdouble},), dataID, _size, valueIndices, gradientValues)
+    gradientValues = reshape(permutedims(gradientValues), :)
+    ccall(
+        (:precicec_writeBlockScalarGradientData, "libprecice"),
+        Cvoid,
+        (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
+        dataID,
+        _size,
+        valueIndices,
+        gradientValues,
+    )
 end
 
 end # module
