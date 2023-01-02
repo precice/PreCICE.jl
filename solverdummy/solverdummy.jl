@@ -68,7 +68,7 @@ let # setting local scope for dt outside of the while loop
         end
 
         PreCICE.writeBlockVectorData(writeDataID, vertexIDs, writeData)
-        
+
         dt = PreCICE.advance(dt)
 
         if PreCICE.requiresReadingCheckpoint()

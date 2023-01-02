@@ -32,7 +32,7 @@ export
     requiresReadingCheckpoint,
     requiresWritingCheckpoint,
     requiresInitialData,
-    
+
 
     # mesh access
     hasMesh,
@@ -620,11 +620,7 @@ Previous calls:
  - Vertices with `firstVertexID` and `secondVertexID` were added to the mesh with the ID `meshID`
 
 """
-function setMeshEdge(
-    meshID::Integer,
-    firstVertexID::Integer,
-    secondVertexID::Integer,
-)
+function setMeshEdge(meshID::Integer, firstVertexID::Integer, secondVertexID::Integer)
     ccall(
         (:precicec_setMeshEdge, "libprecice"),
         Cint,
@@ -682,17 +678,14 @@ Set mesh triangle from vertex IDs.
 - `vertices::AbstractArray{Integer}`: IDs of the vertices of the triangles.
 
 """
-function setMeshTriangles(
-    meshID::Integer,
-    vertices::AbstractArray{Integer},
-)
+function setMeshTriangles(meshID::Integer, vertices::AbstractArray{Integer})
     ccall(
         (:precicec_setMeshTriangles, "libprecice"),
         Cvoid,
         (Cint, Cint, Ref{Cint}),
         meshID,
         length(vertices),
-        vertices
+        vertices,
     )
 end
 
@@ -748,19 +741,16 @@ Set mesh Quad from vertex IDs.
 - `vertices::AbstractArray{Integer}`: IDs of the edges of the Quads.
 
 """
-function setMeshQuad(
-    meshID::Integer,
-    vertices::AbstractArray{Integer},
-)
+function setMeshQuad(meshID::Integer, vertices::AbstractArray{Integer})
     ccall(
         (:precicec_setMeshQuads, "libprecice"),
         Cvoid,
         (Cint, Cint, Ref{Cint}),
         meshID,
         length(vertices),
-        vertices
+        vertices,
     )
-        
+
 end
 
 
