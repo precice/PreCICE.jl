@@ -185,10 +185,10 @@ function actionReadIterationCheckpoint()
     return returnConstant == dummyConstant
 end
 
-function isGradientDataRequired()
+function requiresGradientDataFor()
     PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
     fakeDataId = 0  # compare to test/SolverInterface.c, fake_data_id
-    returnConstant = PreCICE.isGradientDataRequired(fakeDataId)
+    returnConstant = PreCICE.requiresGradientDataFor(fakeDataId)
     dummyConstant = 0
     return returnConstant == dummyConstant
 end

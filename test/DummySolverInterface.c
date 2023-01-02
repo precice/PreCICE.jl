@@ -124,7 +124,7 @@ char precicec_isActionRequired(const char *action)
     return 0;
 }
 
-char precicec_isGradientDataRequired(int dataID)
+char precicec_requiresGradientDataFor(int dataID)
 {
     return 0;
 }

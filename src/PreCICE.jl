@@ -29,8 +29,10 @@ export
     hasToEvaluateFineModel,
 
     # action methods
-    isActionRequired,
-    markActionFulfilled,
+    requiresReadingCheckpoint,
+    requiresWritingCheckpoint,
+    requiresInitialData
+    
 
     # mesh access
     hasMesh,
@@ -65,7 +67,7 @@ export
 
     # Gradient related 
 
-    isGradientDataRequired,
+    requiresGradientDataFor,
     writeScalarGradientData,
     writeVectorGradientData,
     writeBlockScalarGradientData,
@@ -310,7 +312,7 @@ end
 
 @doc """
 
-    isActionRequired(action::String)::Bool
+isActionRequired(action::String)::Bool
 
 Checks if the provided action is required.
     
@@ -1202,15 +1204,15 @@ end
 
 @doc """
 
-    isGradientDataRequired(dataID::Integer)::Bool
+    requiresGradientDataFor(dataID::Integer)::Bool
         
 Checks if the given data set requires gradient data. We check if the data object has been intialized with the gradient flag.
 # Arguments
 - `dataID::Integer`: ID of the data to be checked. Obtained by [`getDataID`](@ref).
 
 """
-function isGradientDataRequired(dataID::Integer)
-    return ccall((:precicec_isGradientDataRequired, "libprecice"), Cint, (Cint,), dataID)
+function requiresGradientDataFor(dataID::Integer)
+    return ccall((:precicec_requiresGradientDataFor, "libprecice"), Cint, (Cint,), dataID)
 end
 
 @doc """
