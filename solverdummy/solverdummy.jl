@@ -57,28 +57,22 @@ let # setting local scope for dt outside of the while loop
 
     while PreCICE.isCouplingOngoing()
 
-        if PreCICE.isActionRequired(PreCICE.actionWriteIterationCheckpoint())
+        if PreCICE.requiresWritingCheckpoint()
             println("DUMMY: Writing iteration checkpoint")
-            PreCICE.markActionFulfilled(PreCICE.actionWriteIterationCheckpoint())
         end
 
-        if PreCICE.isReadDataAvailable()
-            readData = PreCICE.readBlockVectorData(readDataID, vertexIDs)
-        end
+        readData = PreCICE.readBlockVectorData(readDataID, vertexIDs)
 
         for i = 1:numberOfVertices, j = 1:dimensions
             writeData[i, j] = readData[i, j] + 1.0
         end
 
-        if PreCICE.isWriteDataRequired(dt)
-            PreCICE.writeBlockVectorData(writeDataID, vertexIDs, writeData)
-        end
-
+        PreCICE.writeBlockVectorData(writeDataID, vertexIDs, writeData)
+        
         dt = PreCICE.advance(dt)
 
-        if PreCICE.isActionRequired(PreCICE.actionReadIterationCheckpoint())
+        if PreCICE.requiresReadingCheckpoint()
             println("DUMMY: Reading iteration checkpoint")
-            PreCICE.markActionFulfilled(PreCICE.actionReadIterationCheckpoint())
         else
             println("DUMMY: Advancing in time")
         end

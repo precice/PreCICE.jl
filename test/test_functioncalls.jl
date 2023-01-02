@@ -166,25 +166,6 @@ function getVersionInformation()
     return versionInfo == fakeVersionInfo
 end
 
-function actionWriteInitialData()
-    returnConstant = PreCICE.actionWriteInitialData()
-    # compare to test/SolverInterface.c
-    dummyConstant = "dummyWriteInitialData"
-    return returnConstant == dummyConstant
-end
-
-function actionWriteIterationCheckpoint()
-    returnConstant = PreCICE.actionWriteIterationCheckpoint()
-    dummyConstant = "dummyWriteIteration"  # compare to test/SolverInterface.c
-    return returnConstant == dummyConstant
-end
-
-function actionReadIterationCheckpoint()
-    returnConstant = PreCICE.actionReadIterationCheckpoint()
-    dummyConstant = "dummyReadIteration"  # compare to test/SolverInterface.c
-    return returnConstant == dummyConstant
-end
-
 function requiresGradientDataFor()
     PreCICE.createSolverInterface("test", "dummy.xml", 0, 1)
     fakeDataId = 0  # compare to test/SolverInterface.c, fake_data_id
