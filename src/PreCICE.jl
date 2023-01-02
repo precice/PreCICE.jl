@@ -18,7 +18,6 @@ export
 
     # steering methods
     initialize,
-    initializeData,
     advance,
     finalize,
 
@@ -161,38 +160,6 @@ Return the maximum length of first timestep to be computed by the solver.
 function initialize()::Float64
     dt::Float64 = ccall((:precicec_initialize, "libprecice"), Cdouble, ())
     return dt
-end
-
-
-@doc """
-
-    initializeData()
-
-Initializes coupling data. The starting values for coupling data are zero by default.
-To provide custom values, first set the data using the Data Access methods and
-call this method to finally exchange the data.
-
-Serial Coupling Scheme: 
-- Only the first participant has to call this method, the second participant
-receives the values on calling [`initialize`](@ref).
-
-Parallel Coupling Scheme:
-- Values in both directions are exchanged.
-- Both participants need to call [`initializeData`](@ref).
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
- - The action `WriteInitialData` is required
- - [`advance`](@ref) has not yet been called.
- - [`finalize`](@ref) has not yet been called.
-
-Tasks completed:
- - Initial coupling data was exchanged.
-"""
-function initializeData()
-    ccall((:precicec_initialize_data, "libprecice"), Cvoid, ())
 end
 
 
