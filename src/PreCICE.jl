@@ -31,7 +31,7 @@ export
     # action methods
     requiresReadingCheckpoint,
     requiresWritingCheckpoint,
-    requiresInitialData
+    requiresInitialData,
     
 
     # mesh access
@@ -312,42 +312,36 @@ end
 
 @doc """
 
-isActionRequired(action::String)::Bool
+    requiresInitialData()::Bool
 
-Checks if the provided action is required.
-    
-Some features of preCICE require a solver to perform specific actions, in order to be
-in valid state for a coupled simulation. A solver is made eligible to use those features,
-by querying for the required actions, performing them on demand, and calling [`markActionfulfilled`](@ref)
-to signalize preCICE the correct behavior of the solver.
-
-# Arguments
- - `action:: PreCICE action`: Name of the action
-
+Check if the solver has to provide initial data.
 """
-function isActionRequired(action::String)::Bool
-    ans::Integer =
-        ccall((:precicec_isActionRequired, "libprecice"), Cint, (Ptr{Int8},), action)
+function requiresInitialData()::Bool
+    ans::Integer = ccall((:precicec_requiresInitialData, "libprecice"), Cint, ())
     return ans
 end
 
 
+@doc """ 
+
+    requiresReadingCheckpoint()::Bool
+
+Check if the solver has to read a checkpoint.
+"""
+function requiresReadingCheckpoint()::Bool
+    ans::Integer = ccall((:precicec_requiresReadingCheckpoint, "libprecice"), Cint, ())
+    return ans
+end
+
 @doc """
 
-    markActionFulfilled(action::String)
+    requiresWritingCheckpoint()::Bool
 
-Indicate preCICE that a required action has been fulfilled by a solver. 
-
-# Arguments
- - `action::String`: Name of the action.
-
-# Notes
-
-Previous calls:
- - The solver fulfilled the specified action.
+Check if the solver has to write a checkpoint.
 """
-function markActionFulfilled(action::String)
-    ccall((:precicec_markActionFulfilled, "libprecice"), Cvoid, (Ptr{Int8},), action)
+function requiresWritingCheckpoint()::Bool
+    ans::Integer = ccall((:precicec_requiresWritingCheckpoint, "libprecice"), Cint, ())
+    return ans
 end
 
 
@@ -1164,43 +1158,6 @@ function mapReadDataTo(fromMeshID::Integer)
     ccall((:precicec_mapReadDataTo, "libprecice"), Cvoid, (Cint,), fromMeshID)
 end
 
-
-@doc """
-
-    actionWriteInitialData()
-
-Return the name of action for writing initial data.
-
-"""
-function actionWriteInitialData()
-    msgCstring = ccall((:precicec_actionWriteInitialData, "libprecice"), Cstring, ())
-    return unsafe_string(msgCstring)
-end
-
-
-@doc """
-
-    actionWriteIterationCheckpoint()
-
-Return name of action for writing iteration checkpoint.
-"""
-function actionWriteIterationCheckpoint()
-    msgCstring =
-        ccall((:precicec_actionWriteIterationCheckpoint, "libprecice"), Cstring, ())
-    return unsafe_string(msgCstring)
-end
-
-
-@doc """
-
-    actionReadIterationCheckpoint()
-
-Return name of action for reading iteration checkpoint
-"""
-function actionReadIterationCheckpoint()
-    msgCstring = ccall((:precicec_actionReadIterationCheckpoint, "libprecice"), Cstring, ())
-    return unsafe_string(msgCstring)
-end
 
 @doc """
 
