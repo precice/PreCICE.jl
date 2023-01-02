@@ -45,15 +45,12 @@ export
     getMeshVertexIDsFromPositions,
     setMeshEdge,
     setMeshTriangle,
-    setMeshTriangleWithEdges,
     setMeshQuad,
-    setMeshQuadWithEdges,
 
     # data access
     hasData,
     getDataID,
     mapReadDataTo,
-    mapWriteDataFrom,
     writeBlockVectorData,
     writeVectorData,
     writeBlockScalarData,
@@ -702,7 +699,7 @@ end
 
 @doc """
 
-    setMeshEdge(meshID::Integer, firstVertexID::Integer, secondVertexID::Integer)::Integer
+    setMeshEdge(meshID::Integer, firstVertexID::Integer, secondVertexID::Integer)
 
 Set mesh edge from vertex IDs, return edge ID.
 
@@ -721,8 +718,8 @@ function setMeshEdge(
     meshID::Integer,
     firstVertexID::Integer,
     secondVertexID::Integer,
-)::Integer
-    edgeID::Integer = ccall(
+)
+    ccall(
         (:precicec_setMeshEdge, "libprecice"),
         Cint,
         (Cint, Cint, Cint),
@@ -730,7 +727,6 @@ function setMeshEdge(
         firstVertexID,
         secondVertexID,
     )
-    return edgeID
 end
 
 
@@ -738,13 +734,13 @@ end
 
     setMeshTriangle(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
 
-Set mesh triangle from edge IDs.
+Set mesh triangle from vertex IDs.
 
 # Arguments
 - `meshID::Integer`: ID of the mesh to add the edge to.
 - `firstVertexID::Integer`: ID of the first vertex of the edge.
 - `secondVertexID::Integer`: ID of the second vertex of the edge.
-- `thirdEdgeID::Integer`: ID of the third edge of the triangle.
+- `thirdVertexID::Integer`: ID of the third edge of the triangle.
 
 # Notes
 
@@ -753,57 +749,44 @@ Previous calls:
 """
 function setMeshTriangle(
     meshID::Integer,
-    firstEdgeID::Integer,
-    secondEdgeID::Integer,
-    thirdEdgeID::Integer,
+    firstVertexID::Integer,
+    secondVertexID::Integer,
+    thirdVertexID::Integer,
 )
     ccall(
         (:precicec_setMeshTriangle, "libprecice"),
         Cvoid,
         (Cint, Cint, Cint, Cint),
         meshID,
-        firstEdgeID,
-        secondEdgeID,
-        thirdEdgeID,
+        firstVertexID,
+        secondVertexID,
+        thirdVertexID,
     )
 end
 
 
 @doc """
 
-    setMeshTriangleWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
+    setMeshTriangles(meshID::Integer, vertices::AbstractArray{Integer})
 
-Set a triangle from vertex IDs. Create missing edges.
-
-WARNING: This routine is supposed to be used, when no edge information is available per se.
-        Edges are created on the fly within preCICE. This routine is significantly slower than the one
-        using edge IDs, since it needs to check, whether an edge is created already or not.
+Set mesh triangle from vertex IDs.
 
 # Arguments
 - `meshID::Integer`: ID of the mesh to add the edge to.
-- `firstVertexID::Integer`: ID of the first vertex of the edge.
-- `secondVertexID::Integer`: ID of the second vertex of the edge.
-- `thirdEdgeID::Integer`: ID of the third edge of the triangle.
+- `vertices::AbstractArray{Integer}`: IDs of the vertices of the triangles.
 
-# Notes
-
-Previous calls:
- - Edges with `firstVertexID`, `secondVertexID`, and `thirdEdgeID` were added to the mesh with the ID `meshID`
 """
-function setMeshTriangleWithEdges(
+function setMeshTriangles(
     meshID::Integer,
-    firstEdgeID::Integer,
-    secondEdgeID::Integer,
-    thirdEdgeID::Integer,
+    vertices::AbstractArray{Integer},
 )
     ccall(
-        (:precicec_setMeshTriangleWithEdges, "libprecice"),
+        (:precicec_setMeshTriangles, "libprecice"),
         Cvoid,
-        (Cint, Cint, Cint, Cint),
+        (Cint, Cint, Ref{Cint}),
         meshID,
-        firstEdgeID,
-        secondEdgeID,
-        thirdEdgeID,
+        length(vertices),
+        vertices
     )
 end
 
@@ -848,46 +831,30 @@ function setMeshQuad(
     )
 end
 
-
 @doc """
 
-    setMeshQuadWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
+    setMeshQuads(meshID::Integer, vertices::AbstractArray{Integer})
 
-Set surface mesh quadrangle from vertex IDs.
-
-WARNING: This routine is supposed to be used, when no edge information is available per se. Edges are
-created on the fly within preCICE. This routine is significantly slower than the one using
-edge IDs, since it needs to check, whether an edge is created already or not.
+Set mesh Quad from vertex IDs.
 
 # Arguments
 - `meshID::Integer`: ID of the mesh to add the Quad to.
-- `firstVertexID::Integer`: ID of the first edge of the Quad.
-- `secondVertexID::Integer`: ID of the second edge of the Quad.
-- `thirdEdgeID::Integer`: ID of the third edge of the Quad.
-- `fourthEdgeID::Integer`: ID of the fourth edge of the Quad.
+- `vertices::AbstractArray{Integer}`: IDs of the edges of the Quads.
 
-# Notes
-
-Previous calls:
- - Edges with `firstVertexID`, `secondEdgeID`, `thirdVertexID`, and `fourthEdgeID` were added
-    to the mesh with the ID `mesh_id`
 """
-function setMeshQuadWithEdges(
+function setMeshQuad(
     meshID::Integer,
-    firstEdgeID::Integer,
-    secondEdgeID::Integer,
-    thirdEdgeID::Integer,
+    vertices::AbstractArray{Integer},
 )
     ccall(
-        (:precicec_setMeshQuadWithEdges, "libprecice"),
+        (:precicec_setMeshQuads, "libprecice"),
         Cvoid,
-        (Cint, Cint, Cint, Cint, Cint),
+        (Cint, Cint, Ref{Cint}),
         meshID,
-        firstEdgeID,
-        secondEdgeID,
-        thirdEdgeID,
-        fourthEdgeID,
+        length(vertices),
+        vertices
     )
+        
 end
 
 
@@ -1265,23 +1232,6 @@ Return a semicolon-separated String containing:
 function getVersionInformation()
     versionCstring = ccall((:precicec_getVersionInformation, "libprecice"), Cstring, ())
     return unsafe_string(versionCstring)
-end
-
-
-@doc """
-
-    mapReadDataFrom(fromMeshID::Integer)
-
-Compute and map all write data mapped from the mesh with given ID. This is an explicit request
-to map write data from the Mesh associated with [`fromMeshID`](@ref). It also computes the mapping if necessary.
-
-# Notes
-
-Previous calls:
- - A mapping to [`fromMeshID`](@ref) was configured
-"""
-function mapWriteDataFrom(fromMeshID::Integer)
-    ccall((:precicec_mapWriteDataFrom, "libprecice"), Cvoid, (Cint,), fromMeshID)
 end
 
 
