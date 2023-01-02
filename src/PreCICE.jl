@@ -24,8 +24,6 @@ export
     # status queries
     getDimensions,
     isCouplingOngoing,
-    isReadDataAvailable,
-    isWriteDataRequired,
     isTimeWindowComplete,
     hasToEvaluateSurrogateModel,
     hasToEvaluateFineModel,
@@ -306,61 +304,6 @@ Return whether the solver has to evaluate the fine model representation.
 """
 function hasToEvaluateFineModel()::Bool
     ans::Integer = ccall((:precicec_hasToEvaluateFineModel, "libprecice"), Cint, ())
-    return ans
-end
-
-
-@doc """
-
-    isReadDataAvailable()::Bool
-
-Check if new data to be read is available. Data is classified to be new, if it has been received
-while calling [`initialize`](@ref) and before calling [`advance`](@ref), or in the last call of [`advance`](@ref).
-This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
-timesteps than the limits returned in [`intitialize`](@ref) and [`advance`](@ref).
-It is allowed to read data even if this function returns false. This is not recommended
-due to performance reasons. Use this function to prevent unnecessary reads.
-
-#Notes
-
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
-"""
-function isReadDataAvailable()::Bool
-    ans::Integer = ccall((:precicec_isReadDataAvailable, "libprecice"), Cint, ())
-    return ans
-end
-
-
-
-@doc """
-
-    isWriteDataRequired(computedTimestepLength::Float64)::Bool
-
-Check if new data has to be written before calling [`advance`](@ref).
-This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
-timesteps than the limits returned in [`intitialize`](@ref) and [`advance`](@ref).
-It is allowed to write data even if this function returns false. This is not recommended
-due to performance reasons. Use this function to prevent unnecessary writes.
-
-# Arguments
-
- - `computed_timestep_length::double`: Length of timestep used by the solver.
-
-Return whether new data has to be written.
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
-"""
-function isWriteDataRequired(computedTimestepLength::Float64)::Bool
-    ans::Integer = ccall(
-        (:precicec_isWriteDataRequired, "libprecice"),
-        Cint,
-        (Cdouble,),
-        computedTimestepLength,
-    )
     return ans
 end
 
