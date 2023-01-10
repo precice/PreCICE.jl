@@ -69,44 +69,55 @@ julia> using PreCICE
 ```
 
 ### Incompatible version of libstdc++
+
 If you get an error message like:
+
 ```julia-repl
 ERROR: ERROR: LoadError: LoadError: could not load library "libprecice"
 /usr/bin/../lib/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /usr/local/lib/libprecice.so)
 ```
-[It is caused](https://github.com/precice/PreCICE.jl/issues/44#issuecomment-1259655654) by an incompatible version of `libstdc++`. Julia ships its own libraries, which are older than the ones shipped by the system or the ones used to compile preCICE. 
 
-First, consider updating your julia version. The versions used in Julia are fairly up to date and should work with older systems. The problem is also known to the developers of Julia and they are [working on a solution](https://github.com/JuliaGL/GLFW.jl/issues/198). From Julia `v1.8.3` on, the problem [should be fixed](https://github.com/JuliaLang/julia/pull/46976).
+It is caused by an incompatible version of `libstdc++` as described [in the issue](https://github.com/precice/PreCICE.jl/issues/44#issuecomment-1259655654). Julia ships its own libraries, which are older than the ones shipped by the system or the ones used to compile preCICE.
+
+As a first solution, consider updating your julia version. The versions used in Julia are fairly up to date and should work with older systems. The problem is also known to the developers of Julia and they are [working on a solution](https://github.com/JuliaGL/GLFW.jl/issues/198). From Julia `v1.8.3` on, the problem [should be fixed](https://github.com/JuliaLang/julia/pull/46976).
 
 If you cannot update your julia version, or the problem persists, you can try preloading the system `libstdc++`:
+
 <details>
 <summary>Click to expand</summary>
 
-Preload the system `libstdc++` with 
+Preload the system `libstdc++` with
+
 ```bash
 LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 julia
 ```
+
 You may have to [compile preCICE from source](https://precice.org/installation-source-preparation.html) for this to work.
 
+On newer systems, preloading only the system `libstdc++` may not be sufficient. Errors of the form
 
-On newer Systems, preloading only the system `libstdc++` may not be sufficient. There errors of the form
 ```julia-repl
 ERROR: ERROR: LoadError: LoadError: could not load library "libprecice"
 /path/to/julia-1.8.1/bin/../lib/julia/libcurl.so: version `CURL_OPENSSL_4' not found (required by /lib/x86_64-linux-gnu/libhdf5_openmpi.so.103)could not load library "libprecice"
 /path/to/julia-1.8.1/bin/../lib/julia/libcurl.so: version `CURL_OPENSSL_4' not found (required by /lib/x86_64-linux-gnu/libhdf5_openmpi.so.103)
 ```
+
 can be resolved by preloading the system `libcurl`:
+
 ```bash
 LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libstdc++.so.6:/usr/lib/x86_64-linux-gnu/libcurl.so.4" julia
 ```
+
 Again, you may have to [compile preCICE from source](https://precice.org/installation-source-preparation.html).
 
-Adding the following lines to your `~/.bashrc` may help to avoid this error in the future:
+Adding the following lines to your `~/.bashrc` will help to avoid this error in the future:
+
 ```bash
 alias julia='LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libstdc++.so.6:/usr/lib/x86_64-linux-gnu/libcurl.so.4" julia'
 ```
 
 You could instead move the julia libraries out of the way and create a symlink to the system libraries:
+
 ```bash
 mv /path/to/julia/lib/julia/libstdc++.so.6 /path/to/julia/lib/julia/libstdc++.so.6.bak
 ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /path/to/julia/lib/julia/libstdc++.so.6
@@ -131,7 +142,7 @@ pkg> test PreCICE
 This checks if the preCICE bindings can be found and accessed correctly.
 You can also test the full functionality of PreCICE.jl. If not set up, the output of the previous test shows an info on what command you need to execute. It will be along the lines of:
 
-```
+```bash
 cd /home/<user>/.julia/packages/PreCICE/<code>/test && make
 ```
 
