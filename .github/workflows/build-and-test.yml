@@ -22,7 +22,7 @@ jobs:
           sudo apt-get install -y libopenmpi-dev cmake libboost-all-dev libeigen3-dev pkg-config
           sudo rm -rf /var/lib/apt/lists/*
 
-      - name: Checkout precice and make required files discoverable
+      - name: Checkout precice
         run: |
           git clone https://github.com/precice/precice.git precice
           cd precice
@@ -36,9 +36,6 @@ jobs:
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
-
-      - name: Test Installation
-        run:  julia -e "using PreCICE; println(PreCICE.getVersionInformation())" 
 
   run_tests:
     runs-on: ubuntu-latest
