@@ -14,24 +14,11 @@ jobs:
         uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.julia-version }}     
-        
-      - uses: actions/setup-python@v1
-      - name: Install OpenMPI, CMake, Boost library, Eigen and pkg-config
-        run: |
-          sudo apt-get -yy update
-          sudo apt-get install -y libopenmpi-dev cmake libboost-all-dev libeigen3-dev pkg-config
-          sudo rm -rf /var/lib/apt/lists/*
+       
+      - uses: precice/setup-precice-action
+        with:
+          precice-version: 'develop'
 
-      - name: Checkout precice
-        run: |
-          git clone https://github.com/precice/precice.git precice
-          cd precice
-          mkdir build && cd build
-          cmake .. -DPRECICE_MPICommunication=OFF -DPRECICE_PETScMapping=OFF -DPRECICE_PythonActions=OFF -DBUILD_TESTING=OFF
-          make -j $(nproc)
-          export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
-          cd
-      
       - uses: actions/checkout@v2
 
       - name: Build Package
