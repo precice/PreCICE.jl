@@ -38,7 +38,7 @@ jobs:
         with:
           precice-version: 'develop'
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
