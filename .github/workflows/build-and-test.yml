@@ -49,7 +49,7 @@ jobs:
          apt update
          apt install make
 
-      - name: Build Fake Solverinterface
+      - name: Build fake Solverinterface
         run: |
           cd test
           make
