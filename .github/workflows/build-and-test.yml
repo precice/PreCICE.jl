@@ -52,6 +52,9 @@ jobs:
         run: |
           cd test
           make
+          echo $PATH
+          echo $GITHUB_WORKSPACE
+          echo $LD_LIBRARY_PATH
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
