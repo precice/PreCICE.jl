@@ -15,9 +15,9 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}     
        
-      - uses: precice/setup-precice-action@testing
-        with:
-          precice-version: 'develop'
+      # - uses: precice/setup-precice-action@testing
+      #   with:
+      #     precice-version: 'develop'
 
       - uses: actions/checkout@v2
 
@@ -26,7 +26,6 @@ jobs:
 
   run_tests:
     runs-on: ubuntu-latest
-    container: precice/precice
     needs: [build]
     strategy:
       matrix:
@@ -37,8 +36,12 @@ jobs:
       - name: Install Julia
         uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.julia-version }}     
-        
+          version: ${{ matrix.julia-version }}  
+   
+      - uses: precice/setup-precice-action@testing
+        with:
+          precice-version: 'develop'
+
       - uses: actions/checkout@v2
 
       - name: Build Package
