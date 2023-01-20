@@ -15,7 +15,7 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}     
        
-      - uses: precice/setup-precice-action@v0
+      - uses: precice/setup-precice-action@main
         with:
           precice-version: 'develop'
 
