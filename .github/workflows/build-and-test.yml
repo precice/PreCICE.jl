@@ -5,6 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
         julia-arch: [x64, x86]
@@ -55,6 +56,8 @@ jobs:
           echo $PATH
           echo $GITHUB_WORKSPACE
           echo $LD_LIBRARY_PATH
+          ls /home/runner/work/PreCICE.jl/PreCICE.jl/precice/lib
+          ls /home/runner/work/PreCICE.jl/PreCICE.jl/precice/
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
