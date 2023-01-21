@@ -34,9 +34,9 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}  
    
-      - uses: precice/setup-precice-action@testing
+      - uses: precice/setup-precice-action@testing # needs to be changed to main after merge
         with:
-          precice-version: 'main'
+          precice-version: 'v2.5.0' # needs to be changed to develop
 
       - uses: actions/checkout@v3
 
