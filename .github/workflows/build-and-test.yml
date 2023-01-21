@@ -37,7 +37,7 @@ jobs:
    
       - uses: precice/setup-precice-action@testing # needs to be changed to main after merge
         with:
-          precice-version: 'v2.5.0' # needs to be changed to develop
+          precice-version: 'develop'
 
       - uses: actions/checkout@v3
 
@@ -53,24 +53,6 @@ jobs:
         run: |
           cd test
           make
-          echo $PATH
-          echo $GITHUB_WORKSPACE
-          echo $LD_LIBRARY_PATH
-
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: Test Logs
-          path: /home/runner/
-          retention-days: 1
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
-
-
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: Test Logs
-          path: /home/runner/
-          retention-days: 1
