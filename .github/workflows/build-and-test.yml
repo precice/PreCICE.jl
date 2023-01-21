@@ -56,14 +56,12 @@ jobs:
           echo $PATH
           echo $GITHUB_WORKSPACE
           echo $LD_LIBRARY_PATH
-          ls /home/runner/work/PreCICE.jl/PreCICE.jl/precice/lib
-          ls /home/runner/work/PreCICE.jl/PreCICE.jl/precice/
 
       - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: Test Logs
-          path: /home/runner/work/PreCICE.jl/PreCICE.jl/
+          path: /home/runner/
           retention-days: 1
 
       - name: Run tests
@@ -74,5 +72,5 @@ jobs:
         if: failure()
         with:
           name: Test Logs
-          path: /home/runner/work/PreCICE.jl/PreCICE.jl/
+          path: /home/runner/
           retention-days: 1
