@@ -59,5 +59,20 @@ jobs:
           ls /home/runner/work/PreCICE.jl/PreCICE.jl/precice/lib
           ls /home/runner/work/PreCICE.jl/PreCICE.jl/precice/
 
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: Test Logs
+          path: /home/runner/work/PreCICE.jl/PreCICE.jl/
+          retention-days: 1
+
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
+
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: Test Logs
+          path: /home/runner/work/PreCICE.jl/PreCICE.jl/
+          retention-days: 1
