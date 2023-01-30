@@ -1,5 +1,13 @@
 name: Run Tests
-on: [push,pull_request]
+on: # run on every push to main and develop, and on every pull request to main and develop
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   build:
@@ -25,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     strategy:
+      fail-fast: false
       matrix:
         julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
         julia-arch: [x64, x86]
