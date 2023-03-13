@@ -30,15 +30,9 @@ println(
 )
 PreCICE.createSolverInterface(solverName, configFileName, commRank, commSize)
 
-meshID = PreCICE.getMeshID(meshName)
-dimensions = PreCICE.getDimensions()
-
+dimensions = PreCICE.ge
 
 numberOfVertices = 3
-
-
-readDataID = PreCICE.getDataID(dataReadName, meshID)
-writeDataID = PreCICE.getDataID(dataWriteName, meshID)
 
 writeData = zeros(numberOfVertices, dimensions)
 
@@ -48,7 +42,7 @@ for i = 1:numberOfVertices, j = 1:dimensions
     vertices[i, j] = i
 end
 
-vertexIDs = PreCICE.setMeshVertices(meshID, vertices)
+vertexIDs = PreCICE.setMeshVertices(meshName, vertices)
 
 let # setting local scope for dt outside of the while loop
 
@@ -61,13 +55,13 @@ let # setting local scope for dt outside of the while loop
             println("DUMMY: Writing iteration checkpoint")
         end
 
-        readData = PreCICE.readBlockVectorData(readDataID, vertexIDs)
+        readData = PreCICE.readBlockVectorData(meshName, dataReadName, vertexIDs)
 
         for i = 1:numberOfVertices, j = 1:dimensions
             writeData[i, j] = readData[i, j] + 1.0
         end
 
-        PreCICE.writeBlockVectorData(writeDataID, vertexIDs, writeData)
+        PreCICE.writeBlockVectorData(meshName, dataWriteName, vertexIDs, writeData)
 
         dt = PreCICE.advance(dt)
 

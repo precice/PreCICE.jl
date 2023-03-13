@@ -4,7 +4,7 @@ on: [push,pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: precice/precice
+    container: precice/precice:develop
     strategy:
       matrix:
         julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
@@ -23,7 +23,7 @@ jobs:
 
   run_tests:
     runs-on: ubuntu-latest
-    container: precice/precice
+    container: precice/precice:develop
     needs: [build]
     strategy:
       matrix:
