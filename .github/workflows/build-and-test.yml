@@ -55,6 +55,9 @@ jobs:
         run: |
           cd test
           make
+          echo $LD_LIBRARY_PATH
+          echo $LIBRARY_PATH
+          echo $PATH
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
