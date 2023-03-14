@@ -12,7 +12,6 @@ on: # run on every push to main and develop, and on every pull request to main a
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: precice/precice:develop
     strategy:
       fail-fast: false
       matrix:
@@ -58,6 +57,8 @@ jobs:
           echo $LD_LIBRARY_PATH
           echo $LIBRARY_PATH
           echo $PATH
+          ls /usr/local
+          julia -e 'println(Libc.Libdl.DL_LOAD_PATH); println(Libc.Libdl.dlopen("libprecice"))'
           ldconfig -p | grep libprecice
           find /lib* /usr/lib* -name 'libprecice.so*'
 
