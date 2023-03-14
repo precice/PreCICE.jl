@@ -50,20 +50,15 @@ jobs:
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
 
-      - name: Build fake Solverinterface and add /usr/local/lib to LD_LIBRARY_PATH
+      - name: Build fake Solverinterface
         run: |
           cd test
           make
+
+      - name: Add libprecice to LD_LIBRARY_PATH and adjust LD_PRELOAD
+        run: |
           echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo $LD_LIBRARY_PATH
-          export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-          echo $LIBRARY_PATH
-          echo $PATH
-          ls /usr/local/lib | grep libprecice
-          julia -e 'println(Libc.Libdl.DL_LOAD_PATH); println(Libc.Libdl.dlopen("libprecice"))'
-          ldconfig -p | grep libprecice
-          find /lib* /usr/lib* -name 'libprecice.so*'
-          
+          echo "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6" >> $GITHUB_ENV
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
