@@ -30,7 +30,7 @@ println(
 )
 PreCICE.createSolverInterface(solverName, configFileName, commRank, commSize)
 
-dimensions = PreCICE.ge
+dimensions = PreCICE.getDimensions()
 
 numberOfVertices = 3
 
