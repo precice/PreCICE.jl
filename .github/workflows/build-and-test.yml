@@ -1,21 +1,29 @@
 name: Run Tests
-on: [push,pull_request]
+on: # run on every push to main and develop, and on every pull request to main and develop
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: precice/precice:develop
     strategy:
+      fail-fast: false
       matrix:
-        julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
+        julia-version: ["1.6.0", "1.6.5", "1.7.0", "^1.7"]
         julia-arch: [x64, x86]
-    
+
     steps:
       - name: Install Julia
         uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.julia-version }}     
-        
+          version: ${{ matrix.julia-version }}
+
       - uses: actions/checkout@v2
 
       - name: Build Package
@@ -26,30 +34,31 @@ jobs:
     container: precice/precice:develop
     needs: [build]
     strategy:
+      fail-fast: false
       matrix:
-        julia-version: ['1.6.0','1.6.5','1.7.0','^1.7']
+        julia-version: ["1.6.7", "1.7", "^1.8"]
         julia-arch: [x64, x86]
-    
+
     steps:
       - name: Install Julia
         uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.julia-version }}     
-        
-      - uses: actions/checkout@v2
+          version: ${{ matrix.julia-version }}
+
+      - uses: actions/checkout@v3
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
 
-      - name: install make
-        run: |
-         apt update
-         apt install make
-
-      - name: Build Fake Solverinterface
+      - name: Build fake Solverinterface
         run: |
           cd test
           make
+
+      - name: Add libprecice to LD_LIBRARY_PATH and adjust LD_PRELOAD
+        run: |
+          echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6:/usr/lib/x86_64-linux-gnu/libcurl.so.4" >> $GITHUB_ENV
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1

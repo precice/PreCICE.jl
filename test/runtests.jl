@@ -12,6 +12,7 @@ push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
 
     @testset "Solverdummies" begin
         include("test_solverdummy.jl")
+        println(test_solverdummy())
         @test isnothing(test_solverdummy())
     end
 

@@ -90,8 +90,10 @@ double precicec_advance(double computedTimestepLength)
     return -1;
 }
 
-void precicec_precicec_finalize()
+void precicec_finalize()
 {
+    // print some output to check if the library is called
+    printf("Finalizing solver interface");
 }
 
 int precicec_getDimensions()
