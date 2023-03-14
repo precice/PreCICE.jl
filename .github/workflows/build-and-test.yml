@@ -58,7 +58,7 @@ jobs:
       - name: Add libprecice to LD_LIBRARY_PATH and adjust LD_PRELOAD
         run: |
           echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6" >> $GITHUB_ENV
+          echo "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6:/usr/lib/x86_64-linux-gnu/libcurl.so.4" >> $GITHUB_ENV
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
