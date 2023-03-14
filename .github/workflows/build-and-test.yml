@@ -58,6 +58,8 @@ jobs:
           echo $LD_LIBRARY_PATH
           echo $LIBRARY_PATH
           echo $PATH
+          ldconfig -p | grep libprecice
+          find /lib* /usr/lib* -name 'libprecice.so*'
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
