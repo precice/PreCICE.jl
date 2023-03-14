@@ -57,7 +57,7 @@ jobs:
           echo $LD_LIBRARY_PATH
           echo $LIBRARY_PATH
           echo $PATH
-          ls /usr/local
+          ls /usr/local/lib | grep libprecice
           julia -e 'println(Libc.Libdl.DL_LOAD_PATH); println(Libc.Libdl.dlopen("libprecice"))'
           ldconfig -p | grep libprecice
           find /lib* /usr/lib* -name 'libprecice.so*'
