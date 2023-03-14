@@ -879,7 +879,7 @@ end
 
 @doc """
 
-    readVectorData(meshName::String, dataName::String, valueIndex::Integer, dataValue::AbstractArray{Float64})::AbstractArray{Float64}
+    readVectorData(meshName::String, dataName::String, valueIndex::Integer)::AbstractArray{Float64}
 
 Read and return vector data from a vertex.
 
@@ -1013,15 +1013,16 @@ end
 
 @doc """
 
-    requiresGradientDataFor(dataName::String)::Bool
+    requiresGradientDataFor(meshName::String, dataName::String)::Bool
         
 Checks if the given data set requires gradient data. We check if the data object has been intialized with the gradient flag.
 # Arguments
+- `meshName::String`: Name of the mesh to be checked.
 - `dataName::String`: Name of the data to be checked.
 
 """
-function requiresGradientDataFor(dataName::String)::Bool
-    return ccall((:precicec_requiresGradientDataFor, "libprecice"), Cint, (Ptr{Int8},), dataName)
+function requiresGradientDataFor(meshName::String, dataName::String)::Bool
+    return ccall((:precicec_requiresGradientDataFor, "libprecice"), Cint, (Ptr{Int8}, Ptr{Int8},), meshName, dataName)
 end
 
 @doc """
