@@ -327,8 +327,13 @@ Return true if the mesh is already used.
 
 """
 function hasData(dataName::String, meshName::String)::Bool
-    ans::Integer =
-        ccall((:precicec_hasData, "libprecice"), Cint, (Ptr{Int8}, Ptr{Int8}), dataName, meshName)
+    ans::Integer = ccall(
+        (:precicec_hasData, "libprecice"),
+        Cint,
+        (Ptr{Int8}, Ptr{Int8}),
+        dataName,
+        meshName,
+    )
     return ans
 end
 
@@ -811,7 +816,12 @@ value = 1.0
 writeScalarData("MeshOne", "DataOne", vertex_id, value)
 ```
 """
-function writeScalarData(meshName::String, dataName::String, valueIndex::Integer, dataValue::Float64)
+function writeScalarData(
+    meshName::String,
+    dataName::String,
+    valueIndex::Integer,
+    dataValue::Float64,
+)
     ccall(
         (:precicec_writeScalarData, "libprecice"),
         Cvoid,
@@ -861,7 +871,11 @@ julia> size(values)
 (15,)
 ```
 """
-function readBlockVectorData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint})
+function readBlockVectorData(
+    meshName::String,
+    dataName::String,
+    valueIndices::AbstractArray{Cint},
+)
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size * getDimensions())
     ccall(
@@ -940,7 +954,11 @@ vertex_ids = [1, 2, 3, 4, 5]
 values = readBlockScalarData("DataOne", vertex_ids)
 ```
 """
-function readBlockScalarData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint})
+function readBlockScalarData(
+    meshName::String,
+    dataName::String,
+    valueIndices::AbstractArray{Cint},
+)
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size)
     ccall(
@@ -1022,7 +1040,13 @@ Checks if the given data set requires gradient data. We check if the data object
 
 """
 function requiresGradientDataFor(meshName::String, dataName::String)::Bool
-    return ccall((:precicec_requiresGradientDataFor, "libprecice"), Cint, (Ptr{Int8}, Ptr{Int8},), meshName, dataName)
+    return ccall(
+        (:precicec_requiresGradientDataFor, "libprecice"),
+        Cint,
+        (Ptr{Int8}, Ptr{Int8}),
+        meshName,
+        dataName,
+    )
 end
 
 @doc """

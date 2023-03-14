@@ -167,8 +167,17 @@ function writeBlockScalarGradientData()
     nVertices = 3
     ndims = 3
     fakeIndices = Cint[0:(nVertices-1)...]
-    PreCICE.writeBlockScalarGradientData(fakeMeshName, fakeDataName, fakeIndices, gradientData)
-    readData = PreCICE.readBlockScalarData(fakeMeshName, fakeDataName, Cint[0:(nVertices*ndims-1)...])
+    PreCICE.writeBlockScalarGradientData(
+        fakeMeshName,
+        fakeDataName,
+        fakeIndices,
+        gradientData,
+    )
+    readData = PreCICE.readBlockScalarData(
+        fakeMeshName,
+        fakeDataName,
+        Cint[0:(nVertices*ndims-1)...],
+    )
     return reshape(permutedims(gradientData), :) == readData
 end
 
@@ -192,8 +201,17 @@ function writeBlockVectorGradientData()
     ndims = 3
     gradientData = rand(nVertices, ndims * ndims)
     fakeIndices = Cint[0:(nVertices-1)...]
-    PreCICE.writeBlockVectorGradientData(fakeMeshName, fakeDataName, fakeIndices, gradientData)
-    readData = PreCICE.readBlockVectorData(fakeMeshName, fakeDataName, Cint[0:(nVertices*ndims-1)...])
+    PreCICE.writeBlockVectorGradientData(
+        fakeMeshName,
+        fakeDataName,
+        fakeIndices,
+        gradientData,
+    )
+    readData = PreCICE.readBlockVectorData(
+        fakeMeshName,
+        fakeDataName,
+        Cint[0:(nVertices*ndims-1)...],
+    )
     return reshape(permutedims(gradientData), :) == reshape(permutedims(readData), :)
 end
 
