@@ -6,18 +6,12 @@
 double *fake_read_write_buffer;
 const int SIZE = 6;
 int fake_dimensions;
-int fake_mesh_id;
+const char *fake_mesh_name;
 int *fake_ids;
 int n_fake_vertices;
 const char *fake_data_name;
-int fake_data_id;
 double *fake_bounding_box;
 double *fake_coordinates;
-
-double mean(double a, double b)
-{
-    return (a + b) / 2;
-}
 
 void precicec_createSolverInterface(const char *participantName,
                                     const char *configurationFileName,
@@ -26,8 +20,7 @@ void precicec_createSolverInterface(const char *participantName,
 {
     fake_read_write_buffer = malloc(SIZE * fake_dimensions * sizeof(double));
     fake_dimensions = 3;
-    fake_mesh_id = 0;
-    fake_data_id = 15;
+    fake_mesh_name = "MeshOne";
     fake_data_name = "FakeData";
     n_fake_vertices = 3;
     fake_ids = malloc(n_fake_vertices * sizeof(int));
@@ -55,8 +48,8 @@ void precicec_createSolverInterface_withCommunicator(const char *participantName
 {
     fake_read_write_buffer = malloc(SIZE * fake_dimensions * sizeof(double));
     fake_dimensions = 3;
-    fake_mesh_id = 0;
-    fake_data_id = 15;
+    fake_mesh_name = "MeshOne";
+    fake_data_name = "";
     fake_data_name = "FakeData";
     n_fake_vertices = 3;
     fake_ids = malloc(n_fake_vertices * sizeof(int));
@@ -126,7 +119,7 @@ char precicec_isActionRequired(const char *action)
     return 0;
 }
 
-char precicec_isGradientDataRequired(int dataID)
+char precicec_requiresGradientDataFor(const char *meshName, const char *dataName)
 {
     return 0;
 }
@@ -140,26 +133,9 @@ char precicec_hasMesh(const char *meshName)
     return 0;
 }
 
-int precicec_getMeshID(const char *meshName)
-{
-    return fake_mesh_id;
-}
-
 char precicec_hasData(const char *dataName, int meshID)
 {
     return 0;
-}
-
-int precicec_getDataID(const char *dataName, int meshID)
-{
-    if (meshID == fake_mesh_id && strcmp(dataName, fake_data_name) == 0)
-    {
-        return fake_data_id;
-    }
-    else
-    {
-        return -1;
-    }
 }
 
 char precicec_hasToEvaluateSurrogateModel()
@@ -171,13 +147,6 @@ char precicec_hasToEvaluateFineModel()
 {
     return 0;
 }
-
-// bool isMeshConnectivityRequired
-// (
-//   int           meshID )
-// {
-//   return 0;
-// }
 
 int precicec_setMeshVertex(int meshID, const double *position)
 {
@@ -208,15 +177,6 @@ void precicec_getMeshVertices(int meshID, int size, const int *ids, double *posi
     }
 }
 
-void precicec_getMeshVertexIDsFromPositions(int meshID, int size, const double *positions, int *ids)
-{
-    assert(size == n_fake_vertices);
-    for (int i = 0; i < size; i++)
-    {
-        ids[i] = fake_ids[i];
-    }
-}
-
 int precicec_setMeshEdge(int meshID, int firstVertexID, int secondVertexID)
 {
     return -1;
@@ -238,15 +198,7 @@ void precicec_setMeshQuadWithEdges(int meshID, int firstVertexID, int secondVert
 {
 }
 
-void precicec_mapReadDataTo(int toMeshID)
-{
-}
-
-void precicec_mapWriteDataFrom(int fromMeshID)
-{
-}
-
-void precicec_writeBlockVectorData(int dataID, int size, const int *valueIndices, const double *values)
+void precicec_writeBlockVectorData(const char *meshName, const char *dataName, int size, const int *valueIndices, const double *values)
 {
     for (int i = 0; i < size * precicec_getDimensions(); i++)
     {
@@ -254,7 +206,7 @@ void precicec_writeBlockVectorData(int dataID, int size, const int *valueIndices
     }
 }
 
-void precicec_writeVectorData(int dataID, int valueIndex, const double *value)
+void precicec_writeVectorData(const char *meshName, const char *dataName, int valueIndex, const double *value)
 {
     for (int i = 0; i < precicec_getDimensions(); i++)
     {
@@ -262,7 +214,7 @@ void precicec_writeVectorData(int dataID, int valueIndex, const double *value)
     }
 }
 
-void precicec_writeBlockScalarData(int dataID, int size, const int *valueIndices, const double *values)
+void precicec_writeBlockScalarData(const char *meshName, const char *dataName, int size, const int *valueIndices, const double *values)
 {
     for (int i = 0; i < size; i++)
     {
@@ -270,12 +222,12 @@ void precicec_writeBlockScalarData(int dataID, int size, const int *valueIndices
     }
 }
 
-void precicec_writeScalarData(int dataID, int valueIndex, double value)
+void precicec_writeScalarData(const char *meshName, const char *dataName, int valueIndex, double value)
 {
     fake_read_write_buffer[0] = value;
 }
 
-void precicec_readBlockVectorData(int dataID, int size, const int *valueIndices, double *values)
+void precicec_readBlockVectorData(const char *meshName, const char *dataName, int size, const int *valueIndices, double *values)
 {
     for (int i = 0; i < size * precicec_getDimensions(); i++)
     {
@@ -283,7 +235,7 @@ void precicec_readBlockVectorData(int dataID, int size, const int *valueIndices,
     }
 }
 
-void precicec_readVectorData(int dataID, int valueIndex, double *value)
+void precicec_readVectorData(const char *meshName, const char *dataName, int valueIndex, double *value)
 {
     for (int i = 0; i < precicec_getDimensions(); i++)
     {
@@ -291,7 +243,7 @@ void precicec_readVectorData(int dataID, int valueIndex, double *value)
     }
 }
 
-void precicec_readBlockScalarData(int dataID, int size, const int *valueIndices, double *values)
+void precicec_readBlockScalarData(const char *meshName, const char *dataName, int size, const int *valueIndices, double *values)
 {
     for (int i = 0; i < size; i++)
     {
@@ -299,7 +251,7 @@ void precicec_readBlockScalarData(int dataID, int size, const int *valueIndices,
     }
 }
 
-void precicec_readScalarData(int dataID, int valueIndex, double *value)
+void precicec_readScalarData(const char *meshName, const char *dataName, int valueIndex, double *value)
 {
     value[0] = fake_read_write_buffer[0];
 }
@@ -324,7 +276,7 @@ const char *precicec_actionReadIterationCheckpoint()
     return "dummyReadIteration";
 }
 
-void precicec_writeBlockScalarGradientData(int dataID, int size, const int *valueIndices, const double *values)
+void precicec_writeBlockScalarGradientData(const char *meshName, const char *dataName, int size, const int *valueIndices, const double *values)
 {
     for (int i = 0; i < size*precicec_getDimensions(); i++)
     {   
@@ -332,7 +284,7 @@ void precicec_writeBlockScalarGradientData(int dataID, int size, const int *valu
     }
 }
 
-void precicec_writeScalarGradientData(int dataID, int valueIndex, const double *value)
+void precicec_writeScalarGradientData(const char *meshName, const char *dataName, int valueIndex, const double *value)
 {
     for (int i = 0; i < precicec_getDimensions(); i++)
     {
@@ -340,7 +292,7 @@ void precicec_writeScalarGradientData(int dataID, int valueIndex, const double *
     }
 }
 
-void precicec_writeBlockVectorGradientData(int dataID, int size, const int *valueIndices, double *values)
+void precicec_writeBlockVectorGradientData(const char *meshName, const char *dataName, int size, const int *valueIndices, double *values)
 {
     for (int i = 0; i < size*precicec_getDimensions()*precicec_getDimensions(); i++)
     {
@@ -348,7 +300,7 @@ void precicec_writeBlockVectorGradientData(int dataID, int size, const int *valu
     }
 }
 
-void precicec_writeVectorGradientData(int dataID, int valueIndex, double *value)
+void precicec_writeVectorGradientData(const char *meshName, const char *dataName, int valueIndex, double *value)
 {
     for (int i = 0; i < precicec_getDimensions()*precicec_getDimensions(); i++)
     {
