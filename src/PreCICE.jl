@@ -1006,7 +1006,7 @@ julia> size(values)
 """
 function readBlockVectorData(
     meshName::String,
-    dataName::String,   
+    dataName::String,
     valueIndices::AbstractArray{Cint},
     relative_read_time::Float64 = -1.0,
 )
@@ -1037,7 +1037,7 @@ function readBlockVectorData(
             relative_read_time,
         )
     end
-        
+
     return permutedims(reshape(values, (getDimensions(), _size)))
 end
 
@@ -1066,7 +1066,12 @@ vertex_id = 5
 value = readVectorData("DataOne", vertex_id)
 ```
 """
-function readVectorData(meshName::String, dataName::String, valueIndex::Integer, relative_read_time::Float64 = -1.0)
+function readVectorData(
+    meshName::String,
+    dataName::String,
+    valueIndex::Integer,
+    relative_read_time::Float64 = -1.0,
+)
     dataValue = Array{Float64,1}(undef, getDimensions())
     if relative_read_time === -1.0
         ccall(
@@ -1127,7 +1132,7 @@ function readBlockScalarData(
 )
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size)
-    if relative_read_time === -1.0 
+    if relative_read_time === -1.0
         ccall(
             (:precicec_readBlockScalarData, "libprecice"),
             Cvoid,
@@ -1180,7 +1185,12 @@ vertex_id = 5
 value = readScalarData("DataOne", vertex_id)
 ```
 """
-function readScalarData(meshName::String, dataName::String, valueIndex::Integer, relative_read_time::Float64 = -1.0)
+function readScalarData(
+    meshName::String,
+    dataName::String,
+    valueIndex::Integer,
+    relative_read_time::Float64 = -1.0,
+)
     dataValue = [Float64(0.0)]
     if relative_read_time === -1.0
         ccall(
@@ -1255,7 +1265,7 @@ function setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float6
     ccall(
         (:precicec_setMeshAccessRegion, "libprecice"),
         Cvoid,
-        (Ptr{Int8}, Ref{Cdouble},),
+        (Ptr{Int8}, Ref{Cdouble}),
         meshName,
         boundingBox,
     )
@@ -1275,7 +1285,9 @@ coordinates omitting the mapping. This function is still experimental.
 - `vertexIDs::AbstractArray{Integer}`: IDs of the vertices.
 - `vertexCoordinates::AbstractArray{Float64}`: Coordinates of the vertices and corresponding data values.
 """
-function getMeshVerticesAndIDs(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
+function getMeshVerticesAndIDs(
+    meshName::String,
+)::Tuple{AbstractArray{Integer},AbstractArray{Float64}}
     @warn "The function getMeshVerticesAndIDs is still experimental"
 
     _size = getMeshVertexSize(meshName)
