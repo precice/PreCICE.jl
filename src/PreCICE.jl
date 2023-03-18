@@ -37,8 +37,16 @@ export
     setMeshVertices,
     getMeshVertices,
     setMeshEdge,
+    setMeshEdges,
     setMeshTriangle,
+    setMeshTriangles,
     setMeshQuad,
+    setMeshQuads,
+    setMeshTetrahedron,
+    setMeshTetrahedra,
+    requiresMeshConnectivityFor,
+    setMeshAccessRegion,
+    getMeshVerticesAndIDs,
 
     # data access
     hasData,
@@ -313,6 +321,22 @@ function hasMesh(meshName::String)::Bool
     return ans
 end
 
+@doc """
+
+    requiresMeshConnectivityFor(meshName::String)::Bool
+
+Checks if the given mesh requires connectivity.
+"""
+function requiresMeshConnectivityFor(meshName::String)::Bool
+    ans::Integer = ccall(
+        (:precicec_requiresMeshConnectivityFor, "libprecice"),
+        Cint,
+        (Ptr{Int8},),
+        meshName,
+    )
+    return ans
+end
+
 
 @doc """
 
@@ -508,6 +532,39 @@ function setMeshEdge(meshName::String, firstVertexID::Integer, secondVertexID::I
     )
 end
 
+@doc """
+
+    setMeshEdges(meshName::String, vertices::AbstractArray{Cint})
+
+Create multiple mesh edges
+
+# Arguments
+- `meshName::String`: Name of the mesh to add the edge to.
+- `vertices::AbstractArray{Cint}`: An array holding the vertex IDs of the edges.
+                                   It has the shape [N x 2] where N = number of edges.
+
+# Examples
+Set mesh edges for a problem with 4 mesh vertices in the form of a square with both diagonals which are fully interconnected.
+```julia-repl
+julia> vertices = [1 2; 1 3; 1 4; 2 3; 2 4; 3 4]
+julia> vertices.shape
+(6,2)
+julia> setMeshEdges("MeshOne", vertices)
+```
+"""
+function setMeshEdges(meshName::String, vertices::AbstractArray{Cint})
+    _size, dimensions = size(vertices)
+    @assert dimensions == 2 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+
+    ccall(
+        (:precicec_setMeshEdges, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Cint, Ref{Cint}),
+        meshName,
+        _size,
+        reshape(vertices, :),
+    )
+end
 
 @doc """
 
@@ -554,15 +611,26 @@ Set mesh triangle from vertex IDs.
 - `meshName::String`: Name of the mesh to add the edge to.
 - `vertices::AbstractArray{Integer}`: IDs of the vertices of the triangles.
 
+# Examples
+Set mesh triangles for a problem with 4 mesh vertices in the form of a square with both diagonals which are fully interconnected.
+```julia-repl
+julia> vertices = [1 2 3; 1 3 4; 1 2 4; 1 3 4]
+julia> vertices.shape
+(4,3)
+julia> setMeshTriangles("MeshOne", vertices)
+```
 """
 function setMeshTriangles(meshName::String, vertices::AbstractArray{Integer})
+    _size, dimensions = size(vertices)
+    @assert dimensions == 3 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+
     ccall(
         (:precicec_setMeshTriangles, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Cint, Ref{Cint}),
         meshName,
-        length(vertices),
-        vertices,
+        _size,
+        reshape(vertices, :),
     )
 end
 
@@ -618,16 +686,80 @@ Set mesh Quad from vertex IDs.
 - `vertices::AbstractArray{Integer}`: IDs of the edges of the Quads.
 
 """
-function setMeshQuad(meshName::String, vertices::AbstractArray{Integer})
+function setMeshQuads(meshName::String, vertices::AbstractArray{Integer})
+    _size, dimensions = size(vertices)
+    @assert dimensions == 4 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
     ccall(
         (:precicec_setMeshQuads, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Cint, Ref{Cint}),
         meshName,
-        length(vertices),
-        vertices,
+        _size,
+        reshape(vertices, :),
     )
 
+end
+
+@doc """
+
+    setMeshTetrahedron(meshName::String, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer, fourthEdgeID::Integer)
+
+Set mesh Tetrahedron from edge IDs.
+
+# Arguments
+- `meshName::String`: Name of the mesh to add the Tetrahedron to.
+- `firstEdgeID::Integer`: ID of the first edge of the Tetrahedron.
+- `secondEdgeID::Integer`: ID of the second edge of the Tetrahedron.
+- `thirdEdgeID::Integer`: ID of the third edge of the Tetrahedron.
+- `fourthEdgeID::Integer`: ID of the fourth edge of the Tetrahedron.
+
+# Notes
+
+Previous calls:
+ - Edges with `first_edge_id`, `second_edge_id`, `third_edge_id`, and `fourth_edge_id` were added
+    to the mesh with the ID `mesh_id`
+"""
+function setMeshTetrahedron(
+    meshName::String,
+    firstEdgeID::Integer,
+    secondEdgeID::Integer,
+    thirdEdgeID::Integer,
+    fourthEdgeID::Integer,
+)
+    ccall(
+        (:precicec_setMeshTetrahedron, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Cint, Cint, Cint, Cint),
+        meshName,
+        firstEdgeID,
+        secondEdgeID,
+        thirdEdgeID,
+        fourthEdgeID,
+    )
+end
+
+@doc """
+
+    setMeshTetrahedra(meshName::String, vertices::AbstractArray{Integer})
+
+Set mesh Tetrahedron from vertex IDs.
+
+# Arguments
+- `meshName::String`: Name of the mesh to add the Tetrahedron to.
+- `vertices::AbstractArray{Integer}`: IDs of the edges of the Tetrahedra.
+
+"""
+function setMeshTetrahedra(meshName::String, vertices::AbstractArray{Integer})
+    _size, dimensions = size(vertices)
+    @assert dimensions == 4 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+    ccall(
+        (:precicec_setMeshTetrahedra, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Cint, Ref{Cint}),
+        meshName,
+        _size,
+        reshape(vertices, :),
+    )
 end
 
 
@@ -836,9 +968,9 @@ end
 
 @doc """
 
-    readBlockVectorData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
+    readBlockVectorData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}[, relative_read_time::Float64])
 
-Read and return vector data values given as block.
+Read and return vector data values given as block. 
 
 The block contains the vector values in the following form:
 
@@ -848,6 +980,7 @@ The block contains the vector values in the following form:
 - `meshName::String`: Name of the mesh to read the data from.
 - `dataName::String`: Name of the data to be read.
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
+- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
 
 # Notes
 
@@ -873,27 +1006,44 @@ julia> size(values)
 """
 function readBlockVectorData(
     meshName::String,
-    dataName::String,
+    dataName::String,   
     valueIndices::AbstractArray{Cint},
+    relative_read_time::Float64 = -1.0,
 )
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size * getDimensions())
-    ccall(
-        (:precicec_readBlockVectorData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
-        meshName,
-        dataName,
-        _size,
-        valueIndices,
-        values,
-    )
+
+    if relative_read_time === -1.0
+        ccall(
+            (:precicec_readBlockVectorData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
+            meshName,
+            dataName,
+            _size,
+            valueIndices,
+            values,
+        )
+    else
+        ccall(
+            (:precicec_readBlockVectorData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}, Cdouble),
+            meshName,
+            dataName,
+            _size,
+            valueIndices,
+            values,
+            relative_read_time,
+        )
+    end
+        
     return permutedims(reshape(values, (getDimensions(), _size)))
 end
 
 @doc """
 
-    readVectorData(meshName::String, dataName::String, valueIndex::Integer)::AbstractArray{Float64}
+    readVectorData(meshName::String, dataName::String, valueIndex::Integer[, relative_read_time::Float64])::AbstractArray{Float64}
 
 Read and return vector data from a vertex.
 
@@ -901,6 +1051,7 @@ Read and return vector data from a vertex.
 - `meshName::String`: Name of the mesh to read the data from.
 - `dataName::String`: Name of the data to be read.
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
+- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
 
 # Notes
 
@@ -915,24 +1066,37 @@ vertex_id = 5
 value = readVectorData("DataOne", vertex_id)
 ```
 """
-function readVectorData(meshName::String, dataName::String, valueIndex::Integer)
+function readVectorData(meshName::String, dataName::String, valueIndex::Integer, relative_read_time::Float64 = -1.0)
     dataValue = Array{Float64,1}(undef, getDimensions())
-    ccall(
-        (:precicec_readVectorData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
-        meshName,
-        dataName,
-        valueIndex,
-        dataValue,
-    )
+    if relative_read_time === -1.0
+        ccall(
+            (:precicec_readVectorData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
+            meshName,
+            dataName,
+            valueIndex,
+            dataValue,
+        )
+    else
+        ccall(
+            (:precicec_readVectorData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}, Cdouble),
+            meshName,
+            dataName,
+            valueIndex,
+            relative_read_time,
+            dataValue,
+        )
+    end
     return dataValue
 end
 
 
 @doc """
 
-    readBlockScalarData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
+    readBlockScalarData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}[, relative_read_time::Float64])::AbstractArray{Float64}
 
 Read and return scalar data as a block, values of specified vertices from a dataName.
 
@@ -940,6 +1104,7 @@ Read and return scalar data as a block, values of specified vertices from a data
 - `meshName::String`: Name of the mesh to read the data from.
 - `dataName::String`: Name of the data to be read.
 - `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
+- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
 
 # Notes
 
@@ -958,26 +1123,41 @@ function readBlockScalarData(
     meshName::String,
     dataName::String,
     valueIndices::AbstractArray{Cint},
+    relative_read_time::Float64 = -1.0,
 )
     _size = length(valueIndices)
     values = Array{Float64,1}(undef, _size)
-    ccall(
-        (:precicec_readBlockScalarData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
-        meshName,
-        dataName,
-        _size,
-        valueIndices,
-        values,
-    )
+    if relative_read_time === -1.0 
+        ccall(
+            (:precicec_readBlockScalarData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
+            meshName,
+            dataName,
+            _size,
+            valueIndices,
+            values,
+        )
+    else
+        ccall(
+            (:precicec_readBlockScalarData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}, Cdouble),
+            meshName,
+            dataName,
+            _size,
+            valueIndices,
+            relative_read_time,
+            values,
+        )
+    end
     return values
 end
 
 
 @doc """
 
-    readScalarData(meshName::String, dataName::String, valueIndex::Integer)::Float64
+    readScalarData(meshName::String, dataName::String, valueIndex::Integer[, relative_read_time::Float64])::Float64
 
 Read and return scalar data of a vertex.
 
@@ -985,6 +1165,7 @@ Read and return scalar data of a vertex.
 - `meshName::String`: Name of the mesh to read the data from.
 - `dataName::String`: Name of the data to be read.
 - `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
+- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
 
 # Notes
 
@@ -999,20 +1180,117 @@ vertex_id = 5
 value = readScalarData("DataOne", vertex_id)
 ```
 """
-function readScalarData(meshName::String, dataName::String, valueIndex::Integer)
+function readScalarData(meshName::String, dataName::String, valueIndex::Integer, relative_read_time::Float64 = -1.0)
     dataValue = [Float64(0.0)]
-    ccall(
-        (:precicec_readScalarData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
-        meshName,
-        dataName,
-        valueIndex,
-        dataValue,
-    )
+    if relative_read_time === -1.0
+        ccall(
+            (:precicec_readScalarData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
+            meshName,
+            dataName,
+            valueIndex,
+            dataValue,
+        )
+    else
+        ccall(
+            (:precicec_readScalarData, "libprecice"),
+            Cvoid,
+            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}, Cdouble),
+            meshName,
+            dataName,
+            valueIndex,
+            relative_read_time,
+            dataValue,
+        )
+    end
     return dataValue[1]
 end
 
+
+@doc """
+
+    setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float64})
+
+This function is required if you don't want to use the mapping schemes in preCICE, but rather
+want to use your own solver for data mapping. As opposed to the usual preCICE mapping, only a
+single mesh (from the other participant) is now involved in this situation since an 'own'
+mesh defined by the participant itself is not required any more. In order to re-partition the
+received mesh, the participant needs to define the mesh region it wants read data from and
+write data to. The mesh region is specified through an axis-aligned bounding box given by the
+lower and upper [min and max] bounding-box limits in each space dimension [x, y, z]. This function is still
+experimental
+
+
+# Arguments
+- `meshName::String`: Name of the mesh to define the access region for.
+- `boundingBox::AbstractArray{Float64}`: Axis-aligned bounding box. Example for 3D the format: [x_min, x_max, y_min, y_max, z_min, z_max]
+
+# Notes
+Defining a bounding box for serial runs of the solver (not to be confused with serial coupling
+mode) is valid. However, a warning is raised in case vertices are filtered out completely
+on the receiving side, since the associated data values of the filtered vertices are filled
+with zero data.
+This function can only be called once per participant and rank and trying to call it more than
+once results in an error.
+If you combine the direct access with a mapping (say you want to read data from a defined
+mesh, as usual, but you want to directly access and write data on a received mesh without a
+mapping) you may not need this function at all since the region of interest is already defined
+through the defined mesh used for data reading. This is the case if you define any mapping
+involving the directly accessed mesh on the receiving participant. (In parallel, only the cases
+read-consistent and write-conservative are relevant, as usual).
+The safety factor scaling (see safety-factor in the configuration file) is not applied to the
+defined access region and a specified safety will be ignored in case there is no additional
+mapping involved. However, in case a mapping is in addition to the direct access involved, you
+will receive (and gain access to) vertices inside the defined access region plus vertices inside
+the safety factor region resulting from the mapping. The default value of the safety factor is
+0.5, i.e. the defined access region as computed through the involved provided mesh is by 50%
+enlarged.
+"""
+function setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float64})
+    @warn "The function setMeshAccessRegion is still experimental"
+
+    @assert length(boundingBox) > 0 "The bounding box must not be empty"
+    @assert length(boundingBox) == getDimensions() * 2 "The bounding box must have the same dimension as the mesh"
+    ccall(
+        (:precicec_setMeshAccessRegion, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Ref{Cdouble},),
+        meshName,
+        boundingBox,
+    )
+end
+
+@doc """
+
+    getMeshVerticesAndIDs(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
+
+Iterating over the region of interest defined by bounding boxes and reading the corresponding
+coordinates omitting the mapping. This function is still experimental.
+
+# Arguments
+- `meshName::String`: Name of the mesh to get the vertices and IDs for.
+
+# Returns
+- `vertexIDs::AbstractArray{Integer}`: IDs of the vertices.
+- `vertexCoordinates::AbstractArray{Float64}`: Coordinates of the vertices and corresponding data values.
+"""
+function getMeshVerticesAndIDs(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
+    @warn "The function getMeshVerticesAndIDs is still experimental"
+
+    _size = getMeshVertexSize(meshName)
+    vertexIDs = [Int32(0)]
+    vertexCoordinates = [Float64(0.0)]
+    ccall(
+        (:precicec_getMeshVerticesAndIDs, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Ref{Cint}, Ref{Cdouble}),
+        meshName,
+        vertexIDs,
+        vertexCoordinates,
+    )
+    return vertexIDs, reshape(vertexCoordinates, (_size, getDimensions()))
+end
 
 @doc """
 
