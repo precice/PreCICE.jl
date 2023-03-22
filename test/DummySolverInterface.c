@@ -20,7 +20,7 @@ void precicec_createSolverInterface(const char *participantName,
 {
     fake_read_write_buffer = malloc(SIZE * fake_dimensions * sizeof(double));
     fake_dimensions = 3;
-    fake_mesh_name = "MeshOne";
+    fake_mesh_name = "FakeMesh";
     fake_data_name = "FakeData";
     n_fake_vertices = 3;
     fake_ids = malloc(n_fake_vertices * sizeof(int));
@@ -48,7 +48,7 @@ void precicec_createSolverInterface_withCommunicator(const char *participantName
 {
     fake_read_write_buffer = malloc(SIZE * fake_dimensions * sizeof(double));
     fake_dimensions = 3;
-    fake_mesh_name = "MeshOne";
+    fake_mesh_name = "FakeMesh";
     fake_data_name = "";
     fake_data_name = "FakeData";
     n_fake_vertices = 3;
@@ -92,6 +92,11 @@ void precicec_finalize()
 int precicec_getDimensions()
 {
     return fake_dimensions;
+}
+
+int precicec_requiresMeshConnectivityFor(const char *meshName)
+{
+    return 0;
 }
 
 char precicec_isCouplingOngoing()
@@ -259,6 +264,30 @@ void precicec_readScalarData(const char *meshName, const char *dataName, int val
 char *precicec_getVersionInformation()
 {
     return "dummy";
+}
+
+void precicec_setMeshAccessRegion(const char *meshName, const double *boundingBox)
+{
+    // check meshname
+    assert(strcmp(meshName, "FakeMesh") == 0);
+    // check bounding box
+    for (int i = 0; i < 2 * precicec_getDimensions(); i++)
+    {
+        assert(boundingBox[i] == fake_bounding_box[i]);
+    }
+}
+
+void precicec_getMeshVerticesAndIDs(const char *meshName, int size, int *ids, double *positions)
+{
+    assert(size == n_fake_vertices);
+    assert(strcmp(meshName, "FakeMesh") == 0);
+    for (int i = 0; i < size; i++)
+    {
+        ids[i] = fake_ids[i];
+        positions[fake_dimensions * i] = i;
+        positions[fake_dimensions * i + 1] = i + n_fake_vertices;
+        positions[fake_dimensions * i + 2] = i + 2 * n_fake_vertices;
+    }
 }
 
 const char *precicec_actionWriteInitialData()

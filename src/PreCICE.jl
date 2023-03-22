@@ -1291,13 +1291,14 @@ function getMeshVerticesAndIDs(
     @warn "The function getMeshVerticesAndIDs is still experimental"
 
     _size = getMeshVertexSize(meshName)
-    vertexIDs = [Int32(0)]
-    vertexCoordinates = [Float64(0.0)]
+    vertexIDs = zeros(Cint, _size)
+    vertexCoordinates = zeros(Float64, _size * getDimensions())
     ccall(
         (:precicec_getMeshVerticesAndIDs, "libprecice"),
         Cvoid,
-        (Ptr{Int8}, Ref{Cint}, Ref{Cdouble}),
+        (Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
         meshName,
+        _size,
         vertexIDs,
         vertexCoordinates,
     )
