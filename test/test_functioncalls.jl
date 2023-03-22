@@ -169,11 +169,11 @@ function getMeshVerticesAndIDs()
     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
     fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
     nFakeVertices = 3 # compare to test/SolverInterface.c, fake_n_vertices
-    vertexIDs = Cint[0,1,2]
+    vertexIDs = Cint[0, 1, 2]
     vertices = zeros(nFakeVertices, fakeDimension)
-    for i in 1:nFakeVertices
-        for j in 1:fakeDimension
-            vertices[i, j] = (i-1)*fakeDimension + j - 1
+    for i = 1:nFakeVertices
+        for j = 1:fakeDimension
+            vertices[i, j] = (i - 1) * fakeDimension + j - 1
         end
     end
     fakeIDs, fakeVertices = PreCICE.getMeshVerticesAndIDs(fakeMeshName)
