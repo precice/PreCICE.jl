@@ -553,8 +553,8 @@ julia> setMeshEdges("MeshOne", vertices)
 ```
 """
 function setMeshEdges(meshName::String, vertices::AbstractArray{Cint})
-    _size, dimensions = size(vertices)
-    @assert dimensions == 2 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+    _size, n = size(vertices)
+    @assert n == 2 "Vertices pairs need to be provided while setting mesh edges. Provided shape: ($_size, $n), expected shape: ($_size, 2)"
 
     ccall(
         (:precicec_setMeshEdges, "libprecice"),
@@ -621,8 +621,8 @@ julia> setMeshTriangles("MeshOne", vertices)
 ```
 """
 function setMeshTriangles(meshName::String, vertices::AbstractArray{Integer})
-    _size, dimensions = size(vertices)
-    @assert dimensions == 3 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+    _size, n = size(vertices)
+    @assert n == 3 "Vertices triplets need to be provided while setting mesh triangles. Provided shape: ($_size, $n), expected shape: ($_size, 3)"
 
     ccall(
         (:precicec_setMeshTriangles, "libprecice"),
@@ -687,8 +687,8 @@ Set mesh Quad from vertex IDs.
 
 """
 function setMeshQuads(meshName::String, vertices::AbstractArray{Integer})
-    _size, dimensions = size(vertices)
-    @assert dimensions == 4 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+    _size, n = size(vertices)
+    @assert n == 4 "Vertices quadruplets need to be provided while setting mesh quads. Provided shape: ($_size, $n), expected shape: ($_size, 4)"
     ccall(
         (:precicec_setMeshQuads, "libprecice"),
         Cvoid,
@@ -750,8 +750,8 @@ Set mesh Tetrahedron from vertex IDs.
 
 """
 function setMeshTetrahedra(meshName::String, vertices::AbstractArray{Integer})
-    _size, dimensions = size(vertices)
-    @assert dimensions == 4 "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+    _size, n = size(vertices)
+    @assert n == 4 "Vertices quadruplets need to be provided while setting mesh tetrahedra. Provided shape: ($_size, $n), expected shape: ($_size, 4)"
     ccall(
         (:precicec_setMeshTetrahedra, "libprecice"),
         Cvoid,
@@ -968,9 +968,9 @@ end
 
 @doc """
 
-    readBlockVectorData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}[, relative_read_time::Float64])
+    readBlockVectorData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}[, relative_read_time::Float64])::AbstractArray{Float64}
 
-Read and return vector data values given as block. 
+Read and return vector data values given as block.
 
 The block contains the vector values in the following form:
 
