@@ -8,6 +8,8 @@ This package provides Julia language bindings for the C++ library [preCICE](http
 
 Note that the first two digits of the version number of the bindings indicate the preCICE major and minor version that the bindings support. The last digit represents the version of the bindings. Example: `v2.5.1` and `v2.5.2` of the bindings represent versions `1` and `2` of the bindings that are compatible with preCICE `v2.5.0`.
 
+Technical information about the initial design of these bindings can be found in the [Bachelor thesis of Pavel Kharitenko](http://dx.doi.org/10.18419/opus-11836).
+
 ## Adding and using the package
 
 The Julia bindings for preCICE can be used by either by adding them as a package in a Julia environment or also directly including the package in a Julia script. For both type of usages preCICE needs to be installed on the system. For preCICE installation, have a look at the [installation documentation](https://precice.org/installation-overview.html).
