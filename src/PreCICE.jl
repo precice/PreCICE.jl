@@ -11,8 +11,8 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 
 export
     # construction and configuration
-    createSolverInterface,
-    createSolverInterfaceWithCommunicator,
+    createParticipant,
+    createParticipantWithCommunicator,
 
     # steering methods
     initialize,
@@ -20,9 +20,11 @@ export
     finalize,
 
     # status queries
-    getDimensions,
+    getMeshDimensions,
+    getDataDimensions,
     isCouplingOngoing,
     isTimeWindowComplete,
+    getMaxTimeStepSize,
 
     # action methods
     requiresReadingCheckpoint,
@@ -32,10 +34,11 @@ export
 
     # mesh access
     hasMesh,
+    hasData,
+    requiresMeshConnectivityFor,
     setMeshVertex,
-    getMeshVertexSize,
     setMeshVertices,
-    getMeshVertices,
+    getMeshVertexSize,
     setMeshEdge,
     setMeshEdges,
     setMeshTriangle,
@@ -44,29 +47,18 @@ export
     setMeshQuads,
     setMeshTetrahedron,
     setMeshTetrahedra,
-    requiresMeshConnectivityFor,
     setMeshAccessRegion,
     getMeshVerticesAndIDs,
 
     # data access
-    hasData,
-    writeBlockVectorData,
-    writeVectorData,
-    writeBlockScalarData,
-    writeScalarData,
-    readBlockScalarData,
-    readVectorData,
-    readBlockScalarData,
-    readScalarData,
+    writeData,
+    readData,
 
     # constants
     getVersionInformation,
 
     # Gradient related 
     requiresGradientDataFor,
-    writeScalarGradientData,
-    writeVectorGradientData,
-    writeBlockScalarGradientData,
     writeBlockVectorGradientData
 
 
@@ -87,14 +79,14 @@ Create the coupling interface and configure it. Must get called before any other
 createSolverInterface("SolverOne", "./precice-config.xml", 0, 1)
 ```
 """
-function createSolverInterface(
+function createParticipant(
     participantName::String,
     configFilename::String,
     solverProcessIndex::Integer,
     solverProcessSize::Integer,
 )
     ccall(
-        (:precicec_createSolverInterface, "libprecice"),
+        (:precicec_createParticipant, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Ptr{Int8}, Cint, Cint),
         participantName,
@@ -121,7 +113,7 @@ TODO: Documentation or [WIP] tag. The data types of the communicator are not yet
 - `solverProcessSize::Integer`: The number of solver processes of this participant using preCICE.
 - `communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}`: TODO ?
 """
-function createSolverInterfaceWithCommunicator(
+function createParticipantWithCommunicator(
     participantName::String,
     configFilename::String,
     solverProcessIndex::Integer,
@@ -129,7 +121,7 @@ function createSolverInterfaceWithCommunicator(
     communicator::Union{Ptr{Cvoid},Ref{Cvoid},Ptr{Nothing}},
 ) # test if type of com is correct
     ccall(
-        (:precicec_createSolverInterface_withCommunicator, "libprecice"),
+        (:precicec_createParticipant_withCommunicator, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Ptr{Int8}, Int, Int, Union{Ptr{Cvoid},Ref{Cvoid},Ptr{Nothing}}),
         participantName,
@@ -143,17 +135,15 @@ end
 
 @doc """
 
-    initialize()::Float64
+    initialize()
 
 Fully initializes preCICE.
 This function handles:
 - Parallel communication to the coupling partner/s is setup.
 - Meshes are exchanged between coupling partners and the parallel partitions are created.
 - **Serial Coupling Scheme:** If the solver is not starting the simulation, coupling data is received from the coupling partner's first computation.
-
-Return the maximum length of first timestep to be computed by the solver.
 """
-function initialize()::Float64
+function initialize()
     dt::Float64 = ccall((:precicec_initialize, "libprecice"), Cdouble, ())
     return dt
 end
@@ -161,14 +151,12 @@ end
 
 @doc """
     
-    advance(computedTimestepLength::Float64)::Float64
+    advance(computedTimestepLength::Float64)
 
 Advances preCICE after the solver has computed one timestep.
 
 # Arguments
  - `computed_timestep_length::Float64`: Length of timestep used by the solver.
-
-Return the maximum length of next timestep to be computed by solver.
 
 # Notes
 
@@ -219,13 +207,39 @@ end
 
 @doc """
 
-    getDimensions()::Integer
+    getMeshDimensions(meshName::String)::Integer
 
-Return the number of spatial dimensions configured. Currently, two and three dimensional problems
-can be solved using preCICE. The dimension is specified in the XML configuration.
+Returns the spatial dimensionality of the given mesh.
+
+# Arguments
+ - `meshName::String`: Name of the mesh.
 """
-function getDimensions()::Integer
-    dim::Integer = ccall((:precicec_getDimensions, "libprecice"), Cint, ())
+function getMeshDimensions(meshName::String)::Integer
+    dim::Integer =
+        ccall((:precicec_getMeshDimensions, "libprecice"), Cint, (Ptr{Int8},), meshName)
+    return dim
+end
+
+
+@doc """
+
+    getDataDimensions(meshName::String, dataName::String)::Integer
+
+Returns the spatial dimensionality of the given data on the given mesh.
+Note that vectorial data dimensionality directly depends on the spacial dimensionality of the mesh.
+
+# Arguments
+ - `meshName::String`: Name of the associated mesh.
+ - `dataName::String`: Name of the data to get the dimensionality of.
+"""
+function getDataDimensions(meshName::String, dataName::String)::Integer
+    dim::Integer = ccall(
+        (:precicec_getDataDimensions, "libprecice"),
+        Cint,
+        (Ptr{Int8}, Ptr{Int8}),
+        meshName,
+        dataName,
+    )
     return dim
 end
 
@@ -274,6 +288,18 @@ function isTimeWindowComplete()::Bool
     return ans
 end
 
+@doc """
+
+    getMaxTimeStepSize()::Float64
+
+Get the maximum allowed time step size of the current window.
+This should be used to compute the actual time step that the solver uses.
+"""
+function getMaxTimeStepSize()::Float64
+    dt::Float64 = ccall((:precicec_getMaxTimeStepSize, "libprecice"), Cdouble, ())
+    return dt
+end
+
 
 @doc """
 
@@ -314,10 +340,36 @@ end
 
     hasMesh(meshName::String)::Bool
 
-Check if the mesh with given name is used by a solver. 
+Check if the mesh with given name is used by a solver.
+
+# Arguments
+ - `meshName::String`: Name of the mesh.
 """
 function hasMesh(meshName::String)::Bool
     ans::Integer = ccall((:precicec_hasMesh, "libprecice"), Cint, (Ptr{Int8},), meshName)
+    return ans
+end
+
+
+@doc """
+
+    hasData(dataName::String, meshName::String)::Bool
+
+Checks if the data with given name is used by a solver and mesh.
+
+# Arguments
+ - `dataName::String`: Name of the data.
+ - `meshName::String`: Name of the associated mesh.
+
+"""
+function hasData(dataName::String, meshName::String)::Bool
+    ans::Integer = ccall(
+        (:precicec_hasData, "libprecice"),
+        Cint,
+        (Ptr{Int8}, Ptr{Int8}),
+        dataName,
+        meshName,
+    )
     return ans
 end
 
@@ -340,41 +392,13 @@ end
 
 @doc """
 
-    hasData(dataName::String, meshName::String)::Bool
-
-Check if the data with given name is used by a solver and mesh.
-Return true if the mesh is already used.
-
-# Arguments
- - `dataName::String`: Name of the data.
- - `meshName::String`: Name of the associated mesh.
-
-"""
-function hasData(dataName::String, meshName::String)::Bool
-    ans::Integer = ccall(
-        (:precicec_hasData, "libprecice"),
-        Cint,
-        (Ptr{Int8}, Ptr{Int8}),
-        dataName,
-        meshName,
-    )
-    return ans
-end
-
-
-@doc """
-
-    setMeshVertex(meshName::String, position::AbstractArray{Float64})
+    setMeshVertex(meshName::String, position::AbstractArray{Float64})::Integer
 
 Create a mesh vertex on a coupling mesh and return its id.
 
 # Arguments
 - `meshName::String`: The name of the mesh to add the vertex to. 
 - `position::AbstractArray{Float64}`: An array with the coordinates of the vertex. Depending on the dimension, either [x1, x2] or [x1,x2,x3].
-
-# See also
-
-[`getDimensions`](@ref), [`setMeshVertices`](@ref)
 
 # Notes
 
@@ -386,7 +410,7 @@ Previous calls:
 v1_id = setMeshVertex(mesh_name, [1,1,1])
 ```
 """
-function setMeshVertex(meshName::String, position::AbstractArray{Float64})
+function setMeshVertex(meshName::String, position::AbstractArray{Float64})::Integer
     id::Integer = ccall(
         (:precicec_setMeshVertex, "libprecice"),
         Cint,
@@ -397,55 +421,10 @@ function setMeshVertex(meshName::String, position::AbstractArray{Float64})
     return id
 end
 
-@doc """
-
-    getMeshVertices(meshName::String, ids::AbstractArray{Cint})::AbstractArray{Float64}
-
-Return vertex positions for multiple vertex ids from a given mesh.
-
-The shape for positions is [N x D] where N = number of vertices and D = dimensions of geometry
-
-# Arguments
-- `meshName::String`:  The name of the mesh to read the vertices from.
-- `ids::AbstractArray{Cint}`:  The ids of the vertices to get the positions from.
-
-# Examples
-
-Return data structure for a 2D problem with 5 vertices:
-```julia-repl
-julia> vertexIDs = [1,2,3,4,5]
-julia> positions = getMeshVertices("MeshOne", vertexIDs)
-julia> size(positions)
-(2,5)
-```
-Return data structure for a 3D problem with 5 vertices:
-
-```julia-repl
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> positions = getMeshVertices("MeshOne", vertex_ids)
-julia> size(positions)
-(5,3)
-```
-"""
-function getMeshVertices(meshName::String, ids::AbstractArray{Cint})
-    _size = length(ids)
-    positions = Array{Float64,1}(undef, _size * getDimensions())
-    ccall(
-        (:precicec_getMeshVertices, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
-        meshName,
-        _size,
-        ids,
-        positions,
-    )
-    return permutedims(reshape(positions, (getDimensions(), _size)))
-end
-
 
 @doc """
 
-    setMeshVertices(meshName::String, positions::AbstractArray{Float64})
+    setMeshVertices(meshName::String, positions::AbstractArray{Float64})::AbstractArray{Int32,1}
 
 Create multiple mesh vertices on a coupling mesh and return an array holding their ids.
 
@@ -470,9 +449,12 @@ vertices = [1 1 1;2 2 2;3 3 3]
 vertex_ids = setMeshVertices("MeshOne", vertices)
 ```
 """
-function setMeshVertices(meshName::String, positions::AbstractArray{Float64})
+function setMeshVertices(
+    meshName::String,
+    positions::AbstractArray{Float64},
+)::AbstractArray{Int32,1}
     _size, dimensions = size(positions)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+    @assert dimensions == getMeshDimensions(meshName) "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getMeshDimensions(meshName))"
 
     positions = permutedims(positions) # transpose
 
@@ -483,7 +465,7 @@ function setMeshVertices(meshName::String, positions::AbstractArray{Float64})
         (Ptr{Int8}, Cint, Ref{Cdouble}, Ref{Cint}),
         meshName,
         _size,
-        reshape(positions, :),
+        reshape(permutedims(positions), :),
         vertexIDs,
     )
     return vertexIDs
@@ -562,7 +544,7 @@ function setMeshEdges(meshName::String, vertices::AbstractArray{Cint})
         (Ptr{Int8}, Cint, Ref{Cint}),
         meshName,
         _size,
-        reshape(vertices, :),
+        reshape(permutedims(vertices), :),
     )
 end
 
@@ -630,7 +612,7 @@ function setMeshTriangles(meshName::String, vertices::AbstractArray{Integer})
         (Ptr{Int8}, Cint, Ref{Cint}),
         meshName,
         _size,
-        reshape(vertices, :),
+        reshape(permutedims(vertices), :),
     )
 end
 
@@ -640,8 +622,6 @@ end
     setMeshQuad(meshName::String, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID, fourthEdgeID::Integer)
 
 Set mesh Quad from edge IDs.
-
-WARNING: Quads are not fully implemented yet.
 
 # Arguments
 - `meshName::String`: Name of the mesh to add the Quad to.
@@ -660,7 +640,7 @@ function setMeshQuad(
     meshName::String,
     firstEdgeID::Integer,
     secondEdgeID::Integer,
-    thirdEdgeID,
+    thirdEdgeID::Integer,
     fourthEdgeID::Integer,
 )
     ccall(
@@ -683,7 +663,7 @@ Set mesh Quad from vertex IDs.
 
 # Arguments
 - `meshName::String`: Name of the mesh to add the Quad to.
-- `vertices::AbstractArray{Integer}`: IDs of the edges of the Quads.
+- `vertices::AbstractArray{Integer}`: IDs of the edges of the Quads. It has the shape [N x 4] where N = number of Quads.
 
 """
 function setMeshQuads(meshName::String, vertices::AbstractArray{Integer})
@@ -695,7 +675,7 @@ function setMeshQuads(meshName::String, vertices::AbstractArray{Integer})
         (Ptr{Int8}, Cint, Ref{Cint}),
         meshName,
         _size,
-        reshape(vertices, :),
+        reshape(permutedims(vertices), :),
     )
 
 end
@@ -746,7 +726,7 @@ Set mesh Tetrahedron from vertex IDs.
 
 # Arguments
 - `meshName::String`: Name of the mesh to add the Tetrahedron to.
-- `vertices::AbstractArray{Integer}`: IDs of the edges of the Tetrahedra.
+- `vertices::AbstractArray{Integer}`: IDs of the edges of the Tetrahedra. It has the shape [N x 4] where N = number of Tetrahedra.
 
 """
 function setMeshTetrahedra(meshName::String, vertices::AbstractArray{Integer})
@@ -758,463 +738,108 @@ function setMeshTetrahedra(meshName::String, vertices::AbstractArray{Integer})
         (Ptr{Int8}, Cint, Ref{Cint}),
         meshName,
         _size,
-        reshape(vertices, :),
+        reshape(permutedims(vertices), :),
     )
 end
 
 
 @doc """
 
-    writeBlockVectorData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+        writeData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
-Write vector data values given as block. This function writes values of specified vertices to a `dataName`.
-Values must be provided in a Matrix with shape [N x D] where N = number of vertices and D = dimensions of geometry 
+This function writes values of specified vertices to data of a mesh.
+Values are provided as a block of continuous memory defined by values.
+The order of the provided data follows the order specified by vertices.
+
+The 1D/Scalar-format of values is a vector of length N.
+The 2D-format of values is [N x 2].
+The 3D-format of values is [N x 3].
+Where N is the number of vertices.
 
 # Arguments
 - `meshName::String`: Name of the mesh to write the data to.
 - `dataName::String`: Name of the data to be written.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices. 
-- `values::AbstractArray{Float64}`: Values of the data to be written.
+- `valueIndices::AbstractArray{Cint}`: The vertex ids of the vertices to write data to. Shape [N x 1] where N = number of vertices.
+- `values::AbstractArray{Float64}`: The values to be written to preCICE. Shape [N x D] where N = number of vertices and D = number of data dimensions.
 
 # Notes
 
 Previous calls:
- - [`initialize`](@ref) has been called
+- Every VertexID in `valueIndices` is return value of setMeshVertex or setMeshVertices
+- `size(values) == (length(valueIndices), getDataDimensions(meshName, dataName))`
 
-# Examples
-
-Write block vector data for a 2D problem with 5 vertices:
-```julia
-vertex_ids = [1, 2, 3, 4, 5]
-values = [v1_x v1_y; v2_x v2_y; v3_x v3_y; v4_x v4_y; v5_x v5_y])
-writeBlockVectorData("MeshOne", "DataOne", vertex_ids, values)
-```
-Write block vector data for a 3D (D=3) problem with 5 (N=5) vertices:
-```julia
-vertex_ids = [1, 2, 3, 4, 5]
-values = [v1_x v1_y v1_z; v2_x v2_y v2_z; v3_x v3_y v3_z; v4_x v4_y v4_z; v5_x v5_y v5_z]
-writeBlockVectorData("MeshOne", "DataOne", vertex_ids, values)
-```
+See also:
+- [`setMeshVertex`](@ref)
+- [`setMeshVertices`](@ref)
+- [`getDataDimensions`](@ref)
 """
-function writeBlockVectorData(
+function writeData(
     meshName::String,
     dataName::String,
     valueIndices::AbstractArray{Cint},
     values::AbstractArray{Float64},
 )
-    _size, dimensions = size(values)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-
-    values = permutedims(values)
-
+    _size, n = size(values)
+    @assert n == getDataDimensions(meshName, dataName) "The number of columns of values must match the number of data dimensions. Provided shape: ($_size, $n), expected shape: ($_size, $(getDataDimensions(meshName, dataName)))"
     ccall(
-        (:precicec_writeBlockVectorData, "libprecice"),
+        (:precicec_writeData, "libprecice"),
         Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
+        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Float64}),
         meshName,
         dataName,
         _size,
-        valueIndices,
-        reshape(values, :),
+        reshape(permutedims(valueIndices), :),
+        reshape(permutedims(values), :),
     )
 end
 
-
 @doc """
+        readData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, relativeReadTime::Float64)
 
-    writeVectorData(meshName::String, dataName::String, valueIndex::Integer, dataValue::AbstractArray{Float64})
+Reads data values from a mesh. Values correspond to a given point in time relative to the beginning of the current timestep.
+The 1D/Scalar-format of values is a vector of length N.
+The 2D-format of values is [N x 2].
+The 3D-format of values is [N x 3].
+Where N is the number of vertices.
 
-Write vectorial floating-point data to a vertex. This function writes a value of a specified vertex to a dataName.
-Values are provided as a block of continuous memory in the shape of (D,) with D = dimensions of geometry
+The data is read at relativeReadTime, which indicates the point in time measured from the beginning of the current time step.
+`relativeReadTime = 0` corresponds to data at the beginning of the time step. Assuming that the user will call `advance(dt)` at the
+end of the time step, `dt` indicates the size of the current time step. Then `relativeReadTime = dt` corresponds to the data at
+the end of the time step.
 
 # Arguments
-- `meshName::String`: Name of the mesh to write the data to.
-- `dataName::String`: Name of the data to be written.
-- `valueIndex::Integer`: Index of the vertex. 
-- `dataValue::AbstractArray{Float64}`: The array holding the values.
+- `meshName::String`: Name of the mesh to read the data from.
+- `dataName::String`: Name of the data to be read from
+- `valueIndices::AbstractArray{Cint}`: The vertex ids of the vertices to read data from.
+- `relativeReadTime::Float64`: The point in time relative to the beginning of the current time step to read the data from.
+
+# Returns
+- `values::AbstractArray{Float64}`: The values read from preCICE. Shape [N x D] where N = number of vertices and D = number of data dimensions.
 
 # Notes
-        
-Previous calls:
- - Count of available elements at `value` matches the configured dimension
- - [`initialize`](@ref) has been called
-
-# Examples:
-
-Write vector data for a 2D problem with 5 vertices:
-```julia
-vertex_id = 5
-value = [v5_x, v5_y]
-writeVectorData("MeshOne", "DataOne", vertex_id, value)
-```
-
-Write vector data for a 3D (D=3) problem with 5 (N=5) vertices:
-```julia
-vertex_id = 5
-value = [v5_x, v5_y, v5_z]
-writeVectorData("MeshOne", "DataOne", vertex_id, value)
-```
+- Every VertexID in vertices is a return value of setMeshVertex or setMeshVertices
+- `size(values) == (length(valueIndices), getDataDimensions(meshName, dataName))`
 """
-function writeVectorData(
-    meshName::String,
-    dataName::String,
-    valueIndex::Integer,
-    dataValue::AbstractArray{Float64},
-)
-    ccall(
-        (:precicec_writeVectorData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
-        meshName,
-        dataName,
-        valueIndex,
-        dataValue,
-    )
-end
-
-
-@doc """
-
-    writeBlockScalarData(meshName::String, DataName::String, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-
-Write scalar data given as block.
-
-This function writes values of specified vertices to a dataName. Values are provided as a block of continuous memory. `valueIndices` contains the indices of the vertices.
-
-# Arguments
-- `meshName::String`: Name of the mesh to write the data to.
-- `dataName::String`: Name of the data to be written.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-- `values::AbstractArray{Float64}`: The array holding the values.
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) has been called
-
-# Examples
-
-Write block scalar data for a 2D and 3D problem with 5 (N=5) vertices:
-```julia
-vertex_ids = [1, 2, 3, 4, 5]
-values = [1, 2, 3, 4, 5]
-writeBlockScalarData("MeshOne", "DataOne", vertex_ids, values)
-```
-"""
-function writeBlockScalarData(
+function readData(
     meshName::String,
     dataName::String,
     valueIndices::AbstractArray{Cint},
-    values::AbstractArray{Float64},
+    relativeReadTime::Float64,
 )
     _size = length(valueIndices)
+    values = Array{Float64,1}(undef, _size * getDataDimensions(meshName, dataName))
     ccall(
-        (:precicec_writeBlockScalarData, "libprecice"),
+        (:precicec_readData, "libprecice"),
         Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
+        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Float64, Ref{Float64}),
         meshName,
         dataName,
         _size,
         valueIndices,
+        relativeReadTime,
         values,
     )
-end
-
-
-@doc """
-
-    writeScalarData(meshName::String, dataName::String, valueIndex::Integer, dataValue::Float64)
-
-Write scalar data, the value of a specified vertex to a dataName.
-
-# Arguments
-- `meshName::String`: Name of the mesh to write the data to.
-- `dataName::String`: Name of the data to be written.
-- `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-- `value::Float64`: The value to write.
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) 
-
-# Examples
-
-Write scalar data for a 2D or 3D problem with 5 vertices:
-
-```julia
-vertex_id = 5
-value = 1.0
-writeScalarData("MeshOne", "DataOne", vertex_id, value)
-```
-"""
-function writeScalarData(
-    meshName::String,
-    dataName::String,
-    valueIndex::Integer,
-    dataValue::Float64,
-)
-    ccall(
-        (:precicec_writeScalarData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Cdouble),
-        meshName,
-        dataName,
-        valueIndex,
-        dataValue,
-    )
-end
-
-
-@doc """
-
-    readBlockVectorData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}[, relative_read_time::Float64])::AbstractArray{Float64}
-
-Read and return vector data values given as block.
-
-The block contains the vector values in the following form:
-
-`size(values) = (N, D)`, N = number of vertices and D = dimensions of geometry
-
-# Arguments
-- `meshName::String`: Name of the mesh to read the data from.
-- `dataName::String`: Name of the data to be read.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
-
-# Notes
-
-Previous calls:
-- [`initialize`](@ref) has been called
-
-# Examples
-
-Read block vector data for a 2D problem with 5 vertices:
-```julia-repl
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = readBlockVectorData(meshName, dataName, vertex_ids)
-julia> size(values)
-(10,)
-```
-Read block vector data for a 3D system with 5 vertices:
-```julia-repl
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = readBlockVectorData(meshName, dataName, vertex_ids)
-julia> size(values)
-(15,)
-```
-"""
-function readBlockVectorData(
-    meshName::String,
-    dataName::String,
-    valueIndices::AbstractArray{Cint},
-    relative_read_time::Float64 = -1.0,
-)
-    _size = length(valueIndices)
-    values = Array{Float64,1}(undef, _size * getDimensions())
-
-    if relative_read_time === -1.0
-        ccall(
-            (:precicec_readBlockVectorData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
-            meshName,
-            dataName,
-            _size,
-            valueIndices,
-            values,
-        )
-    else
-        ccall(
-            (:precicec_readBlockVectorData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}, Cdouble),
-            meshName,
-            dataName,
-            _size,
-            valueIndices,
-            values,
-            relative_read_time,
-        )
-    end
-
-    return permutedims(reshape(values, (getDimensions(), _size)))
-end
-
-@doc """
-
-    readVectorData(meshName::String, dataName::String, valueIndex::Integer[, relative_read_time::Float64])::AbstractArray{Float64}
-
-Read and return vector data from a vertex.
-
-# Arguments
-- `meshName::String`: Name of the mesh to read the data from.
-- `dataName::String`: Name of the data to be read.
-- `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
-
-# Notes
-
-Previous calls:
- - count of available elements at value matches the configured dimension
- - [`initialize`](@ref) has been called
-
-# Examples
-
-```julia
-vertex_id = 5
-value = readVectorData("DataOne", vertex_id)
-```
-"""
-function readVectorData(
-    meshName::String,
-    dataName::String,
-    valueIndex::Integer,
-    relative_read_time::Float64 = -1.0,
-)
-    dataValue = Array{Float64,1}(undef, getDimensions())
-    if relative_read_time === -1.0
-        ccall(
-            (:precicec_readVectorData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
-            meshName,
-            dataName,
-            valueIndex,
-            dataValue,
-        )
-    else
-        ccall(
-            (:precicec_readVectorData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}, Cdouble),
-            meshName,
-            dataName,
-            valueIndex,
-            relative_read_time,
-            dataValue,
-        )
-    end
-    return dataValue
-end
-
-
-@doc """
-
-    readBlockScalarData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}[, relative_read_time::Float64])::AbstractArray{Float64}
-
-Read and return scalar data as a block, values of specified vertices from a dataName.
-
-# Arguments
-- `meshName::String`: Name of the mesh to read the data from.
-- `dataName::String`: Name of the data to be read.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
-
-# Notes
-
-Previous calls:
-- [`initialize`](@ref) has been called
-
-# Examples
-
-Read block scalar data for 2D and 3D problems with 5 vertices:
-```julia
-vertex_ids = [1, 2, 3, 4, 5]
-values = readBlockScalarData("DataOne", vertex_ids)
-```
-"""
-function readBlockScalarData(
-    meshName::String,
-    dataName::String,
-    valueIndices::AbstractArray{Cint},
-    relative_read_time::Float64 = -1.0,
-)
-    _size = length(valueIndices)
-    values = Array{Float64,1}(undef, _size)
-    if relative_read_time === -1.0
-        ccall(
-            (:precicec_readBlockScalarData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
-            meshName,
-            dataName,
-            _size,
-            valueIndices,
-            values,
-        )
-    else
-        ccall(
-            (:precicec_readBlockScalarData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}, Cdouble),
-            meshName,
-            dataName,
-            _size,
-            valueIndices,
-            relative_read_time,
-            values,
-        )
-    end
-    return values
-end
-
-
-@doc """
-
-    readScalarData(meshName::String, dataName::String, valueIndex::Integer[, relative_read_time::Float64])::Float64
-
-Read and return scalar data of a vertex.
-
-# Arguments
-- `meshName::String`: Name of the mesh to read the data from.
-- `dataName::String`: Name of the data to be read.
-- `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-- `relative_read_time::Float64`: Point in time where data is read relative to the beginning of the current time step.
-
-# Notes
-
-Previous calls:
-- [`initialize`](@ref) has been called.
-
-# Examples
-
-Read scalar data for 2D and 3D problems:
-```julia
-vertex_id = 5
-value = readScalarData("DataOne", vertex_id)
-```
-"""
-function readScalarData(
-    meshName::String,
-    dataName::String,
-    valueIndex::Integer,
-    relative_read_time::Float64 = -1.0,
-)
-    dataValue = [Float64(0.0)]
-    if relative_read_time === -1.0
-        ccall(
-            (:precicec_readScalarData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
-            meshName,
-            dataName,
-            valueIndex,
-            dataValue,
-        )
-    else
-        ccall(
-            (:precicec_readScalarData, "libprecice"),
-            Cvoid,
-            (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}, Cdouble),
-            meshName,
-            dataName,
-            valueIndex,
-            relative_read_time,
-            dataValue,
-        )
-    end
-    return dataValue[1]
+    return permutedims(reshape(values, (getDataDimensions(meshName, dataName), _size)))
 end
 
 
@@ -1261,7 +886,7 @@ function setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float6
     @warn "The function setMeshAccessRegion is still experimental"
 
     @assert length(boundingBox) > 0 "The bounding box must not be empty"
-    @assert length(boundingBox) == getDimensions() * 2 "The bounding box must have the same dimension as the mesh"
+    @assert length(boundingBox) == getMeshDimensions(meshName) * 2 "The bounding box must have the same dimension as the mesh"
     ccall(
         (:precicec_setMeshAccessRegion, "libprecice"),
         Cvoid,
@@ -1283,7 +908,7 @@ coordinates omitting the mapping. This function is still experimental.
 
 # Returns
 - `vertexIDs::AbstractArray{Integer}`: IDs of the vertices.
-- `vertexCoordinates::AbstractArray{Float64}`: Coordinates of the vertices and corresponding data values.
+- `vertexCoordinates::AbstractArray{Float64}`: Coordinates of the vertices and corresponding data values. Shape [N x D] where N = number of vertices and D = number of data dimensions.
 """
 function getMeshVerticesAndIDs(
     meshName::String,
@@ -1292,7 +917,7 @@ function getMeshVerticesAndIDs(
 
     _size = getMeshVertexSize(meshName)
     vertexIDs = zeros(Cint, _size)
-    vertexCoordinates = zeros(Float64, _size * getDimensions())
+    vertexCoordinates = zeros(Float64, _size * getMeshDimensions(meshName))
     ccall(
         (:precicec_getMeshVerticesAndIDs, "libprecice"),
         Cvoid,
@@ -1302,19 +927,20 @@ function getMeshVerticesAndIDs(
         vertexIDs,
         vertexCoordinates,
     )
-    return vertexIDs, reshape(vertexCoordinates, (_size, getDimensions()))
+    return vertexIDs,
+    permutedims(reshape(vertexCoordinates, (_size, getMeshDimensions(meshName))))
 end
 
 @doc """
 
-    getVersionInformation()
+    getVersionInformation()::String
 
 Return a semicolon-separated String containing: 
  - the version of preCICE
  - the revision information of preCICE
  - the configuration of preCICE including MPI, PETSC, PYTHON
 """
-function getVersionInformation()
+function getVersionInformation()::String
     versionCstring = ccall((:precicec_getVersionInformation, "libprecice"), Cstring, ())
     return unsafe_string(versionCstring)
 end
@@ -1379,168 +1005,10 @@ function writeBlockVectorGradientData(
     gradientValues::AbstractArray{Float64},
 )
     _size, dimensions = size(gradientValues)
-    @assert dimensions == getDimensions() * getDimensions() "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
+    @assert dimensions == getMeshDimensions(meshName) * getMeshDimensions(meshName) "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getMeshDimensions(meshName)*getMeshDimensions(meshName))"
     gradientValues = reshape(permutedims(gradientValues), :)
     ccall(
         (:precicec_writeBlockVectorGradientData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
-        meshName,
-        dataName,
-        _size,
-        valueIndices,
-        gradientValues,
-    )
-end
-
-@doc """
-
-    writeScalarGradientData(meshName::String, dataName::String, valueIndex::Integer, gradientValues::AbstractArray{Float64})
-
-Write gradient data of a scalar data, the value of a specified vertex to a dataName.
-
-The 2D-format of gradientValues is [v_dx, v_dy] vector corresponding to the data block v = [v]
-differentiated respectively in x-direction dx and y-direction dy
-
-The 3D-format of gradientValues is [v_dx, v_dy, v_dz] vector
-corresponding to the data block v = [v] differentiated respectively in spatial directions x-direction dx and y-direction dy and z-direction dz
-
-# Arguments
-- `meshName::String`: Name of the mesh to write the data to.
-- `dataName::String`: Name of the data to be written.
-- `valueIndex::Integer`: Indice of the vertex.
-- `gradientValues::AbstractArray{Float64}`: The gradient values to write.
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) 
-
-# Examples
-
-Write gradient values of a scalar data for a 3D problem with 5 vertices:
-
-```julia
-vertex_id = 5
-gradientValues = [1.0 2.0 3.0]
-PreCICE.writeScalarGradientData("MeshOne", "DataName", vertex_id, gradientValue)
-```
-
-"""
-function writeScalarGradientData(
-    meshName::String,
-    dataName::String,
-    valueIndex::Integer,
-    gradientValues::AbstractArray{Float64},
-)
-    dimensions = length(gradientValues)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-
-    ccall(
-        (:precicec_writeScalarGradientData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
-        meshName,
-        dataName,
-        valueIndex,
-        gradientValues,
-    )
-end
-
-
-@doc """
-
-    writeVectorGradientData(meshName::String, dataName::String, valueIndex::Integer, gradientValues::AbstractArray{Float64})
-
-Write gradient data of a vector data, the value of a specified vertex to a dataName.
-
-The 2D-format of gradientValues is [vx_dx, vy_dx, vx_dy, vy_dy] vector corresponding to the data block v = [vx, vy]
-differentiated respectively in x-direction dx and y-direction dy
-
-The 3D-format of gradientValues is [vx_dx, vy_dx, vz_dx, vx_dy, vy_dy, vz_dy, vx_dz, vy_dz, vz_dz] vector
-corresponding to the data block v = [vx, vy, vz] differentiated respectively in spatial directions x-direction dx and y-direction dy and z-direction dz
-
-# Arguments
-- `meshName::String`: Name of the mesh to write the data to.
-- `dataName::String`: Name of the data to be written.
-- `valueIndex::Integer`: Indice of the vertex.
-- `gradientValues::AbstractArray{Float64}`: The gradient values to write.
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) 
-
-# Examples
-
-Write gradient values of a vector data for a 3D problem with 5 vertices:
-
-```julia
-vertex_id = 5
-gradientValues = [1.0 2.0 3.0 4.0 5.0 6.0 1.0 2.0 3.0]
-PreCICE.writeVectorGradientData("MeshOne", "DataOne", vertex_id, gradientValue)
-```
-"""
-function writeVectorGradientData(
-    meshName::String,
-    dataName::String,
-    valueIndex::Integer,
-    gradientValues::AbstractArray{Float64},
-)
-    dimensions = length(gradientValues)
-    @assert dimensions == getDimensions() * getDimensions() "Dimensions of vector data in write_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions()*getDimensions())"
-
-    ccall(
-        (:precicec_writeVectorGradientData, "libprecice"),
-        Cvoid,
-        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cdouble}),
-        meshName,
-        dataName,
-        valueIndex,
-        gradientValues,
-    )
-end
-
-@doc """
-
-    writeBlockScalarGradientData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
-
-
-Write gradient data of a scalar data as a block, the value of a specified vertices to a dataName.
-
-# Arguments
-- `meshName::String`: Name of the mesh to write the data to.
-- `dataName::String`: Name of the data to be written.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertex.
-- `gradientValues::AbstractArray{Float64}`: The gradient values to write. For example for a 2D problem use the format [v1_dx v1_dy; v2_dx v2_dy]
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) 
-
-# Examples
-
-Write gradient values of a vector data for a 2D problem with 3 vertices:
-
-```julia
-valueIndices = [1,2,3]
-gradientValues = [1.0 2.0; 3.0 4.0; 5.0 6.0]
-PreCICE.writeBlockScalarGradientData("MeshOne", "DataOne", valueIndices, gradientValue)
-```
-
-"""
-function writeBlockScalarGradientData(
-    meshName::String,
-    dataName::String,
-    valueIndices::AbstractArray{Cint},
-    gradientValues::AbstractArray{Float64},
-)
-    _size, dimensions = size(gradientValues)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_block_scalar_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-    gradientValues = reshape(permutedims(gradientValues), :)
-    ccall(
-        (:precicec_writeBlockScalarGradientData, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
         meshName,
