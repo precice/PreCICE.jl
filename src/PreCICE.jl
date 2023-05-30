@@ -7,7 +7,7 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 # TODO add 'return nothing' keyword to void functions
 # TODO add Julia's exception handling to the ccalls
 
-# TODO createSolverInterfaceWithCommunicator documentation
+# TODO createParticipantWithCommunicator documentation
 
 export
     # construction and configuration
@@ -64,7 +64,7 @@ export
 
 @doc """
 
-    createSolverInterface(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer)
+    createParticipant(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer)
 
 Create the coupling interface and configure it. Must get called before any other method of this interface.
 
@@ -76,7 +76,7 @@ Create the coupling interface and configure it. Must get called before any other
 
 # Examples
 ```julia
-createSolverInterface("SolverOne", "./precice-config.xml", 0, 1)
+createParticipant("SolverOne", "./precice-config.xml", 0, 1)
 ```
 """
 function createParticipant(
@@ -97,13 +97,13 @@ function createParticipant(
 end
 
 @doc """
-    createSolverInterfaceWithCommunicator(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer, communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}})
+    createParticipantWithCommunicator(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer, communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}})
 
 TODO: Documentation or [WIP] tag. The data types of the communicator are not yet verified.
 
 # See also:
 
-[`createSolverInterface`](@ref)
+[`createParticipant`](@ref)
 
 # Arguments
 
@@ -137,11 +137,18 @@ end
 
     initialize()
 
-Fully initializes preCICE.
-This function handles:
-- Parallel communication to the coupling partner/s is setup.
-- Meshes are exchanged between coupling partners and the parallel partitions are created.
-- **Serial Coupling Scheme:** If the solver is not starting the simulation, coupling data is received from the coupling partner's first computation.
+Fully initializes preCICE and coupling data.
+
+This function does the following:
+- Sets up a connection to the other participants of the coupled simulation.
+- Creates all meshes, solver meshes need to be submitted before.
+- Receives first coupling data. The starting values for coupling data are zero by default.
+- Determines maximum allowed size of the first time step to be computed.
+
+# Notes
+
+See also:
+- [`getMaxTimeStepSize`](@ref)
 """
 function initialize()
     dt::Float64 = ccall((:precicec_initialize, "libprecice"), Cdouble, ())
@@ -153,10 +160,17 @@ end
     
     advance(computedTimestepLength::Float64)
 
-Advances preCICE after the solver has computed one timestep.
+Advances preCICE after the solver has computed one time step.
+
+This function does the following:
+- Sends and resets coupling data written by solver to coupling partners.
+- Receives coupling data read by solver.
+- Computes and applies data mappings.
+- Computes acceleration of coupling data.
+- Exchanges and computes information regarding the state of the coupled simulation.
 
 # Arguments
- - `computed_timestep_length::Float64`: Length of timestep used by the solver.
+ - `computed_timestep_length::Float64`: Size of time step used by the solver.
 
 # Notes
 
@@ -165,14 +179,6 @@ Previous calls:
  - The solver has computed one timestep.
  - The solver has written all coupling data.
  - [`finalize`](@ref) has not yet been called.
-
-Tasks completed:
- - Coupling data values specified in the configuration are exchanged.
- - Coupling scheme state (computed time, computed timesteps, ...) is updated.
- - The coupling state is logged.
- - Configured data mapping schemes are applied.
- - [Second Participant] Configured post processing schemes are applied.
- - Meshes with data are exported to files if configured.
 """
 function advance(computedTimestepLength::Float64)::Float64
     dt::Float64 = ccall(
@@ -191,14 +197,16 @@ end
 
 Finalize the coupling to the coupling supervisor.
 
-# Notes
+If initialize() has been called:
+- synchronizes with remote participants
+- handles final exports
+- cleans up general state
+- closes communication channels
 
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
-
-Tasks completed:
- - Communication channels are closed.
- - Meshes and data are deallocated.
+Always:
+- flushes and finalizes Events
+- finalizes managed PETSc
+- finalizes managed MPI
 """
 function finalize()
     ccall((:precicec_finalize, "libprecice"), Cvoid, ())
@@ -249,6 +257,7 @@ end
     isCouplingOngoing()::Bool
 
 Check if the coupled simulation is still ongoing.
+
 A coupling is ongoing as long as
  - the maximum number of timesteps has not been reached, and
  - the final time has not been reached.
@@ -306,6 +315,10 @@ end
     requiresInitialData()::Bool
 
 Check if the solver has to provide initial data.
+
+# Notes
+
+ - [`initialize`](@ref) has *not* yet been called.
 """
 function requiresInitialData()::Bool
     ans::Integer = ccall((:precicec_requiresInitialData, "libprecice"), Cint, ())
@@ -317,7 +330,8 @@ end
 
     requiresReadingCheckpoint()::Bool
 
-Check if the solver has to read a checkpoint.
+Check if the solver has to read an iteration checkpoint.
+preCICE refuses to proceed if reading a checkpoint is required, but this method isn't called prior to advance().
 """
 function requiresReadingCheckpoint()::Bool
     ans::Integer = ccall((:precicec_requiresReadingCheckpoint, "libprecice"), Cint, ())
@@ -329,6 +343,7 @@ end
     requiresWritingCheckpoint()::Bool
 
 Check if the solver has to write a checkpoint.
+preCICE refuses to proceed if writing a checkpoint is required, but this method isn't called prior to advance().
 """
 function requiresWritingCheckpoint()::Bool
     ans::Integer = ccall((:precicec_requiresWritingCheckpoint, "libprecice"), Cint, ())
@@ -378,6 +393,10 @@ end
     requiresMeshConnectivityFor(meshName::String)::Bool
 
 Checks if the given mesh requires connectivity.
+
+preCICE may require connectivity information from the solver and
+ignores any API calls regarding connectivity if it is not required.
+Use this function to conditionally generate this connectivity.
 """
 function requiresMeshConnectivityFor(meshName::String)::Bool
     ans::Integer = ccall(
@@ -490,7 +509,7 @@ end
 
     setMeshEdge(meshName::String, firstVertexID::Integer, secondVertexID::Integer)
 
-Set mesh edge from vertex IDs, return edge ID.
+Set mesh edge from vertex IDs, return edge ID. Ignored if preCICE doesn't require connectivity for the mesh.
 
 # Arguments
 - `meshName::String`: Name of the mesh to add the edge to.
@@ -747,8 +766,8 @@ end
 
         writeData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
-This function writes values of specified vertices to data of a mesh.
-Values are provided as a block of continuous memory defined by values.
+Writes values of specified vertices to data of a mesh.
+Values are provided as a matrix.
 The order of the provided data follows the order specified by vertices.
 
 The 1D/Scalar-format of values is a vector of length N.
@@ -796,7 +815,9 @@ end
 @doc """
         readData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, relativeReadTime::Float64)
 
-Reads data values from a mesh. Values correspond to a given point in time relative to the beginning of the current timestep.
+Reads values of specified vertices from data of a mesh.
+Values are read into a matrix in the order specified by vertices.
+
 The 1D/Scalar-format of values is a vector of length N.
 The 2D-format of values is [N x 2].
 The 3D-format of values is [N x 3].
@@ -971,7 +992,7 @@ end
     writeGradientData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
 
 
-Write gradient data of a vector data as a block, the value of a specified vertices to a dataName.
+Write gradient values of specified vertices to data of a mesh.
 
 The format for a 2D problem with 2 vertices is [v1x_dx v1y_dx v1x_dy v1y_dy; v2x_dx v2y_dx v2x_dy v2y_dy]
 The format for a 3D problem with 2 vertices is [v1x_dx v1y_dx v1z_dx v1x_dy v1y_dy v1z_dy v1x_dz v1y_dz v1z_dz; v2x_dx v2y_dx v2z_dx v2x_dy v2y_dy v2z_dy v2x_dz v2y_dz v2z_dz]
