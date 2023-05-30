@@ -59,7 +59,7 @@ export
 
     # Gradient related 
     requiresGradientDataFor,
-    writeBlockVectorGradientData
+    writeGradientData
 
 
 @doc """
@@ -968,7 +968,7 @@ end
 
 @doc """
 
-    writeBlockVectorGradientData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+    writeGradientData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
 
 
 Write gradient data of a vector data as a block, the value of a specified vertices to a dataName.
@@ -994,11 +994,11 @@ Write gradient values of a vector data for a 2D problem with 2 vertices:
 ```julia
 valueIndices = [1, 2]
 gradientValues = [1.0 2.0 3.0 4.0; 5.0 6.0 7.0 8.0]
-PreCICE.writeBlockVectorGradientData("MeshOne", "DataOne", valueIndices, gradientValue)
+PreCICE.writeGradientData("MeshOne", "DataOne", valueIndices, gradientValue)
 ```
 
 """
-function writeBlockVectorGradientData(
+function writeGradientData(
     meshName::String,
     dataName::String,
     valueIndices::AbstractArray{Cint},
@@ -1008,7 +1008,7 @@ function writeBlockVectorGradientData(
     @assert dimensions == getMeshDimensions(meshName) * getMeshDimensions(meshName) "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getMeshDimensions(meshName)*getMeshDimensions(meshName))"
     gradientValues = reshape(permutedims(gradientValues), :)
     ccall(
-        (:precicec_writeBlockVectorGradientData, "libprecice"),
+        (:precicec_writeGradientData, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
         meshName,
