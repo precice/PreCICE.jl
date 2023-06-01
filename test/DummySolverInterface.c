@@ -216,7 +216,7 @@ int precicec_requiresGradientDataFor(const char *meshName, const char *dataName)
     return 0;
 }
 
-void precicec_writeBlockVectorGradientData(const char *meshName, const char *dataName, int size, const int *valueIndices, const double *gradients)
+void precicec_writeGradientData(const char *meshName, const char *dataName, int size, const int *valueIndices, const double *gradients)
 {
     for (int i = 0; i < size * precicec_getMeshDimensions(meshName) * precicec_getMeshDimensions(meshName); i++)
     {

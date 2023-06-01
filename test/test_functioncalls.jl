@@ -150,7 +150,7 @@ function requiresGradientDataFor()
 
 end
 
-function writeBlockVectorGradientData()
+function writeGradientData()
     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
     fakeDataName = "FakeData"  # compare to test/SolverInterface.c, fake_data_name
@@ -158,12 +158,7 @@ function writeBlockVectorGradientData()
     ndims = 3
     gradientData = rand(nVertices, ndims * ndims)
     fakeIndices = Cint[0:(nVertices-1)...]
-    PreCICE.writeBlockVectorGradientData(
-        fakeMeshName,
-        fakeDataName,
-        fakeIndices,
-        gradientData,
-    )
+    PreCICE.writeGradientData(fakeMeshName, fakeDataName, fakeIndices, gradientData)
     readData =
         PreCICE.readData(fakeMeshName, fakeDataName, Cint[0:(nVertices*ndims-1)...], 1.0)
     return reshape(permutedims(gradientData), :) == reshape(permutedims(readData), :)
