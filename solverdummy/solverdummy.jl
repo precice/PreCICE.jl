@@ -15,22 +15,22 @@ solverName = ARGS[2]
 
 
 if solverName == "SolverOne"
-    meshName = "MeshOne"
-    dataWriteName = "dataOne"
-    dataReadName = "dataTwo"
+    meshName = "SolverOne-Mesh"
+    dataWriteName = "Data-One"
+    dataReadName = "Data-Two"
 else
-    meshName = "MeshTwo"
-    dataReadName = "dataOne"
-    dataWriteName = "dataTwo"
+    meshName = "SolverTwo-Mesh"
+    dataReadName = "Data-One"
+    dataWriteName = "Data-Two"
 end
 
 
 println(
     """DUMMY: Running solver dummy with preCICE config file "$configFileName", participant name "$solverName", and mesh name "$meshName" """,
 )
-PreCICE.createSolverInterface(solverName, configFileName, commRank, commSize)
+PreCICE.createParticipant(solverName, configFileName, commRank, commSize)
 
-dimensions = PreCICE.getDimensions()
+dimensions = PreCICE.getMeshDimensions(meshName)
 
 numberOfVertices = 3
 
@@ -46,8 +46,7 @@ vertexIDs = PreCICE.setMeshVertices(meshName, vertices)
 
 let # setting local scope for dt outside of the while loop
 
-    dt = PreCICE.initialize()
-    readData = zeros(numberOfVertices, dimensions)
+    PreCICE.initialize()
 
     while PreCICE.isCouplingOngoing()
 
@@ -55,15 +54,16 @@ let # setting local scope for dt outside of the while loop
             println("DUMMY: Writing iteration checkpoint")
         end
 
-        readData = PreCICE.readBlockVectorData(meshName, dataReadName, vertexIDs)
+        dt = PreCICE.getMaxTimeStepSize()
+        readData = PreCICE.readData(meshName, dataReadName, vertexIDs, dt)
 
         for i = 1:numberOfVertices, j = 1:dimensions
             writeData[i, j] = readData[i, j] + 1.0
         end
 
-        PreCICE.writeBlockVectorData(meshName, dataWriteName, vertexIDs, writeData)
+        PreCICE.writeData(meshName, dataWriteName, vertexIDs, writeData)
 
-        dt = PreCICE.advance(dt)
+        PreCICE.advance(dt)
 
         if PreCICE.requiresReadingCheckpoint()
             println("DUMMY: Reading iteration checkpoint")
