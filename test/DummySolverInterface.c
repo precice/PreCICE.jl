@@ -5,7 +5,8 @@
 
 double *fake_read_write_buffer;
 const int SIZE = 6;
-int fake_dimensions;
+int fake_mesh_dimensions;
+int fake_data_dimensions;
 const char *fake_mesh_name;
 int *fake_ids;
 int n_fake_vertices;
@@ -19,27 +20,28 @@ void precicec_createParticipant_withCommunicator(const char *participantName,
                                                  int solverProcessSize,
                                                  void *communicator)
 {
-    fake_dimensions = 3;
-    fake_read_write_buffer = malloc(SIZE * fake_dimensions * sizeof(double));
+    fake_mesh_dimensions = 3;
+    fake_data_dimensions = 3;
+    fake_read_write_buffer = malloc(SIZE * fake_mesh_dimensions * sizeof(double));
     fake_mesh_name = "FakeMesh";
     fake_data_name = "";
     fake_data_name = "FakeData";
     n_fake_vertices = 3;
     fake_ids = malloc(n_fake_vertices * sizeof(int));
-    fake_bounding_box = malloc(fake_dimensions * 2 * sizeof(double));
-    fake_coordinates = malloc(n_fake_vertices * fake_dimensions * sizeof(double));
+    fake_bounding_box = malloc(fake_mesh_dimensions * 2 * sizeof(double));
+    fake_coordinates = malloc(n_fake_vertices * fake_mesh_dimensions * sizeof(double));
     fake_ids = malloc(n_fake_vertices * sizeof(int));
     for (int i = 0; i < n_fake_vertices; i++)
     {
         fake_ids[i] = i;
     }
-    fake_bounding_box = malloc(fake_dimensions * 2 * sizeof(double));
-    for (int i = 0; i < fake_dimensions * 2; i++)
+    fake_bounding_box = malloc(fake_mesh_dimensions * 2 * sizeof(double));
+    for (int i = 0; i < fake_mesh_dimensions * 2; i++)
     {
         fake_bounding_box[i] = i;
     }
-    fake_coordinates = malloc(n_fake_vertices * fake_dimensions * sizeof(double));
-    for (int i = 0; i < n_fake_vertices * fake_dimensions; i++)
+    fake_coordinates = malloc(n_fake_vertices * fake_mesh_dimensions * sizeof(double));
+    for (int i = 0; i < n_fake_vertices * fake_mesh_dimensions; i++)
     {
         fake_coordinates[i] = i;
     }
@@ -50,8 +52,9 @@ void precicec_createParticipant(const char *participantName,
                                 int solverProcessIndex,
                                 int solverProcessSize)
 {
-    fake_dimensions = 3;
-    fake_read_write_buffer = malloc(SIZE * fake_dimensions * sizeof(double));
+    fake_mesh_dimensions = 3;
+    fake_data_dimensions = 3;
+    fake_read_write_buffer = malloc(SIZE * fake_mesh_dimensions * sizeof(double));
     fake_mesh_name = "FakeMesh";
     fake_data_name = "FakeData";
     n_fake_vertices = 3;
@@ -60,13 +63,13 @@ void precicec_createParticipant(const char *participantName,
     {
         fake_ids[i] = i;
     }
-    fake_bounding_box = malloc(fake_dimensions * 2 * sizeof(double));
-    for (int i = 0; i < fake_dimensions * 2; i++)
+    fake_bounding_box = malloc(fake_mesh_dimensions * 2 * sizeof(double));
+    for (int i = 0; i < fake_mesh_dimensions * 2; i++)
     {
         fake_bounding_box[i] = i;
     }
-    fake_coordinates = malloc(n_fake_vertices * fake_dimensions * sizeof(double));
-    for (int i = 0; i < n_fake_vertices * fake_dimensions; i++)
+    fake_coordinates = malloc(n_fake_vertices * fake_mesh_dimensions * sizeof(double));
+    for (int i = 0; i < n_fake_vertices * fake_mesh_dimensions; i++)
     {
         fake_coordinates[i] = i;
     }
@@ -87,12 +90,12 @@ void precicec_finalize()
 
 int precicec_getMeshDimensions(const char *meshName)
 {
-    return fake_dimensions;
+    return fake_mesh_dimensions;
 }
 
 int precicec_getDataDimensions(const char *meshName, const char *dataName)
 {
-    return fake_dimensions;
+    return fake_data_dimensions;
 }
 
 int precicec_isCouplingOngoing()
@@ -247,8 +250,8 @@ void precicec_getMeshVerticesAndIDs(const char *meshName, const int size, int *i
     for (int i = 0; i < size; i++)
     {
         ids[i] = fake_ids[i];
-        coordinates[fake_dimensions * i] = i;
-        coordinates[fake_dimensions * i + 1] = i + n_fake_vertices;
-        coordinates[fake_dimensions * i + 2] = i + 2 * n_fake_vertices;
+        coordinates[fake_mesh_dimensions * i] = i;
+        coordinates[fake_mesh_dimensions * i + 1] = i + n_fake_vertices;
+        coordinates[fake_mesh_dimensions * i + 2] = i + 2 * n_fake_vertices;
     }
 }

@@ -13,17 +13,17 @@ end
 
 function getMeshDimensions()
     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
-    fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
+    fakeMeshDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
-    return fakeDimension == PreCICE.getMeshDimensions(fakeMeshName)
+    return fakeMeshDimension == PreCICE.getMeshDimensions(fakeMeshName)
 end
 
 function getDataDimensions()
     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
     fakeDataName = "FakeData"  # compare to test/SolverInterface.c, fake_data_name
-    fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
-    return fakeDimension == PreCICE.getDataDimensions(fakeMeshName, fakeDataName)
+    fakeDataDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
+    return fakeDataDimension == PreCICE.getDataDimensions(fakeMeshName, fakeDataName)
 end
 
 function isCouplingOngoing()
@@ -78,8 +78,8 @@ end
 function setMeshVertex()
     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
-    fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
-    fakePosition = rand(Cdouble, fakeDimension)
+    fakeMeshDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
+    fakePosition = rand(Cdouble, fakeMeshDimension)
     fakeVertexId = PreCICE.setMeshVertex(fakeMeshName, fakePosition)
     return 0 == fakeVertexId
 end
@@ -88,9 +88,9 @@ end
 function setMeshVertices()
     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
-    fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
+    fakeMeshDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
     nFakeVertices = 3  # compare to test/SolverInterface.c, n_fake_vertices
-    positions = rand(Cdouble, (nFakeVertices, fakeDimension))
+    positions = rand(Cdouble, (nFakeVertices, fakeMeshDimension))
     expectedOutput = 0:(nFakeVertices-1)
     actualOutput = PreCICE.setMeshVertices(fakeMeshName, positions)
     return expectedOutput == actualOutput
@@ -99,9 +99,9 @@ end
 # function setMeshVerticesEmpty()
 #     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
 #     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
-#     fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
+#     fakeMeshDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
 #     nFakeVertices = 0  # compare to test/SolverInterface.c, n_fake_vertices
-#     positions = rand(Cdouble, (nFakeVertices, fakeDimension))
+#     positions = rand(Cdouble, (nFakeVertices, fakeMeshDimension))
 #     expectedOutput = []
 #     actualOutput = PreCICE.setMeshVertices(fakeMeshName, positions)
 #     return expectedOutput == actualOutput
@@ -181,11 +181,11 @@ end
 function getMeshVerticesAndIDs()
     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
     fakeMeshName = "FakeMesh"  # compare to test/SolverInterface.c, fake_mesh_name
-    fakeDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
+    fakeMeshDimension = 3  # compare to test/SolverInterface.c, fake_dimensions
     nFakeVertices = 3 # compare to test/SolverInterface.c, fake_n_vertices
     vertexIDs = Cint[0, 1, 2]
     expected_vertices =
-        reshape(0:(nFakeVertices*fakeDimension-1), (nFakeVertices, fakeDimension))
+        reshape(0:(nFakeVertices*fakeMeshDimension-1), (nFakeVertices, fakeMeshDimension))
     fakeIDs, fakeVertices = PreCICE.getMeshVerticesAndIDs(fakeMeshName)
     return fakeIDs == vertexIDs && fakeVertices == expected_vertices
 end
