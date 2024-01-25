@@ -128,6 +128,23 @@ ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /path/to/julia/lib/julia/libstdc+
 If the above approaches do not work, you may have to [compile preCICE from source](https://precice.org/installation-source-preparation.html) using the version of `libstdc++` that is shipped with Julia.
 </details>
 
+### Incorrect linking of libcurl.so.4
+
+If you get an error message like:
+
+```bash
+version `CURL_OPENSSL_4' not found (required by /lib/x86_64-linux-gnu/libhdf5_openmpi.so.103)
+```
+
+it is because Julia ships the file `libcurl.so.4` which conflicts with the system file of the same name. A quick and dirty solution is to find the `libcurl.so.4` file in the Julia installation and do the following:
+
+```bash
+mv libcurl.so.4 libcurl.so.4.bak
+ln -s /usr/lib/x86_64-linux-gnu/libcurl.so.4 libcurl.so.4
+```
+
+This workaround is a solution, but may have unintended consequences that have not been investigated.
+
 ## Usage
 
 The [solverdummy](https://github.com/precice/julia-bindings/tree/main/solverdummy) shows an example of how to use the Julia bindings for preCICE.
