@@ -75,7 +75,7 @@ julia> using PreCICE
 If you get an error message like:
 
 ```julia-repl
-ERROR: ERROR: LoadError: LoadError: could not load library "libprecice"
+ERROR: LoadError: could not load library "libprecice"
 /usr/bin/../lib/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /usr/local/lib/libprecice.so)
 ```
 
