@@ -6,73 +6,65 @@ The `PreCICE` module provides the bindings for using the preCICE api. For more i
 
 # TODO add 'return nothing' keyword to void functions
 # TODO add Julia's exception handling to the ccalls
-# TODO maybe load libprecice.so only once with Libdl.dlopen() instead of calling it in each method?
 
-# TODO createSolverInterfaceWithCommunicator documentation
-# TODO does it make sense to set the data_id by hand in the example
+# TODO createParticipantWithCommunicator documentation
 
 export
     # construction and configuration
-    createSolverInterface,
-    createSolverInterfaceWithCommunicator,
+    createParticipant,
+    createParticipantWithCommunicator,
 
     # steering methods
     initialize,
-    initializeData,
     advance,
     finalize,
 
     # status queries
-    getDimensions,
+    getMeshDimensions,
+    getDataDimensions,
     isCouplingOngoing,
-    isReadDataAvailable,
-    isWriteDataRequired,
     isTimeWindowComplete,
-    hasToEvaluateSurrogateModel,
-    hasToEvaluateFineModel,
+    getMaxTimeStepSize,
 
     # action methods
-    isActionRequired,
-    markActionFulfilled,
+    requiresReadingCheckpoint,
+    requiresWritingCheckpoint,
+    requiresInitialData,
+
 
     # mesh access
     hasMesh,
-    getMeshID,
+    hasData,
+    requiresMeshConnectivityFor,
     setMeshVertex,
-    getMeshVertexSize,
     setMeshVertices,
-    getMeshVertices,
-    getMeshVertexIDsFromPositions,
+    getMeshVertexSize,
     setMeshEdge,
+    setMeshEdges,
     setMeshTriangle,
-    setMeshTriangleWithEdges,
+    setMeshTriangles,
     setMeshQuad,
-    setMeshQuadWithEdges,
+    setMeshQuads,
+    setMeshTetrahedron,
+    setMeshTetrahedra,
+    setMeshAccessRegion,
+    getMeshVerticesAndIDs,
 
     # data access
-    hasData,
-    getDataID,
-    mapReadDataTo,
-    mapWriteDataFrom,
-    writeBlockVectorData,
-    writeVectorData,
-    writeBlockScalarData,
-    writeScalarData,
-    readBlockScalarData,
-    readVectorData,
-    readBlockScalarData,
-    readScalarData,
+    writeData,
+    readData,
 
     # constants
     getVersionInformation,
-    actionWriteInitialData,
-    actionWriteIterationCheckpoint,
-    actionReadIterationCheckpoint
+
+    # Gradient related 
+    requiresGradientDataFor,
+    writeGradientData
 
 
 @doc """
 
-    createSolverInterface(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer)
+    createParticipant(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer)
 
 Create the coupling interface and configure it. Must get called before any other method of this interface.
 
@@ -84,17 +76,17 @@ Create the coupling interface and configure it. Must get called before any other
 
 # Examples
 ```julia
-createSolverInterface("SolverOne", "./precice-config.xml", 0, 1)
+createParticipant("SolverOne", "./precice-config.xml", 0, 1)
 ```
 """
-function createSolverInterface(
+function createParticipant(
     participantName::String,
     configFilename::String,
     solverProcessIndex::Integer,
     solverProcessSize::Integer,
 )
     ccall(
-        (:precicec_createSolverInterface, "libprecice"),
+        (:precicec_createParticipant, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Ptr{Int8}, Cint, Cint),
         participantName,
@@ -105,13 +97,13 @@ function createSolverInterface(
 end
 
 @doc """
-    createSolverInterfaceWithCommunicator(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer, communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}})
+    createParticipantWithCommunicator(participantName::String, configFilename::String, solverProcessIndex::Integer, solverProcessSize::Integer, communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}})
 
 TODO: Documentation or [WIP] tag. The data types of the communicator are not yet verified.
 
 # See also:
 
-[`createSolverInterface`](@ref)
+[`createParticipant`](@ref)
 
 # Arguments
 
@@ -121,7 +113,7 @@ TODO: Documentation or [WIP] tag. The data types of the communicator are not yet
 - `solverProcessSize::Integer`: The number of solver processes of this participant using preCICE.
 - `communicator::Union{Ptr{Cvoid}, Ref{Cvoid}, Ptr{Nothing}}`: TODO ?
 """
-function createSolverInterfaceWithCommunicator(
+function createParticipantWithCommunicator(
     participantName::String,
     configFilename::String,
     solverProcessIndex::Integer,
@@ -129,7 +121,7 @@ function createSolverInterfaceWithCommunicator(
     communicator::Union{Ptr{Cvoid},Ref{Cvoid},Ptr{Nothing}},
 ) # test if type of com is correct
     ccall(
-        (:precicec_createSolverInterface_withCommunicator, "libprecice"),
+        (:precicec_createParticipant_withCommunicator, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Ptr{Int8}, Int, Int, Union{Ptr{Cvoid},Ref{Cvoid},Ptr{Nothing}}),
         participantName,
@@ -143,64 +135,42 @@ end
 
 @doc """
 
-    initialize()::Float64
+    initialize()
 
-Fully initializes preCICE.
-This function handles:
-- Parallel communication to the coupling partner/s is setup.
-- Meshes are exchanged between coupling partners and the parallel partitions are created.
-- **Serial Coupling Scheme:** If the solver is not starting the simulation, coupling data is received from the coupling partner's first computation.
+Fully initializes preCICE and coupling data.
 
-Return the maximum length of first timestep to be computed by the solver.
+This function does the following:
+- Sets up a connection to the other participants of the coupled simulation.
+- Creates all meshes, solver meshes need to be submitted before.
+- Receives first coupling data. The starting values for coupling data are zero by default.
+- Determines maximum allowed size of the first time step to be computed.
+
+# Notes
+
+See also:
+- [`getMaxTimeStepSize`](@ref)
 """
-function initialize()::Float64
+function initialize()
     dt::Float64 = ccall((:precicec_initialize, "libprecice"), Cdouble, ())
     return dt
 end
 
 
 @doc """
-
-    initializeData()
-
-Initializes coupling data. The starting values for coupling data are zero by default.
-To provide custom values, first set the data using the Data Access methods and
-call this method to finally exchange the data.
-
-Serial Coupling Scheme: 
-- Only the first participant has to call this method, the second participant
-receives the values on calling [`initialize`](@ref).
-
-Parallel Coupling Scheme:
-- Values in both directions are exchanged.
-- Both participants need to call [`initializeData`](@ref).
-
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
- - The action `WriteInitialData` is required
- - [`advance`](@ref) has not yet been called.
- - [`finalize`](@ref) has not yet been called.
-
-Tasks completed:
- - Initial coupling data was exchanged.
-"""
-function initializeData()
-    ccall((:precicec_initialize_data, "libprecice"), Cvoid, ())
-end
-
-
-@doc """
     
-    advance(computedTimestepLength::Float64)::Float64
+    advance(computedTimestepLength::Float64)
 
-Advances preCICE after the solver has computed one timestep.
+Advances preCICE after the solver has computed one time step.
+
+This function does the following:
+- Sends and resets coupling data written by solver to coupling partners.
+- Receives coupling data read by solver.
+- Computes and applies data mappings.
+- Computes acceleration of coupling data.
+- Exchanges and computes information regarding the state of the coupled simulation.
 
 # Arguments
- - `computed_timestep_length::Float64`: Length of timestep used by the solver.
-
-Return the maximum length of next timestep to be computed by solver.
+ - `computed_timestep_length::Float64`: Size of time step used by the solver.
 
 # Notes
 
@@ -209,14 +179,6 @@ Previous calls:
  - The solver has computed one timestep.
  - The solver has written all coupling data.
  - [`finalize`](@ref) has not yet been called.
-
-Tasks completed:
- - Coupling data values specified in the configuration are exchanged.
- - Coupling scheme state (computed time, computed timesteps, ...) is updated.
- - The coupling state is logged.
- - Configured data mapping schemes are applied.
- - [Second Participant] Configured post processing schemes are applied.
- - Meshes with data are exported to files if configured.
 """
 function advance(computedTimestepLength::Float64)::Float64
     dt::Float64 = ccall(
@@ -235,14 +197,16 @@ end
 
 Finalize the coupling to the coupling supervisor.
 
-# Notes
+If initialize() has been called:
+- synchronizes with remote participants
+- handles final exports
+- cleans up general state
+- closes communication channels
 
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
-
-Tasks completed:
- - Communication channels are closed.
- - Meshes and data are deallocated.
+Always:
+- flushes and finalizes Events
+- finalizes managed PETSc
+- finalizes managed MPI
 """
 function finalize()
     ccall((:precicec_finalize, "libprecice"), Cvoid, ())
@@ -251,13 +215,39 @@ end
 
 @doc """
 
-    getDimensions()::Integer
+    getMeshDimensions(meshName::String)::Integer
 
-Return the number of spatial dimensions configured. Currently, two and three dimensional problems
-can be solved using preCICE. The dimension is specified in the XML configuration.
+Returns the spatial dimensionality of the given mesh.
+
+# Arguments
+ - `meshName::String`: Name of the mesh.
 """
-function getDimensions()::Integer
-    dim::Integer = ccall((:precicec_getDimensions, "libprecice"), Cint, ())
+function getMeshDimensions(meshName::String)::Integer
+    dim::Integer =
+        ccall((:precicec_getMeshDimensions, "libprecice"), Cint, (Ptr{Int8},), meshName)
+    return dim
+end
+
+
+@doc """
+
+    getDataDimensions(meshName::String, dataName::String)::Integer
+
+Returns the spatial dimensionality of the given data on the given mesh.
+Note that vectorial data dimensionality directly depends on the spacial dimensionality of the mesh.
+
+# Arguments
+ - `meshName::String`: Name of the associated mesh.
+ - `dataName::String`: Name of the data to get the dimensionality of.
+"""
+function getDataDimensions(meshName::String, dataName::String)::Integer
+    dim::Integer = ccall(
+        (:precicec_getDataDimensions, "libprecice"),
+        Cint,
+        (Ptr{Int8}, Ptr{Int8}),
+        meshName,
+        dataName,
+    )
     return dim
 end
 
@@ -267,6 +257,7 @@ end
     isCouplingOngoing()::Bool
 
 Check if the coupled simulation is still ongoing.
+
 A coupling is ongoing as long as
  - the maximum number of timesteps has not been reached, and
  - the final time has not been reached.
@@ -306,131 +297,57 @@ function isTimeWindowComplete()::Bool
     return ans
 end
 
-
 @doc """
 
-    hasToEvaluateSurrogateModel()::Bool
+    getMaxTimeStepSize()::Float64
 
-Return whether the solver has to evaluate the surrogate model representation.
-The solver may still have to evaluate the fine model representation.
-
-DEPRECATED: Only necessary for deprecated manifold mapping.
+Get the maximum allowed time step size of the current window.
+This should be used to compute the actual time step that the solver uses.
 """
-function hasToEvaluateSurrogateModel()::Bool
-    ans::Integer = ccall((:precicec_hasToEvaluateSurrogateModel, "libprecice"), Cint, ())
-    return ans
+function getMaxTimeStepSize()::Float64
+    dt::Float64 = ccall((:precicec_getMaxTimeStepSize, "libprecice"), Cdouble, ())
+    return dt
 end
 
 
 @doc """
 
-    hasToEvaluateFineModel()::Bool
+    requiresInitialData()::Bool
 
-Check if the solver has to evaluate the fine model representation.
-The solver may still have to evaluate the surrogate model representation.
-DEPRECATED: Only necessary for deprecated manifold mapping.
-
-Return whether the solver has to evaluate the fine model representation.
-"""
-function hasToEvaluateFineModel()::Bool
-    ans::Integer = ccall((:precicec_hasToEvaluateFineModel, "libprecice"), Cint, ())
-    return ans
-end
-
-
-@doc """
-
-    isReadDataAvailable()::Bool
-
-Check if new data to be read is available. Data is classified to be new, if it has been received
-while calling [`initialize`](@ref) and before calling [`advance`](@ref), or in the last call of [`advance`](@ref).
-This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
-timesteps than the limits returned in [`intitialize`](@ref) and [`advance`](@ref).
-It is allowed to read data even if this function returns false. This is not recommended
-due to performance reasons. Use this function to prevent unnecessary reads.
-
-#Notes
-
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
-"""
-function isReadDataAvailable()::Bool
-    ans::Integer = ccall((:precicec_isReadDataAvailable, "libprecice"), Cint, ())
-    return ans
-end
-
-
-
-@doc """
-
-    isWriteDataRequired(computedTimestepLength::Float64)::Bool
-
-Check if new data has to be written before calling [`advance`](@ref).
-This is always true, if a participant does not make use of subcycling, i.e. choosing smaller
-timesteps than the limits returned in [`intitialize`](@ref) and [`advance`](@ref).
-It is allowed to write data even if this function returns false. This is not recommended
-due to performance reasons. Use this function to prevent unnecessary writes.
-
-# Arguments
-
- - `computed_timestep_length::double`: Length of timestep used by the solver.
-
-Return whether new data has to be written.
+Check if the solver has to provide initial data.
 
 # Notes
 
-Previous calls:
- - [`initialize`](@ref) has been called successfully.
+ - [`initialize`](@ref) has *not* yet been called.
 """
-function isWriteDataRequired(computedTimestepLength::Float64)::Bool
-    ans::Integer = ccall(
-        (:precicec_isWriteDataRequired, "libprecice"),
-        Cint,
-        (Cdouble,),
-        computedTimestepLength,
-    )
+function requiresInitialData()::Bool
+    ans::Integer = ccall((:precicec_requiresInitialData, "libprecice"), Cint, ())
     return ans
 end
 
 
-@doc """
+@doc """ 
 
-    isActionRequired(action::String)::Bool
+    requiresReadingCheckpoint()::Bool
 
-Checks if the provided action is required.
-    
-Some features of preCICE require a solver to perform specific actions, in order to be
-in valid state for a coupled simulation. A solver is made eligible to use those features,
-by querying for the required actions, performing them on demand, and calling [`markActionfulfilled`](@ref)
-to signalize preCICE the correct behavior of the solver.
-
-# Arguments
- - `action:: PreCICE action`: Name of the action
-
+Check if the solver has to read an iteration checkpoint.
+preCICE refuses to proceed if reading a checkpoint is required, but this method isn't called prior to advance().
 """
-function isActionRequired(action::String)::Bool
-    ans::Integer =
-        ccall((:precicec_isActionRequired, "libprecice"), Cint, (Ptr{Int8},), action)
+function requiresReadingCheckpoint()::Bool
+    ans::Integer = ccall((:precicec_requiresReadingCheckpoint, "libprecice"), Cint, ())
     return ans
 end
 
-
 @doc """
 
-    markActionFulfilled(action::String)
+    requiresWritingCheckpoint()::Bool
 
-Indicate preCICE that a required action has been fulfilled by a solver. 
-
-# Arguments
- - `action::String`: Name of the action.
-
-# Notes
-
-Previous calls:
- - The solver fulfilled the specified action.
+Check if the solver has to write a checkpoint.
+preCICE refuses to proceed if writing a checkpoint is required, but this method isn't called prior to advance().
 """
-function markActionFulfilled(action::String)
-    ccall((:precicec_markActionFulfilled, "libprecice"), Cvoid, (Ptr{Int8},), action)
+function requiresWritingCheckpoint()::Bool
+    ans::Integer = ccall((:precicec_requiresWritingCheckpoint, "libprecice"), Cint, ())
+    return ans
 end
 
 
@@ -438,7 +355,10 @@ end
 
     hasMesh(meshName::String)::Bool
 
-Check if the mesh with given name is used by a solver. 
+Check if the mesh with given name is used by a solver.
+
+# Arguments
+ - `meshName::String`: Name of the mesh.
 """
 function hasMesh(meshName::String)::Bool
     ans::Integer = ccall((:precicec_hasMesh, "libprecice"), Cint, (Ptr{Int8},), meshName)
@@ -448,78 +368,56 @@ end
 
 @doc """
 
-    getMeshID(meshName::String)::Integer
+    hasData(dataName::String, meshName::String)::Bool
 
-Return the ID belonging to the given mesh name.
-
-# Examples
-
-```julia
-meshid = getMeshID("MeshOne")
-```
-"""
-function getMeshID(meshName::String)
-    ans::Integer = ccall((:precicec_getMeshID, "libprecice"), Cint, (Ptr{Int8},), meshName)
-    return ans
-end
-
-
-@doc """
-
-    hasData(dataName::String, meshID::Integer)::Bool
-
-Check if the data with given name is used by a solver and mesh.
-Return true if the mesh is already used.
+Checks if the data with given name is used by a solver and mesh.
 
 # Arguments
  - `dataName::String`: Name of the data.
- - `meshID::Integer`: ID of the associated mesh.
+ - `meshName::String`: Name of the associated mesh.
 
 """
-function hasData(dataName::String, meshID::Integer)::Bool
-    ans::Integer =
-        ccall((:precicec_hasData, "libprecice"), Cint, (Ptr{Int8}, Cint), dataName, meshID)
+function hasData(dataName::String, meshName::String)::Bool
+    ans::Integer = ccall(
+        (:precicec_hasData, "libprecice"),
+        Cint,
+        (Ptr{Int8}, Ptr{Int8}),
+        dataName,
+        meshName,
+    )
+    return ans
+end
+
+@doc """
+
+    requiresMeshConnectivityFor(meshName::String)::Bool
+
+Checks if the given mesh requires connectivity.
+
+preCICE may require connectivity information from the solver and
+ignores any API calls regarding connectivity if it is not required.
+Use this function to conditionally generate this connectivity.
+"""
+function requiresMeshConnectivityFor(meshName::String)::Bool
+    ans::Integer = ccall(
+        (:precicec_requiresMeshConnectivityFor, "libprecice"),
+        Cint,
+        (Ptr{Int8},),
+        meshName,
+    )
     return ans
 end
 
 
 @doc """
 
-    getDataID(dataName::String, meshID::Integer)::Integer
-
-# Arguments
-- `dataName::String`: Name of the data.
-- `meshID::Integer`: ID of the associated mesh.
-
-Return the data id belonging to the given name.
-
-The given name (`dataName`) has to be one of the names specified in the configuration file. The data ID obtained can be used to read and write data to and from the coupling mesh.
-"""
-function getDataID(dataName::String, meshID::Integer)
-    id::Integer = ccall(
-        (:precicec_getDataID, "libprecice"),
-        Cint,
-        (Ptr{Int8}, Cint),
-        dataName,
-        meshID,
-    )
-    return id
-end
-
-
-@doc """
-
-    setMeshVertex(meshID::Integer, position::AbstractArray{Float64})
+    setMeshVertex(meshName::String, position::AbstractArray{Float64})::Integer
 
 Create a mesh vertex on a coupling mesh and return its id.
 
 # Arguments
-- `meshID::Integer`: The id of the mesh to add the vertex to. 
+- `meshName::String`: The name of the mesh to add the vertex to. 
 - `position::AbstractArray{Float64}`: An array with the coordinates of the vertex. Depending on the dimension, either [x1, x2] or [x1,x2,x3].
-
-# See also
-
-[`getDimensions`](@ref), [`setMeshVertices`](@ref)
 
 # Notes
 
@@ -528,77 +426,30 @@ Previous calls:
 
 # Examples
 ```julia
-v1_id = setMeshVertex(mesh_id, [1,1,1])
+v1_id = setMeshVertex(mesh_name, [1,1,1])
 ```
 """
-function setMeshVertex(meshID::Integer, position::AbstractArray{Float64})
+function setMeshVertex(meshName::String, position::AbstractArray{Float64})::Integer
     id::Integer = ccall(
         (:precicec_setMeshVertex, "libprecice"),
         Cint,
-        (Cint, Ref{Float64}),
-        meshID,
+        (Ptr{Int8}, Ref{Float64}),
+        meshName,
         position,
     )
     return id
 end
 
-@doc """
-
-    getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})::AbstractArray{Float64}
-
-Return vertex positions for multiple vertex ids from a given mesh.
-
-The shape for positions is [N x D] where N = number of vertices and D = dimensions of geometry
-
-# Arguments
-- `meshID::Integer`:  The id of the mesh to read the vertices from.
-- `ids::AbstractArray{Cint}`:  The ids of the vertices to get the positions from.
-
-# Examples
-
-Return data structure for a 2D problem with 5 vertices:
-```julia-repl
-julia> meshID = getMeshID("MeshOne")
-julia> vertexIDs = [1,2,3,4,5]
-julia> positions = getMeshVertices(meshID, vertexIDs)
-julia> size(positions)
-(2,5)
-```
-Return data structure for a 3D problem with 5 vertices:
-
-```julia-repl
-julia> mesh_id = getMeshID("MeshOne")
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> positions = getMeshVertices(mesh_id, vertex_ids)
-julia> size(positions)
-(5,3)
-```
-"""
-function getMeshVertices(meshID::Integer, ids::AbstractArray{Cint})
-    _size = length(ids)
-    positions = Array{Float64,1}(undef, _size * getDimensions())
-    ccall(
-        (:precicec_getMeshVertices, "libprecice"),
-        Cvoid,
-        (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
-        meshID,
-        _size,
-        ids,
-        positions,
-    )
-    return permutedims(reshape(positions, (getDimensions(), _size)))
-end
-
 
 @doc """
 
-    setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
+    setMeshVertices(meshName::String, positions::AbstractArray{Float64})::AbstractArray{Int32,1}
 
 Create multiple mesh vertices on a coupling mesh and return an array holding their ids.
 
 
 # Arguments
-- `meshID::Integer`: The id of the mesh to add the vertices to. 
+- `meshName::String`: The name of the mesh to add the vertices to. 
 - `positions::AbstractArray{Float64}`: An array holding the coordinates of the vertices.
                                        It has the shape [N x D] where N = number of vertices and D = dimensions of geometry
                  
@@ -614,12 +465,15 @@ Previous calls:
 Example for a 3D Problem with 5 vertices
 ```julia
 vertices = [1 1 1;2 2 2;3 3 3]
-vertex_ids = setMeshVertices(mesh_id, vertices)
+vertex_ids = setMeshVertices("MeshOne", vertices)
 ```
 """
-function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
+function setMeshVertices(
+    meshName::String,
+    positions::AbstractArray{Float64},
+)::AbstractArray{Int32,1}
     _size, dimensions = size(positions)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
+    @assert dimensions == getMeshDimensions(meshName) "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getMeshDimensions(meshName))"
 
     positions = permutedims(positions) # transpose
 
@@ -627,10 +481,10 @@ function setMeshVertices(meshID::Integer, positions::AbstractArray{Float64})
     ccall(
         (:precicec_setMeshVertices, "libprecice"),
         Cvoid,
-        (Cint, Cint, Ref{Cdouble}, Ref{Cint}),
-        meshID,
+        (Ptr{Int8}, Cint, Ref{Cdouble}, Ref{Cint}),
+        meshName,
         _size,
-        reshape(positions, :),
+        reshape(permutedims(positions), :),
         vertexIDs,
     )
     return vertexIDs
@@ -639,177 +493,157 @@ end
 
 @doc """
 
-    getMeshVertexSize(meshID::Integer)::Integer
+    getMeshVertexSize(meshName::String)::Integer
 
 Return the number of vertices of a mesh.
 
 """
-function getMeshVertexSize(meshID::Integer)::Integer
+function getMeshVertexSize(meshName::String)::Integer
     _size::Integer =
-        ccall((:precicec_getMeshVertexSize, "libprecice"), Cint, (Cint,), meshID)
+        ccall((:precicec_getMeshVertexSize, "libprecice"), Cint, (Ptr{Int8},), meshName)
     return _size
 end
 
 
 @doc """
 
-    getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})::AbstractArray{Int}
+    setMeshEdge(meshName::String, firstVertexID::Integer, secondVertexID::Integer)
 
-Return mesh vertex IDs from positions.
-
-Prefer to reuse the IDs returned from calls to [`setMeshVertex`](@ref) and [`setMeshVertices`](@ref).
+Set mesh edge from vertex IDs, return edge ID. Ignored if preCICE doesn't require connectivity for the mesh.
 
 # Arguments
-- `meshID::Integer`: ID of the mesh to retrieve positions from.
-- `positions::AbstractArray{Float64}`: Positions to find ids for. The format is [N x D] where N = number of vertices and D = dimensions of geometry.
-
-# Examples
-
-Get mesh vertex ids from positions for a 2D (D=2) problem with 5 (N=5) mesh vertices.
-```julia
-meshID = getMeshID("MeshOne")
-positions = [1 1; 2 2; 3 3; 4 4; 5 5]
-vertex_ids = getMeshVertexIDsFromPositions(meshID, positions)
-```
-"""
-function getMeshVertexIDsFromPositions(meshID::Integer, positions::AbstractArray{Float64})
-    _size, dimensions = size(positions)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-
-    positions = permutedims(positions)
-
-    ids = Array{Cint,1}(undef, _size)
-    ccall(
-        (:precicec_getMeshVertexIDsFromPositions, "libprecice"),
-        Cvoid,
-        (Cint, Cint, Ref{Cdouble}, Ref{Cint}),
-        meshID,
-        _size,
-        reshape(positions, :),
-        ids,
-    )
-    return ids
-end
-
-
-@doc """
-
-    setMeshEdge(meshID::Integer, firstVertexID::Integer, secondVertexID::Integer)::Integer
-
-Set mesh edge from vertex IDs, return edge ID.
-
-# Arguments
-- `meshID::Integer`: ID of the mesh to add the edge to.
+- `meshName::String`: Name of the mesh to add the edge to.
 - `firstVertexID::Integer`: ID of the first vertex of the edge.
 - `secondVertexID::Integer`: ID of the second vertex of the edge.
 
 # Notes
 
 Previous calls:
- - Vertices with `firstVertexID` and `secondVertexID` were added to the mesh with the ID `meshID`
+ - Vertices with `firstVertexID` and `secondVertexID` were added to the mesh with `meshName`.
 
 """
-function setMeshEdge(
-    meshID::Integer,
-    firstVertexID::Integer,
-    secondVertexID::Integer,
-)::Integer
-    edgeID::Integer = ccall(
+function setMeshEdge(meshName::String, firstVertexID::Integer, secondVertexID::Integer)
+    ccall(
         (:precicec_setMeshEdge, "libprecice"),
         Cint,
-        (Cint, Cint, Cint),
-        meshID,
+        (Ptr{Int8}, Cint, Cint),
+        meshName,
         firstVertexID,
         secondVertexID,
     )
-    return edgeID
 end
-
 
 @doc """
 
-    setMeshTriangle(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
+    setMeshEdges(meshName::String, vertices::AbstractArray{Cint})
 
-Set mesh triangle from edge IDs.
+Create multiple mesh edges
 
 # Arguments
-- `meshID::Integer`: ID of the mesh to add the edge to.
+- `meshName::String`: Name of the mesh to add the edge to.
+- `vertices::AbstractArray{Cint}`: An array holding the vertex IDs of the edges.
+                                   It has the shape [N x 2] where N = number of edges.
+
+# Examples
+Set mesh edges for a problem with 4 mesh vertices in the form of a square with both diagonals which are fully interconnected.
+```julia-repl
+julia> vertices = [1 2; 1 3; 1 4; 2 3; 2 4; 3 4]
+julia> vertices.shape
+(6,2)
+julia> setMeshEdges("MeshOne", vertices)
+```
+"""
+function setMeshEdges(meshName::String, vertices::AbstractArray{Cint})
+    _size, n = size(vertices)
+    @assert n == 2 "Vertices pairs need to be provided while setting mesh edges. Provided shape: ($_size, $n), expected shape: ($_size, 2)"
+
+    ccall(
+        (:precicec_setMeshEdges, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Cint, Ref{Cint}),
+        meshName,
+        _size,
+        reshape(permutedims(vertices), :),
+    )
+end
+
+@doc """
+
+    setMeshTriangle(meshName::String, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
+
+Set mesh triangle from vertex IDs.
+
+# Arguments
+- `meshName::String`: Name of the mesh to add the edge to.
 - `firstVertexID::Integer`: ID of the first vertex of the edge.
 - `secondVertexID::Integer`: ID of the second vertex of the edge.
-- `thirdEdgeID::Integer`: ID of the third edge of the triangle.
+- `thirdVertexID::Integer`: ID of the third edge of the triangle.
 
 # Notes
 
 Previous calls:
- - Edges with `first_edge_id`, `second_edge_id`, and `third_edge_id` were added to the mesh with the ID `meshID`
+ - Edges with `first_edge_id`, `second_edge_id`, and `third_edge_id` were added to the mesh with the name `meshName`
 """
 function setMeshTriangle(
-    meshID::Integer,
-    firstEdgeID::Integer,
-    secondEdgeID::Integer,
-    thirdEdgeID::Integer,
+    meshName::String,
+    firstVertexID::Integer,
+    secondVertexID::Integer,
+    thirdVertexID::Integer,
 )
     ccall(
         (:precicec_setMeshTriangle, "libprecice"),
         Cvoid,
-        (Cint, Cint, Cint, Cint),
-        meshID,
-        firstEdgeID,
-        secondEdgeID,
-        thirdEdgeID,
+        (Ptr{Int8}, Cint, Cint, Cint),
+        meshName,
+        firstVertexID,
+        secondVertexID,
+        thirdVertexID,
     )
 end
 
 
 @doc """
 
-    setMeshTriangleWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
+    setMeshTriangles(meshName::String, vertices::AbstractArray{Integer})
 
-Set a triangle from vertex IDs. Create missing edges.
-
-WARNING: This routine is supposed to be used, when no edge information is available per se.
-        Edges are created on the fly within preCICE. This routine is significantly slower than the one
-        using edge IDs, since it needs to check, whether an edge is created already or not.
+Set mesh triangle from vertex IDs.
 
 # Arguments
-- `meshID::Integer`: ID of the mesh to add the edge to.
-- `firstVertexID::Integer`: ID of the first vertex of the edge.
-- `secondVertexID::Integer`: ID of the second vertex of the edge.
-- `thirdEdgeID::Integer`: ID of the third edge of the triangle.
+- `meshName::String`: Name of the mesh to add the edge to.
+- `vertices::AbstractArray{Integer}`: IDs of the vertices of the triangles.
 
-# Notes
-
-Previous calls:
- - Edges with `firstVertexID`, `secondVertexID`, and `thirdEdgeID` were added to the mesh with the ID `meshID`
+# Examples
+Set mesh triangles for a problem with 4 mesh vertices in the form of a square with both diagonals which are fully interconnected.
+```julia-repl
+julia> vertices = [1 2 3; 1 3 4; 1 2 4; 1 3 4]
+julia> vertices.shape
+(4,3)
+julia> setMeshTriangles("MeshOne", vertices)
+```
 """
-function setMeshTriangleWithEdges(
-    meshID::Integer,
-    firstEdgeID::Integer,
-    secondEdgeID::Integer,
-    thirdEdgeID::Integer,
-)
+function setMeshTriangles(meshName::String, vertices::AbstractArray{Integer})
+    _size, n = size(vertices)
+    @assert n == 3 "Vertices triplets need to be provided while setting mesh triangles. Provided shape: ($_size, $n), expected shape: ($_size, 3)"
+
     ccall(
-        (:precicec_setMeshTriangleWithEdges, "libprecice"),
+        (:precicec_setMeshTriangles, "libprecice"),
         Cvoid,
-        (Cint, Cint, Cint, Cint),
-        meshID,
-        firstEdgeID,
-        secondEdgeID,
-        thirdEdgeID,
+        (Ptr{Int8}, Cint, Ref{Cint}),
+        meshName,
+        _size,
+        reshape(permutedims(vertices), :),
     )
 end
 
 
 @doc """
 
-    setMeshQuad(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID, fourthEdgeID::Integer)
+    setMeshQuad(meshName::String, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID, fourthEdgeID::Integer)
 
 Set mesh Quad from edge IDs.
 
-WARNING: Quads are not fully implemented yet.
-
 # Arguments
-- `meshID::Integer`: ID of the mesh to add the Quad to.
+- `meshName::String`: Name of the mesh to add the Quad to.
 - `firstVertexID::Integer`: ID of the first edge of the Quad.
 - `secondVertexID::Integer`: ID of the second edge of the Quad.
 - `thirdEdgeID::Integer`: ID of the third edge of the Quad.
@@ -822,17 +656,17 @@ Previous calls:
     to the mesh with the ID `mesh_id`
 """
 function setMeshQuad(
-    meshID::Integer,
+    meshName::String,
     firstEdgeID::Integer,
     secondEdgeID::Integer,
-    thirdEdgeID,
+    thirdEdgeID::Integer,
     fourthEdgeID::Integer,
 )
     ccall(
         (:precicec_setMeshQuad, "libprecice"),
         Cvoid,
-        (Cint, Cint, Cint, Cint, Cint),
-        meshID,
+        (Ptr{Int8}, Cint, Cint, Cint, Cint),
+        meshName,
         firstEdgeID,
         secondEdgeID,
         thirdEdgeID,
@@ -840,41 +674,62 @@ function setMeshQuad(
     )
 end
 
+@doc """
+
+    setMeshQuads(meshName::String, vertices::AbstractArray{Integer})
+
+Set mesh Quad from vertex IDs.
+
+# Arguments
+- `meshName::String`: Name of the mesh to add the Quad to.
+- `vertices::AbstractArray{Integer}`: IDs of the edges of the Quads. It has the shape [N x 4] where N = number of Quads.
+
+"""
+function setMeshQuads(meshName::String, vertices::AbstractArray{Integer})
+    _size, n = size(vertices)
+    @assert n == 4 "Vertices quadruplets need to be provided while setting mesh quads. Provided shape: ($_size, $n), expected shape: ($_size, 4)"
+    ccall(
+        (:precicec_setMeshQuads, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Cint, Ref{Cint}),
+        meshName,
+        _size,
+        reshape(permutedims(vertices), :),
+    )
+
+end
 
 @doc """
 
-    setMeshQuadWithEdges(meshID::Integer, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer)
+    setMeshTetrahedron(meshName::String, firstEdgeID::Integer, secondEdgeID::Integer, thirdEdgeID::Integer, fourthEdgeID::Integer)
 
-Set surface mesh quadrangle from vertex IDs.
-
-WARNING: This routine is supposed to be used, when no edge information is available per se. Edges are
-created on the fly within preCICE. This routine is significantly slower than the one using
-edge IDs, since it needs to check, whether an edge is created already or not.
+Set mesh Tetrahedron from edge IDs.
 
 # Arguments
-- `meshID::Integer`: ID of the mesh to add the Quad to.
-- `firstVertexID::Integer`: ID of the first edge of the Quad.
-- `secondVertexID::Integer`: ID of the second edge of the Quad.
-- `thirdEdgeID::Integer`: ID of the third edge of the Quad.
-- `fourthEdgeID::Integer`: ID of the fourth edge of the Quad.
+- `meshName::String`: Name of the mesh to add the Tetrahedron to.
+- `firstEdgeID::Integer`: ID of the first edge of the Tetrahedron.
+- `secondEdgeID::Integer`: ID of the second edge of the Tetrahedron.
+- `thirdEdgeID::Integer`: ID of the third edge of the Tetrahedron.
+- `fourthEdgeID::Integer`: ID of the fourth edge of the Tetrahedron.
 
 # Notes
 
 Previous calls:
- - Edges with `firstVertexID`, `secondEdgeID`, `thirdVertexID`, and `fourthEdgeID` were added
+ - Edges with `first_edge_id`, `second_edge_id`, `third_edge_id`, and `fourth_edge_id` were added
     to the mesh with the ID `mesh_id`
 """
-function setMeshQuadWithEdges(
-    meshID::Integer,
+function setMeshTetrahedron(
+    meshName::String,
     firstEdgeID::Integer,
     secondEdgeID::Integer,
     thirdEdgeID::Integer,
+    fourthEdgeID::Integer,
 )
     ccall(
-        (:precicec_setMeshQuadWithEdges, "libprecice"),
+        (:precicec_setMeshTetrahedron, "libprecice"),
         Cvoid,
-        (Cint, Cint, Cint, Cint, Cint),
-        meshID,
+        (Ptr{Int8}, Cint, Cint, Cint, Cint),
+        meshName,
         firstEdgeID,
         secondEdgeID,
         thirdEdgeID,
@@ -882,171 +737,271 @@ function setMeshQuadWithEdges(
     )
 end
 
-
 @doc """
 
-    writeBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
+    setMeshTetrahedra(meshName::String, vertices::AbstractArray{Integer})
 
-Write vector data values given as block. This function writes values of specified vertices to a `dataID`.
-Values must be provided in a Matrix with shape [N x D] where N = number of vertices and D = dimensions of geometry 
+Set mesh Tetrahedron from vertex IDs.
 
 # Arguments
-- `dataID::Integer`: ID of the data to be written.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices. 
-- `values::AbstractArray{Float64}`: Values of the data to be written.
+- `meshName::String`: Name of the mesh to add the Tetrahedron to.
+- `vertices::AbstractArray{Integer}`: IDs of the edges of the Tetrahedra. It has the shape [N x 4] where N = number of Tetrahedra.
 
-# Notes
-
-Previous calls:
- - [`initialize`](@ref) has been called
-
-# Examples
-
-Write block vector data for a 2D problem with 5 vertices:
-```julia
-data_id = 1
-vertex_ids = [1, 2, 3, 4, 5]
-values = [v1_x v1_y; v2_x v2_y; v3_x v3_y; v4_x v4_y; v5_x v5_y])
-writeBlockVectorData(data_id, vertex_ids, values)
-```
-Write block vector data for a 3D (D=3) problem with 5 (N=5) vertices:
-```julia
-data_id = 1
-vertex_ids = [1, 2, 3, 4, 5]
-values = [v1_x v1_y v1_z; v2_x v2_y v2_z; v3_x v3_y v3_z; v4_x v4_y v4_z; v5_x v5_y v5_z]
-writeBlockVectorData(data_id, vertex_ids, values)
-```
 """
-function writeBlockVectorData(
-    dataID::Integer,
-    valueIndices::AbstractArray{Cint},
-    values::AbstractArray{Float64},
-)
-    _size, dimensions = size(values)
-    @assert dimensions == getDimensions() "Dimensions of vector data in write_vector_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getDimensions())"
-
-    values = permutedims(values)
-
+function setMeshTetrahedra(meshName::String, vertices::AbstractArray{Integer})
+    _size, n = size(vertices)
+    @assert n == 4 "Vertices quadruplets need to be provided while setting mesh tetrahedra. Provided shape: ($_size, $n), expected shape: ($_size, 4)"
     ccall(
-        (:precicec_writeBlockVectorData, "libprecice"),
+        (:precicec_setMeshTetrahedra, "libprecice"),
         Cvoid,
-        (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
-        dataID,
+        (Ptr{Int8}, Cint, Ref{Cint}),
+        meshName,
         _size,
-        valueIndices,
-        reshape(values, :),
+        reshape(permutedims(vertices), :),
     )
 end
 
 
 @doc """
 
-    writeVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})
+        writeData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
 
-Write vectorial floating-point data to a vertex. This function writes a value of a specified vertex to a dataID.
-Values are provided as a block of continuous memory in the shape of (D,) with D = dimensions of geometry
+Writes values of specified vertices to data of a mesh.
+Values are provided as a matrix.
+The order of the provided data follows the order specified by vertices.
 
-# Arguments
-- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
-- `valueIndex::Integer`: Index of the vertex. 
-- `dataValue::AbstractArray{Float64}`: The array holding the values.
-
-# Notes
-        
-Previous calls:
- - Count of available elements at `value` matches the configured dimension
- - [`initialize`](@ref) has been called
-
-# Examples:
-
-Write vector data for a 2D problem with 5 vertices:
-```julia
-data_id = 1
-vertex_id = 5
-value = [v5_x, v5_y]
-writeVectorData(data_id, vertex_id, value)
-```
-
-Write vector data for a 3D (D=3) problem with 5 (N=5) vertices:
-```julia
-data_id = 1
-vertex_id = 5
-value = [v5_x, v5_y, v5_z]
-writeVectorData(data_id, vertex_id, value)
-```
-"""
-function writeVectorData(
-    dataID::Integer,
-    valueIndex::Integer,
-    dataValue::AbstractArray{Float64},
-)
-    ccall(
-        (:precicec_writeVectorData, "libprecice"),
-        Cvoid,
-        (Cint, Cint, Ref{Cdouble}),
-        dataID,
-        valueIndex,
-        dataValue,
-    )
-end
-
-
-@doc """
-
-    writeBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint}, values::AbstractArray{Float64})
-
-Write scalar data given as block.
-
-This function writes values of specified vertices to a dataID. Values are provided as a block of continuous memory. `valueIndices` contains the indices of the vertices.
+The 1D/Scalar-format of values is a vector of length N.
+The 2D-format of values is [N x 2].
+The 3D-format of values is [N x 3].
+Where N is the number of vertices.
 
 # Arguments
-- `dataID::Integer`: ID of the data to be written. Obtained by getDataID().
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-- `values::AbstractArray{Float64}`: The array holding the values.
-    
+- `meshName::String`: Name of the mesh to write the data to.
+- `dataName::String`: Name of the data to be written.
+- `valueIndices::AbstractArray{Cint}`: The vertex ids of the vertices to write data to. Shape [N x 1] where N = number of vertices.
+- `values::AbstractArray{Float64}`: The values to be written to preCICE. Shape [N x D] where N = number of vertices and D = number of data dimensions.
+
 # Notes
 
 Previous calls:
- - [`initialize`](@ref) has been called
+- Every VertexID in `valueIndices` is return value of setMeshVertex or setMeshVertices
+- `size(values) == (length(valueIndices), getDataDimensions(meshName, dataName))`
 
-# Examples
-
-Write block scalar data for a 2D and 3D problem with 5 (N=5) vertices:
-```julia
-data_id = 1
-vertex_ids = [1, 2, 3, 4, 5]
-values = [1, 2, 3, 4, 5]
-writeBlockScalarData(data_id, vertex_ids, values)
-```
+See also:
+- [`setMeshVertex`](@ref)
+- [`setMeshVertices`](@ref)
+- [`getDataDimensions`](@ref)
 """
-function writeBlockScalarData(
-    dataID::Integer,
+function writeData(
+    meshName::String,
+    dataName::String,
     valueIndices::AbstractArray{Cint},
     values::AbstractArray{Float64},
+)
+    _size, n = size(values)
+    @assert n == getDataDimensions(meshName, dataName) "The number of columns of values must match the number of data dimensions. Provided shape: ($_size, $n), expected shape: ($_size, $(getDataDimensions(meshName, dataName)))"
+    ccall(
+        (:precicec_writeData, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Float64}),
+        meshName,
+        dataName,
+        _size,
+        reshape(permutedims(valueIndices), :),
+        reshape(permutedims(values), :),
+    )
+end
+
+@doc """
+        readData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, relativeReadTime::Float64)
+
+Reads values of specified vertices from data of a mesh.
+Values are read into a matrix in the order specified by vertices.
+
+The 1D/Scalar-format of values is a vector of length N.
+The 2D-format of values is [N x 2].
+The 3D-format of values is [N x 3].
+Where N is the number of vertices.
+
+The data is read at relativeReadTime, which indicates the point in time measured from the beginning of the current time step.
+`relativeReadTime = 0` corresponds to data at the beginning of the time step. Assuming that the user will call `advance(dt)` at the
+end of the time step, `dt` indicates the size of the current time step. Then `relativeReadTime = dt` corresponds to the data at
+the end of the time step.
+
+# Arguments
+- `meshName::String`: Name of the mesh to read the data from.
+- `dataName::String`: Name of the data to be read from
+- `valueIndices::AbstractArray{Cint}`: The vertex ids of the vertices to read data from.
+- `relativeReadTime::Float64`: The point in time relative to the beginning of the current time step to read the data from.
+
+# Returns
+- `values::AbstractArray{Float64}`: The values read from preCICE. Shape [N x D] where N = number of vertices and D = number of data dimensions.
+
+# Notes
+- Every VertexID in vertices is a return value of setMeshVertex or setMeshVertices
+- `size(values) == (length(valueIndices), getDataDimensions(meshName, dataName))`
+"""
+function readData(
+    meshName::String,
+    dataName::String,
+    valueIndices::AbstractArray{Cint},
+    relativeReadTime::Float64,
 )
     _size = length(valueIndices)
+    values = Array{Float64,1}(undef, _size * getDataDimensions(meshName, dataName))
     ccall(
-        (:precicec_writeBlockScalarData, "libprecice"),
+        (:precicec_readData, "libprecice"),
         Cvoid,
-        (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
-        dataID,
+        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Float64, Ref{Float64}),
+        meshName,
+        dataName,
         _size,
         valueIndices,
+        relativeReadTime,
         values,
     )
+    return permutedims(reshape(values, (getDataDimensions(meshName, dataName), _size)))
 end
 
 
 @doc """
 
-    writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
+    setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float64})
 
-Write scalar data, the value of a specified vertex to a dataID.
+This function is required if you don't want to use the mapping schemes in preCICE, but rather
+want to use your own solver for data mapping. As opposed to the usual preCICE mapping, only a
+single mesh (from the other participant) is now involved in this situation since an 'own'
+mesh defined by the participant itself is not required any more. In order to re-partition the
+received mesh, the participant needs to define the mesh region it wants read data from and
+write data to. The mesh region is specified through an axis-aligned bounding box given by the
+lower and upper [min and max] bounding-box limits in each space dimension [x, y, z]. This function is still
+experimental
+
 
 # Arguments
-- `dataID::Integer`: ID of the data to be written. Obtained by [`getDataID`](@ref).
-- `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-- `value::Float64`: The value to write.
+- `meshName::String`: Name of the mesh to define the access region for.
+- `boundingBox::AbstractArray{Float64}`: Axis-aligned bounding box. Example for 3D the format: [x_min, x_max, y_min, y_max, z_min, z_max]
+
+# Notes
+Defining a bounding box for serial runs of the solver (not to be confused with serial coupling
+mode) is valid. However, a warning is raised in case vertices are filtered out completely
+on the receiving side, since the associated data values of the filtered vertices are filled
+with zero data.
+This function can only be called once per participant and rank and trying to call it more than
+once results in an error.
+If you combine the direct access with a mapping (say you want to read data from a defined
+mesh, as usual, but you want to directly access and write data on a received mesh without a
+mapping) you may not need this function at all since the region of interest is already defined
+through the defined mesh used for data reading. This is the case if you define any mapping
+involving the directly accessed mesh on the receiving participant. (In parallel, only the cases
+read-consistent and write-conservative are relevant, as usual).
+The safety factor scaling (see safety-factor in the configuration file) is not applied to the
+defined access region and a specified safety will be ignored in case there is no additional
+mapping involved. However, in case a mapping is in addition to the direct access involved, you
+will receive (and gain access to) vertices inside the defined access region plus vertices inside
+the safety factor region resulting from the mapping. The default value of the safety factor is
+0.5, i.e. the defined access region as computed through the involved provided mesh is by 50%
+enlarged.
+"""
+function setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float64})
+    @warn "The function setMeshAccessRegion is still experimental"
+
+    @assert length(boundingBox) > 0 "The bounding box must not be empty"
+    @assert length(boundingBox) == getMeshDimensions(meshName) * 2 "The bounding box must have the same dimension as the mesh"
+    ccall(
+        (:precicec_setMeshAccessRegion, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Ref{Cdouble}),
+        meshName,
+        boundingBox,
+    )
+end
+
+@doc """
+
+    getMeshVerticesAndIDs(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
+
+Iterating over the region of interest defined by bounding boxes and reading the corresponding
+coordinates omitting the mapping. This function is still experimental.
+
+# Arguments
+- `meshName::String`: Name of the mesh to get the vertices and IDs for.
+
+# Returns
+- `vertexIDs::AbstractArray{Integer}`: IDs of the vertices.
+- `vertexCoordinates::AbstractArray{Float64}`: Coordinates of the vertices and corresponding data values. Shape [N x D] where N = number of vertices and D = number of data dimensions.
+"""
+function getMeshVerticesAndIDs(
+    meshName::String,
+)::Tuple{AbstractArray{Integer},AbstractArray{Float64}}
+    @warn "The function getMeshVerticesAndIDs is still experimental"
+
+    _size = getMeshVertexSize(meshName)
+    vertexIDs = zeros(Cint, _size)
+    vertexCoordinates = zeros(Float64, _size * getMeshDimensions(meshName))
+    ccall(
+        (:precicec_getMeshVerticesAndIDs, "libprecice"),
+        Cvoid,
+        (Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
+        meshName,
+        _size,
+        vertexIDs,
+        vertexCoordinates,
+    )
+    return vertexIDs,
+    permutedims(reshape(vertexCoordinates, (_size, getMeshDimensions(meshName))))
+end
+
+@doc """
+
+    getVersionInformation()::String
+
+Return a semicolon-separated String containing: 
+ - the version of preCICE
+ - the revision information of preCICE
+ - the configuration of preCICE including MPI, PETSC, PYTHON
+"""
+function getVersionInformation()::String
+    versionCstring = ccall((:precicec_getVersionInformation, "libprecice"), Cstring, ())
+    return unsafe_string(versionCstring)
+end
+
+
+@doc """
+
+    requiresGradientDataFor(meshName::String, dataName::String)::Bool
+        
+Checks if the given data set requires gradient data. We check if the data object has been intialized with the gradient flag.
+# Arguments
+- `meshName::String`: Name of the mesh to be checked.
+- `dataName::String`: Name of the data to be checked.
+
+"""
+function requiresGradientDataFor(meshName::String, dataName::String)::Bool
+    return ccall(
+        (:precicec_requiresGradientDataFor, "libprecice"),
+        Cint,
+        (Ptr{Int8}, Ptr{Int8}),
+        meshName,
+        dataName,
+    )
+end
+
+@doc """
+
+    writeGradientData(meshName::String, dataName::String, valueIndices::AbstractArray{Cint}, gradientValues::AbstractArray{Float64})
+
+
+Write gradient values of specified vertices to data of a mesh.
+
+The format for a 2D problem with 2 vertices is [v1x_dx v1y_dx v1x_dy v1y_dy; v2x_dx v2y_dx v2x_dy v2y_dy]
+The format for a 3D problem with 2 vertices is [v1x_dx v1y_dx v1z_dx v1x_dy v1y_dy v1z_dy v1x_dz v1y_dz v1z_dz; v2x_dx v2y_dx v2z_dx v2x_dy v2y_dy v2z_dy v2x_dz v2y_dz v2z_dz]
+
+# Arguments
+- `meshName::String`: Name of the mesh to write the data to.
+- `dataName::String`: Name of the data to be written.
+- `valueIndices::AbstractArray{Cint}`: Indices of the vertex.
+- `gradientValues::AbstractArray{Float64}`: The gradient values to write.
 
 # Notes
 
@@ -1055,282 +1010,34 @@ Previous calls:
 
 # Examples
 
-Write scalar data for a 2D or 3D problem with 5 vertices:
+Write gradient values of a vector data for a 2D problem with 2 vertices:
 
 ```julia
-data_id = 1
-vertex_id = 5
-value = 1.0
-writeScalarData(data_id, vertex_id, value)
+valueIndices = [1, 2]
+gradientValues = [1.0 2.0 3.0 4.0; 5.0 6.0 7.0 8.0]
+PreCICE.writeGradientData("MeshOne", "DataOne", valueIndices, gradientValue)
 ```
+
 """
-function writeScalarData(dataID::Integer, valueIndex::Integer, dataValue::Float64)
+function writeGradientData(
+    meshName::String,
+    dataName::String,
+    valueIndices::AbstractArray{Cint},
+    gradientValues::AbstractArray{Float64},
+)
+    _size, dimensions = size(gradientValues)
+    @assert dimensions == getMeshDimensions(meshName) * getMeshDimensions(meshName) "Dimensions of vector data in write_block_vector_gradient_data does not match with dimensions in problem definition. Provided dimensions: $dimensions, expected dimensions: $(getMeshDimensions(meshName)*getMeshDimensions(meshName))"
+    gradientValues = reshape(permutedims(gradientValues), :)
     ccall(
-        (:precicec_writeScalarData, "libprecice"),
+        (:precicec_writeGradientData, "libprecice"),
         Cvoid,
-        (Cint, Cint, Cdouble),
-        dataID,
-        valueIndex,
-        dataValue,
-    )
-end
-
-
-@doc """
-
-    readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
-
-Read and return vector data values given as block.
-
-The block contains the vector values in the following form:
-
-`size(values) = (N, D)`, N = number of vertices and D = dimensions of geometry
-
-# Arguments
-- `dataID::Integer`: ID of the data to be read.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-
-# Notes
-
-Previous calls:
-- [`initialize`](@ref) has been called
-
-# Examples
-
-Read block vector data for a 2D problem with 5 vertices:
-```julia-repl
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = readBlockVectorData(data_id, vertex_ids)
-julia> size(values)
-(10,)
-```
-Read block vector data for a 3D system with 5 vertices:
-```julia-repl
-julia> data_id = 1
-julia> vertex_ids = [1, 2, 3, 4, 5]
-julia> values = readBlockVectorData(data_id, vertex_ids)
-julia> size(values)
-(15,)
-```
-"""
-function readBlockVectorData(dataID::Integer, valueIndices::AbstractArray{Cint})
-    _size = length(valueIndices)
-    values = Array{Float64,1}(undef, _size * getDimensions())
-    ccall(
-        (:precicec_readBlockVectorData, "libprecice"),
-        Cvoid,
-        (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
-        dataID,
+        (Ptr{Int8}, Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
+        meshName,
+        dataName,
         _size,
         valueIndices,
-        values,
+        gradientValues,
     )
-    return permutedims(reshape(values, (getDimensions(), _size)))
 end
-
-@doc """
-
-    readVectorData(dataID::Integer, valueIndex::Integer, dataValue::AbstractArray{Float64})::AbstractArray{Float64}
-
-Read and return vector data from a vertex.
-
-# Arguments
-- `dataID::Integer`: ID of the data to be read.
-- `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-
-# Notes
-
-Previous calls:
- - count of available elements at value matches the configured dimension
- - [`initialize`](@ref) has been called
-
-# Examples
-
-```julia
-data_id = 1
-vertex_id = 5
-value = readVectorData(data_id, vertex_id)
-```
-"""
-function readVectorData(dataID::Integer, valueIndex::Integer)
-    dataValue = Array{Float64,1}(undef, getDimensions())
-    ccall(
-        (:precicec_readVectorData, "libprecice"),
-        Cvoid,
-        (Cint, Cint, Ref{Cdouble}),
-        dataID,
-        valueIndex,
-        dataValue,
-    )
-    return dataValue
-end
-
-
-@doc """
-
-    readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})::AbstractArray{Float64}
-
-Read and return scalar data as a block, values of specified vertices from a dataID.
-
-# Arguments
-- `dataID::Integer`: ID of the data to be read.
-- `valueIndices::AbstractArray{Cint}`: Indices of the vertices.
-
-# Notes
-
-Previous calls:
-- [`initialize`](@ref) has been called
-
-# Examples
-
-Read block scalar data for 2D and 3D problems with 5 vertices:
-```julia
-data_id = 1
-vertex_ids = [1, 2, 3, 4, 5]
-values = readBlockScalarData(data_id, vertex_ids)
-```
-"""
-function readBlockScalarData(dataID::Integer, valueIndices::AbstractArray{Cint})
-    _size = length(valueIndices)
-    values = Array{Float64,1}(undef, _size)
-    ccall(
-        (:precicec_readBlockScalarData, "libprecice"),
-        Cvoid,
-        (Cint, Cint, Ref{Cint}, Ref{Cdouble}),
-        dataID,
-        _size,
-        valueIndices,
-        values,
-    )
-    return values
-end
-
-
-@doc """
-
-    readScalarData(dataID::Integer, valueIndex::Integer)::Float64
-
-Read and return scalar data of a vertex.
-
-# Arguments
-- `dataID::Integer`: ID of the data to be read.
-- `valueIndex::AbstractArray{Cint}`: Indicex of the vertex.
-
-# Notes
-
-Previous calls:
-- [`initialize`](@ref) has been called.
-
-# Examples
-
-Read scalar data for 2D and 3D problems:
-```julia
-data_id = 1
-vertex_id = 5
-value = readScalarData(data_id, vertex_id)
-```
-"""
-function readScalarData(dataID::Integer, valueIndex::Integer)
-    dataValue = [Float64(0.0)]
-    ccall(
-        (:precicec_readScalarData, "libprecice"),
-        Cvoid,
-        (Cint, Cint, Ref{Cdouble}),
-        dataID,
-        valueIndex,
-        dataValue,
-    )
-    return dataValue[1]
-end
-
-
-@doc """
-
-    getVersionInformation()
-
-Return a semicolon-separated String containing: 
- - the version of preCICE
- - the revision information of preCICE
- - the configuration of preCICE including MPI, PETSC, PYTHON
-"""
-function getVersionInformation()
-    versionCstring = ccall((:precicec_getVersionInformation, "libprecice"), Cstring, ())
-    return unsafe_string(versionCstring)
-end
-
-
-@doc """
-
-    mapReadDataFrom(fromMeshID::Integer)
-
-Compute and map all write data mapped from the mesh with given ID. This is an explicit request
-to map write data from the Mesh associated with [`fromMeshID`](@ref). It also computes the mapping if necessary.
-
-# Notes
-
-Previous calls:
- - A mapping to [`fromMeshID`](@ref) was configured
-"""
-function mapWriteDataFrom(fromMeshID::Integer)
-    ccall((:precicec_mapWriteDataFrom, "libprecice"), Cvoid, (Cint,), fromMeshID)
-end
-
-
-@doc """
-
-    mapReadDataTo(fromMeshID::Integer)
-
-Compute and map all read data mapped to the mesh with given ID.
-This is an explicit request to map read data to the Mesh associated with [`toMeshID`](@ref).
-It also computes the mapping if necessary.
-
-# Notes
-
-Previous calls:
- - A mapping to [`toMeshID`](@ref) was configured.
-"""
-function mapReadDataTo(fromMeshID::Integer)
-    ccall((:precicec_mapReadDataTo, "libprecice"), Cvoid, (Cint,), fromMeshID)
-end
-
-
-@doc """
-
-    actionWriteInitialData()
-
-Return the name of action for writing initial data.
-
-"""
-function actionWriteInitialData()
-    msgCstring = ccall((:precicec_actionWriteInitialData, "libprecice"), Cstring, ())
-    return unsafe_string(msgCstring)
-end
-
-
-@doc """
-
-    actionWriteIterationCheckpoint()
-
-Return name of action for writing iteration checkpoint.
-"""
-function actionWriteIterationCheckpoint()
-    msgCstring =
-        ccall((:precicec_actionWriteIterationCheckpoint, "libprecice"), Cstring, ())
-    return unsafe_string(msgCstring)
-end
-
-
-@doc """
-
-    actionReadIterationCheckpoint()
-
-Return name of action for reading iteration checkpoint
-"""
-function actionReadIterationCheckpoint()
-    msgCstring = ccall((:precicec_actionReadIterationCheckpoint, "libprecice"), Cstring, ())
-    return unsafe_string(msgCstring)
-end
-
 
 end # module

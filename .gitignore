@@ -6,3 +6,5 @@ solverdummy/precice-run/
 *.o
 *.so
 deps/build.log
+build/
+.vscode/

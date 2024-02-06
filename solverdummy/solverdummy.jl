@@ -15,30 +15,24 @@ solverName = ARGS[2]
 
 
 if solverName == "SolverOne"
-    meshName = "MeshOne"
-    dataWriteName = "dataOne"
-    dataReadName = "dataTwo"
+    meshName = "SolverOne-Mesh"
+    dataWriteName = "Data-One"
+    dataReadName = "Data-Two"
 else
-    meshName = "MeshTwo"
-    dataReadName = "dataOne"
-    dataWriteName = "dataTwo"
+    meshName = "SolverTwo-Mesh"
+    dataReadName = "Data-One"
+    dataWriteName = "Data-Two"
 end
 
 
 println(
     """DUMMY: Running solver dummy with preCICE config file "$configFileName", participant name "$solverName", and mesh name "$meshName" """,
 )
-PreCICE.createSolverInterface(solverName, configFileName, commRank, commSize)
+PreCICE.createParticipant(solverName, configFileName, commRank, commSize)
 
-meshID = PreCICE.getMeshID(meshName)
-dimensions = PreCICE.getDimensions()
-
+dimensions = PreCICE.getMeshDimensions(meshName)
 
 numberOfVertices = 3
-
-
-readDataID = PreCICE.getDataID(dataReadName, meshID)
-writeDataID = PreCICE.getDataID(dataWriteName, meshID)
 
 writeData = zeros(numberOfVertices, dimensions)
 
@@ -48,37 +42,31 @@ for i = 1:numberOfVertices, j = 1:dimensions
     vertices[i, j] = i
 end
 
-vertexIDs = PreCICE.setMeshVertices(meshID, vertices)
+vertexIDs = PreCICE.setMeshVertices(meshName, vertices)
 
 let # setting local scope for dt outside of the while loop
 
-    dt = PreCICE.initialize()
-    readData = zeros(numberOfVertices, dimensions)
+    PreCICE.initialize()
 
     while PreCICE.isCouplingOngoing()
 
-        if PreCICE.isActionRequired(PreCICE.actionWriteIterationCheckpoint())
+        if PreCICE.requiresWritingCheckpoint()
             println("DUMMY: Writing iteration checkpoint")
-            PreCICE.markActionFulfilled(PreCICE.actionWriteIterationCheckpoint())
         end
 
-        if PreCICE.isReadDataAvailable()
-            readData = PreCICE.readBlockVectorData(readDataID, vertexIDs)
-        end
+        dt = PreCICE.getMaxTimeStepSize()
+        readData = PreCICE.readData(meshName, dataReadName, vertexIDs, dt)
 
         for i = 1:numberOfVertices, j = 1:dimensions
             writeData[i, j] = readData[i, j] + 1.0
         end
 
-        if PreCICE.isWriteDataRequired(dt)
-            PreCICE.writeBlockVectorData(writeDataID, vertexIDs, writeData)
-        end
+        PreCICE.writeData(meshName, dataWriteName, vertexIDs, writeData)
 
-        dt = PreCICE.advance(dt)
+        PreCICE.advance(dt)
 
-        if PreCICE.isActionRequired(PreCICE.actionReadIterationCheckpoint())
+        if PreCICE.requiresReadingCheckpoint()
             println("DUMMY: Reading iteration checkpoint")
-            PreCICE.markActionFulfilled(PreCICE.actionReadIterationCheckpoint())
         else
             println("DUMMY: Advancing in time")
         end
