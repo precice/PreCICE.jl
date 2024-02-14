@@ -243,7 +243,7 @@ void precicec_setMeshAccessRegion(const char *meshName, const double *boundingBo
     }
 }
 
-void precicec_getMeshVerticesAndIDs(const char *meshName, const int size, int *ids, double *coordinates)
+void precicec_getMeshVertexIDsAndCoordinates(const char *meshName, const int size, int *ids, double *coordinates)
 {
     assert(size == n_fake_vertices);
     assert(strcmp(meshName, "FakeMesh") == 0);

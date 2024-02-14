@@ -49,7 +49,7 @@ push!(Libc.Libdl.DL_LOAD_PATH, dirname(abspath(PROGRAM_FILE)))
             @test writeGradientData()
             @test getVersionInformation()
             @test setMeshAccessRegion()
-            @test getMeshVerticesAndIDs()
+            @test getMeshVertexIDsAndCoordinates()
         end #if
     end # testset
 
