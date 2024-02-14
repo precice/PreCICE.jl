@@ -48,7 +48,7 @@ export
     setMeshTetrahedron,
     setMeshTetrahedra,
     setMeshAccessRegion,
-    getMeshVerticesAndIDs,
+    getMeshVertexIDsAndCoordinates,
 
     # data access
     writeData,
@@ -919,7 +919,7 @@ end
 
 @doc """
 
-    getMeshVerticesAndIDs(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
+    getMeshVertexIDsAndCoordinates(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
 
 Iterating over the region of interest defined by bounding boxes and reading the corresponding
 coordinates omitting the mapping. This function is still experimental.
@@ -931,16 +931,16 @@ coordinates omitting the mapping. This function is still experimental.
 - `vertexIDs::AbstractArray{Integer}`: IDs of the vertices.
 - `vertexCoordinates::AbstractArray{Float64}`: Coordinates of the vertices and corresponding data values. Shape [N x D] where N = number of vertices and D = number of data dimensions.
 """
-function getMeshVerticesAndIDs(
+function getMeshVertexIDsAndCoordinates(
     meshName::String,
 )::Tuple{AbstractArray{Integer},AbstractArray{Float64}}
-    @warn "The function getMeshVerticesAndIDs is still experimental"
+    @warn "The function getMeshVertexIDsAndCoordinates is still experimental"
 
     _size = getMeshVertexSize(meshName)
     vertexIDs = zeros(Cint, _size)
     vertexCoordinates = zeros(Float64, _size * getMeshDimensions(meshName))
     ccall(
-        (:precicec_getMeshVerticesAndIDs, "libprecice"),
+        (:precicec_getMeshVertexIDsAndCoordinates, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
         meshName,

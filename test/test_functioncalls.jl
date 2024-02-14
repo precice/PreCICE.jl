@@ -178,7 +178,7 @@ function setMeshAccessRegion()
     return true
 end
 
-function getMeshVerticesAndIDs()
+function getMeshVertexIDsAndCoordinates()
     PreCICE.createParticipant("test", "dummy.xml", 0, 1)
     fakeMeshName = "FakeMesh"  # compare to test/Participant.c, fake_mesh_name
     fakeMeshDimension = 3  # compare to test/Participant.c, fake_dimensions
@@ -186,6 +186,6 @@ function getMeshVerticesAndIDs()
     vertexIDs = Cint[0, 1, 2]
     expected_vertices =
         reshape(0:(nFakeVertices*fakeMeshDimension-1), (nFakeVertices, fakeMeshDimension))
-    fakeIDs, fakeVertices = PreCICE.getMeshVerticesAndIDs(fakeMeshName)
+    fakeIDs, fakeVertices = PreCICE.getMeshVertexIDsAndCoordinates(fakeMeshName)
     return fakeIDs == vertexIDs && fakeVertices == expected_vertices
 end
