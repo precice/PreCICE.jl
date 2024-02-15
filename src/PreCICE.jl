@@ -904,8 +904,6 @@ the safety factor region resulting from the mapping. The default value of the sa
 enlarged.
 """
 function setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float64})
-    @warn "The function setMeshAccessRegion is still experimental"
-
     @assert length(boundingBox) > 0 "The bounding box must not be empty"
     @assert length(boundingBox) == getMeshDimensions(meshName) * 2 "The bounding box must have the same dimension as the mesh"
     ccall(
@@ -934,8 +932,6 @@ coordinates omitting the mapping. This function is still experimental.
 function getMeshVertexIDsAndCoordinates(
     meshName::String,
 )::Tuple{AbstractArray{Integer},AbstractArray{Float64}}
-    @warn "The function getMeshVertexIDsAndCoordinates is still experimental"
-
     _size = getMeshVertexSize(meshName)
     vertexIDs = zeros(Cint, _size)
     vertexCoordinates = zeros(Float64, _size * getMeshDimensions(meshName))
