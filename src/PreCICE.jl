@@ -944,8 +944,7 @@ function getMeshVertexIDsAndCoordinates(
         vertexIDs,
         vertexCoordinates,
     )
-    return vertexIDs,
-    permutedims(reshape(vertexCoordinates, (_size, getMeshDimensions(meshName))))
+    return vertexIDs, reshape(vertexCoordinates, (_size, getMeshDimensions(meshName)))
 end
 
 @doc """
