@@ -874,9 +874,7 @@ single mesh (from the other participant) is now involved in this situation since
 mesh defined by the participant itself is not required any more. In order to re-partition the
 received mesh, the participant needs to define the mesh region it wants read data from and
 write data to. The mesh region is specified through an axis-aligned bounding box given by the
-lower and upper [min and max] bounding-box limits in each space dimension [x, y, z]. This function is still
-experimental
-
+lower and upper [min and max] bounding-box limits in each space dimension [x, y, z].
 
 # Arguments
 - `meshName::String`: Name of the mesh to define the access region for.
@@ -920,7 +918,7 @@ end
     getMeshVertexIDsAndCoordinates(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
 
 Iterating over the region of interest defined by bounding boxes and reading the corresponding
-coordinates omitting the mapping. This function is still experimental.
+coordinates omitting the mapping.
 
 # Arguments
 - `meshName::String`: Name of the mesh to get the vertices and IDs for.
