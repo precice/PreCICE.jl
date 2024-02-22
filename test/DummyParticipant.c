@@ -250,8 +250,8 @@ void precicec_getMeshVertexIDsAndCoordinates(const char *meshName, const int siz
     for (int i = 0; i < size; i++)
     {
         ids[i] = fake_ids[i];
-        coordinates[fake_mesh_dimensions * i] = i;
-        coordinates[fake_mesh_dimensions * i + 1] = i + n_fake_vertices;
-        coordinates[fake_mesh_dimensions * i + 2] = i + 2 * n_fake_vertices;
+        coordinates[fake_mesh_dimensions * i] = fake_mesh_dimensions * i;
+        coordinates[fake_mesh_dimensions * i + 1] = fake_mesh_dimensions * i + 1;
+        coordinates[fake_mesh_dimensions * i + 2] = fake_mesh_dimensions * i + 2;
     }
 }

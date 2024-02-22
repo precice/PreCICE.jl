@@ -185,7 +185,7 @@ function getMeshVertexIDsAndCoordinates()
     nFakeVertices = 3 # compare to test/DummyParticipant.c, fake_n_vertices
     vertexIDs = Cint[0, 1, 2]
     expected_vertices =
-        reshape(0:(nFakeVertices*fakeMeshDimension-1), (nFakeVertices, fakeMeshDimension))
+        reshape(0.0:(nFakeVertices*fakeMeshDimension-1), (nFakeVertices, fakeMeshDimension))
     fakeIDs, fakeVertices = PreCICE.getMeshVertexIDsAndCoordinates(fakeMeshName)
     return fakeIDs == vertexIDs && fakeVertices == expected_vertices
 end
