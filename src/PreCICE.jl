@@ -48,7 +48,7 @@ export
     setMeshTetrahedron,
     setMeshTetrahedra,
     setMeshAccessRegion,
-    getMeshVerticesAndIDs,
+    getMeshVertexIDsAndCoordinates,
 
     # data access
     writeData,
@@ -874,9 +874,7 @@ single mesh (from the other participant) is now involved in this situation since
 mesh defined by the participant itself is not required any more. In order to re-partition the
 received mesh, the participant needs to define the mesh region it wants read data from and
 write data to. The mesh region is specified through an axis-aligned bounding box given by the
-lower and upper [min and max] bounding-box limits in each space dimension [x, y, z]. This function is still
-experimental
-
+lower and upper [min and max] bounding-box limits in each space dimension [x, y, z].
 
 # Arguments
 - `meshName::String`: Name of the mesh to define the access region for.
@@ -904,8 +902,6 @@ the safety factor region resulting from the mapping. The default value of the sa
 enlarged.
 """
 function setMeshAccessRegion(meshName::String, boundingBox::AbstractArray{Float64})
-    @warn "The function setMeshAccessRegion is still experimental"
-
     @assert length(boundingBox) > 0 "The bounding box must not be empty"
     @assert length(boundingBox) == getMeshDimensions(meshName) * 2 "The bounding box must have the same dimension as the mesh"
     ccall(
@@ -919,10 +915,10 @@ end
 
 @doc """
 
-    getMeshVerticesAndIDs(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
+    getMeshVertexIDsAndCoordinates(meshName::String)::Tuple{AbstractArray{Integer}, AbstractArray{Float64}}
 
 Iterating over the region of interest defined by bounding boxes and reading the corresponding
-coordinates omitting the mapping. This function is still experimental.
+coordinates omitting the mapping.
 
 # Arguments
 - `meshName::String`: Name of the mesh to get the vertices and IDs for.
@@ -931,16 +927,14 @@ coordinates omitting the mapping. This function is still experimental.
 - `vertexIDs::AbstractArray{Integer}`: IDs of the vertices.
 - `vertexCoordinates::AbstractArray{Float64}`: Coordinates of the vertices and corresponding data values. Shape [N x D] where N = number of vertices and D = number of data dimensions.
 """
-function getMeshVerticesAndIDs(
+function getMeshVertexIDsAndCoordinates(
     meshName::String,
 )::Tuple{AbstractArray{Integer},AbstractArray{Float64}}
-    @warn "The function getMeshVerticesAndIDs is still experimental"
-
     _size = getMeshVertexSize(meshName)
     vertexIDs = zeros(Cint, _size)
     vertexCoordinates = zeros(Float64, _size * getMeshDimensions(meshName))
     ccall(
-        (:precicec_getMeshVerticesAndIDs, "libprecice"),
+        (:precicec_getMeshVertexIDsAndCoordinates, "libprecice"),
         Cvoid,
         (Ptr{Int8}, Cint, Ref{Cint}, Ref{Cdouble}),
         meshName,
@@ -948,8 +942,7 @@ function getMeshVerticesAndIDs(
         vertexIDs,
         vertexCoordinates,
     )
-    return vertexIDs,
-    permutedims(reshape(vertexCoordinates, (_size, getMeshDimensions(meshName))))
+    return vertexIDs, reshape(vertexCoordinates, (_size, getMeshDimensions(meshName)))
 end
 
 @doc """
