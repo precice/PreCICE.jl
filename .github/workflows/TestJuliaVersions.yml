@@ -28,16 +28,16 @@ jobs:
         id: cache-libprecice
         uses: actions/cache@v2
         with:
-          path: libprecice3_3.0.0_focal.deb
-          key: libprecice3_3.0.0_focal.deb1
-          restore-keys: libprecice3_3.0.0_focal.deb1
+          path: libprecice3_3.1.0_focal.deb
+          key: libprecice3_3.1.0_focal.deb1
+          restore-keys: libprecice3_3.1.0_focal.deb1
       
       - name: Download preCICE
         if: steps.cache-libprecice.outputs.cache-hit != 'true'
-        run: wget https://github.com/precice/precice/releases/download/v3.0.0/libprecice3_3.0.0_focal.deb
+        run: wget https://github.com/precice/precice/releases/download/v3.1.0/libprecice3_3.1.0_focal.deb
 
       - name: Install preCICE
-        run: sudo apt install ./libprecice3_3.0.0_focal.deb
+        run: sudo apt install ./libprecice3_3.1.0_focal.deb
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
