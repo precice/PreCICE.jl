@@ -24,7 +24,7 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
@@ -45,7 +45,7 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
