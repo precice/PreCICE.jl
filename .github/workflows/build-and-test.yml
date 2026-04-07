@@ -31,7 +31,7 @@ jobs:
 
   run_tests:
     runs-on: ubuntu-latest
-    container: precice/precice:develop
+    container: precice/precice:nightly
     needs: [build]
     strategy:
       fail-fast: false
