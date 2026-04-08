@@ -15,12 +15,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ["1.10.0", "1.11.0", "1.12.0"]
+        julia-version: ["1", "lts", "pre"]
         julia-arch: [x64, x86]
 
     steps:
       - name: Install Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
 
@@ -36,12 +36,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ["1.10.0", "1.11.0", "1.12.0"]
+        julia-version: ["1", "lts", "pre"]
         julia-arch: [x64, x86]
 
     steps:
       - name: Install Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
 
