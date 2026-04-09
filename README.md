@@ -156,6 +156,6 @@ This package works with official Julia binaries listed below. See the [Platform 
 
 ## Supported versions
 
-The package is actively tested for Julia versions `1.8.0`, `1.9.0`, and `1.10.0`. Julia versions prior to `1.6.0` are not supported.
+In the CI, we test the package for the latest `v1`, the latest LTS, and the latest prerelease versions of Julia.
 
 [Unofficial Julia binaries](https://julialang.org/downloads/platform/#platform_specific_instructions_for_unofficial_binaries) may not be compatible.

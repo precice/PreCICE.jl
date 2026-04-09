@@ -15,37 +15,37 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ["1.8.0", "1.9.0", "1.10.0"]
+        julia-version: ["1", "lts", "pre"]
         julia-arch: [x64, x86]
 
     steps:
       - name: Install Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
 
   run_tests:
     runs-on: ubuntu-latest
-    container: precice/precice:develop
+    container: precice/precice:nightly
     needs: [build]
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ["1.8.0", "1.9.0", "1.10.0"]
+        julia-version: ["1", "lts", "pre"]
         julia-arch: [x64, x86]
 
     steps:
       - name: Install Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build Package
         uses: julia-actions/julia-buildpkg@v1
@@ -58,7 +58,7 @@ jobs:
       - name: Add libprecice to LD_LIBRARY_PATH and adjust LD_PRELOAD
         run: |
           echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6:/usr/lib/x86_64-linux-gnu/libcurl.so.4" >> $GITHUB_ENV
+          echo "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6" >> $GITHUB_ENV
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
