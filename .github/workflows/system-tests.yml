@@ -10,4 +10,4 @@ jobs:
     uses: precice/tutorials/.github/workflows/system-tests.yml@develop
     with:
       suites: julia-bindings
-      build_args: JULIA_BINDINGS_PR:${{ github.event.number }},JULIA_BINDINGS_REF:${{ github.event.pull_request.head.sha }}
+      build_args: JULIA_BINDINGS_REF:${{ github.event.pull_request.head.sha }}
